@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout --orphan clean-start)",
+      "Bash(git add .gitignore index.html schema.sql schema_v2.sql wrangler.toml package.json functions/ sounds/ icons/ light-open.png light-stage.png dark-open.png dark-stage.png)",
+      "Bash(git commit -m \"Initial commit\")",
+      "Bash(git rm -r --cached . -q)",
+      "Bash(git add .gitignore \"Inflictor App/index.html\" \"Inflictor App/schema.sql\" \"Inflictor App/schema_v2.sql\" \"Inflictor App/wrangler.toml\" \"Inflictor App/package.json\" \"Inflictor App/functions/\" \"Inflictor App/sounds/\" \"Inflictor App/icons/\" \"Inflictor App/light-open.png\" \"Inflictor App/light-stage.png\" \"Inflictor App/dark-open.png\" \"Inflictor App/dark-stage.png\")",
+      "Bash(git rm -r --cached -f . -q)"
+    ]
+  }
+}
