@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Inflictor</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/inflictor-icon-192x192.png">
+  <link rel="apple-touch-icon" href="icons/inflictor-icon-192x192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root { --font-display:'Cinzel','Palatino Linotype',serif; --font-body:'Crimson Text',Georgia,serif; }
+
+    .theme-light {
+      --surface:rgba(255,248,228,.93); --text:#1e0c00; --text-muted:#7a4a20;
+      --accent:#8b5a00; --accent-hi:#c07a10; --border:#c0943a;
+      --input-bg:rgba(255,252,240,.98); --btn-bg:#7a4a00; --btn-hover:#a06a10; --btn-text:#fff5e0;
+      --ghost-border:#c0943a; --ghost-text:#7a4a20; --error-col:#8b0000; --success-col:#1a5c1a;
+      --shadow:rgba(80,40,0,.45); --header-bg:rgba(20,8,0,.62); --header-text:#f0d898;
+      --slot-bg:rgba(250,237,210,.62); --slot-border:rgba(190,145,70,.38); --col-head-bg:rgba(242,218,170,.90);
+    }
+    .theme-dark {
+      --surface:rgba(12,7,30,.94); --text:#e5d09a; --text-muted:#907850;
+      --accent:#d4af37; --accent-hi:#f0cc50; --border:#3a2808;
+      --input-bg:rgba(18,10,40,.98); --btn-bg:#d4af37; --btn-hover:#f0cc50; --btn-text:#090615;
+      --ghost-border:#4a3010; --ghost-text:#907840; --error-col:#e05555; --success-col:#50be50;
+      --shadow:rgba(0,0,0,.78); --header-bg:rgba(0,0,0,.68); --header-text:#d4af37;
+      --slot-bg:rgba(10,5,25,.62); --slot-border:rgba(55,33,8,.45); --col-head-bg:rgba(8,4,20,.92);
+    }
+
+    /* ── Premium themes ──────────────────────────────────────── */
+    .theme-crimson{--surface:rgba(25,5,5,.94);--text:#f0c8c0;--text-muted:#a06060;--accent:#e84040;--accent-hi:#ff6060;--border:#5a1515;--input-bg:rgba(35,5,5,.98);--btn-bg:#c03030;--btn-hover:#e04040;--btn-text:#fff0f0;--ghost-border:#5a1515;--ghost-text:#a06060;--error-col:#ff5555;--success-col:#50be50;--shadow:rgba(60,0,0,.82);--header-bg:rgba(20,0,0,.72);--header-text:#f0c8c0;--slot-bg:rgba(30,5,5,.62);--slot-border:rgba(90,20,20,.4);--col-head-bg:rgba(22,2,2,.93)}
+    .theme-gilded{--surface:rgba(22,14,0,.94);--text:#f5e8b0;--text-muted:#b09040;--accent:#f0c030;--accent-hi:#ffe060;--border:#7a5a10;--input-bg:rgba(28,18,0,.98);--btn-bg:#c09020;--btn-hover:#e0b030;--btn-text:#1a0e00;--ghost-border:#7a5a10;--ghost-text:#b09040;--error-col:#e05555;--success-col:#50be50;--shadow:rgba(0,0,0,.82);--header-bg:rgba(10,6,0,.72);--header-text:#f0c030;--slot-bg:rgba(22,14,0,.62);--slot-border:rgba(100,72,12,.4);--col-head-bg:rgba(14,9,0,.93)}
+    .theme-sapphire{--surface:rgba(5,10,35,.94);--text:#b8d0f8;--text-muted:#5880b0;--accent:#60a0f0;--accent-hi:#80c0ff;--border:#1a3060;--input-bg:rgba(5,10,45,.98);--btn-bg:#2060c0;--btn-hover:#4080e0;--btn-text:#e8f0ff;--ghost-border:#1a3060;--ghost-text:#5880b0;--error-col:#e05555;--success-col:#50be50;--shadow:rgba(0,0,20,.82);--header-bg:rgba(0,5,25,.72);--header-text:#80c0ff;--slot-bg:rgba(5,10,35,.62);--slot-border:rgba(25,50,100,.45);--col-head-bg:rgba(2,5,22,.93)}
+
+    /* Premium stage background filters */
+    .theme-crimson  #stage-bg,.theme-crimson  #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(200deg) saturate(1.4) brightness(.82)}
+    .theme-gilded   #stage-bg,.theme-gilded   #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(28deg) saturate(1.9) brightness(.88)}
+    .theme-sapphire #stage-bg,.theme-sapphire #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(50deg) saturate(1.3) brightness(.72)}
+
+    /* ── Font styles ──────────────────────────────────────────── */
+    .font-classic{--font-display:'Cinzel','Palatino Linotype',serif;--font-body:'Crimson Text',Georgia,serif}
+    .font-modern{--font-display:Georgia,'Times New Roman',serif;--font-body:system-ui,'Helvetica Neue',sans-serif}
+    .font-romantic{--font-display:'Playfair Display','Times New Roman',serif;--font-body:'EB Garamond',Georgia,serif}
+
+    /* ── Avatar ───────────────────────────────────────────────── */
+    .ah-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.72rem;font-weight:700;color:#0d0a00;flex-shrink:0;cursor:pointer;transition:transform .2s}
+    .ah-avatar:hover{transform:scale(1.1)}
+
+    /* ── Upgrade overlay ──────────────────────────────────────── */
+    #upgrade-overlay{position:fixed;inset:0;z-index:65;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.48);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .4s ease}
+    #upgrade-overlay.visible{opacity:1;pointer-events:all}
+    #upgrade-overlay.gone{display:none}
+    .upgrade-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:2rem 2.2rem;width:440px;max-width:96vw;text-align:center;box-shadow:0 30px 100px var(--shadow);position:relative}
+    .upgrade-features{margin:1.4rem 0;display:flex;flex-direction:column;gap:.6rem;text-align:left}
+    .upgrade-feature{font-family:var(--font-body);font-size:.95rem;color:var(--text);display:flex;align-items:center;gap:.6rem;padding:.35rem .5rem;border-left:2px solid var(--accent)}
+    .upgrade-price{font-family:var(--font-display);font-size:1.1rem;color:var(--accent);letter-spacing:.1em;margin-bottom:1.2rem}
+    .upgrade-small{font-family:var(--font-body);font-style:italic;font-size:.8rem;color:var(--text-muted);margin-top:.6rem}
+
+    /* ── Legal overlay ────────────────────────────────────────── */
+    #legal-overlay{position:fixed;inset:0;z-index:75;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.52);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .3s ease}
+    #legal-overlay.visible{opacity:1;pointer-events:all}
+    #legal-overlay.gone{display:none}
+    .legal-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:1.8rem 2rem;width:580px;max-width:96vw;max-height:86vh;overflow-y:auto;box-shadow:0 30px 100px var(--shadow);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .legal-title{font-family:var(--font-display);font-size:1.1rem;letter-spacing:.18em;color:var(--accent);margin-bottom:1rem}
+    .legal-body{font-family:var(--font-body);font-size:.92rem;color:var(--text);line-height:1.75}
+    .legal-body h3{font-family:var(--font-display);font-size:.75rem;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase;margin:1.2rem 0 .4rem}
+    .legal-body p{margin-bottom:.8rem}
+    .legal-footer{margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end}
+    .auth-legal-links{text-align:center;padding:.9rem 0 0;border-top:1px solid var(--border);margin-top:1.2rem;display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+    .auth-legal-links button{background:none;border:none;color:var(--text-muted);font-family:var(--font-body);font-style:italic;font-size:.8rem;cursor:pointer;transition:color .2s;padding:0;text-decoration:underline;text-decoration-style:dotted}
+    .auth-legal-links button:hover{color:var(--accent)}
+
+    /* ── Premium badge ────────────────────────────────────────── */
+    .premium-badge{font-family:var(--font-display);font-size:.6rem;letter-spacing:.12em;background:var(--accent);color:var(--btn-text);padding:.15rem .45rem;vertical-align:middle;margin-left:.35rem}
+    .locked-pill{opacity:.45;cursor:pointer;position:relative}
+    .locked-pill::after{content:'★';font-size:.7rem;color:var(--accent);margin-left:.3rem}
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%;overflow:hidden}
+    body{font-family:var(--font-body);background:#060204}
+
+    /* Stage background */
+    #stage-bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-color:#060204;opacity:0;transition:opacity 1.2s ease}
+    #stage-bg.visible{opacity:1}
+
+    /* Theme selector */
+    #theme-selector{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 60%,#180d02 0%,#060204 100%);gap:2rem;padding:2rem;transition:opacity .6s ease}
+    #theme-selector.fading{opacity:0;pointer-events:none}
+    #theme-selector.hidden{display:none}
+    .ts-eyebrow{font-family:var(--font-body);font-style:italic;color:#5a3810;font-size:.88rem;letter-spacing:.25em;text-align:center;text-transform:uppercase}
+    .ts-title{font-family:var(--font-display);font-weight:700;font-size:clamp(2rem,5vw,3.8rem);color:#d4af37;letter-spacing:.28em;text-align:center;text-shadow:0 0 50px rgba(212,175,55,.45),0 2px 6px rgba(0,0,0,.9)}
+    .ts-subtitle{font-family:var(--font-body);font-style:italic;font-size:1.05rem;color:#907040;text-align:center;max-width:480px;line-height:1.5}
+    .ts-instruct{font-family:var(--font-body);font-style:italic;color:#5a3810;font-size:.9rem;letter-spacing:.1em}
+    .ts-cards{display:flex;gap:2.5rem;flex-wrap:wrap;justify-content:center}
+    .ts-card{width:250px;height:350px;border:2px solid #4a3010;border-radius:2px;cursor:pointer;overflow:hidden;position:relative;background:#100808;transition:transform .35s ease,border-color .35s,box-shadow .35s}
+    .ts-card:hover{transform:translateY(-10px);border-color:#d4af37;box-shadow:0 24px 70px rgba(0,0,0,.75),0 0 50px rgba(212,175,55,.22)}
+    .ts-card-bg{position:absolute;inset:0;background-size:cover;background-position:center;transition:transform .5s ease}
+    .ts-card:hover .ts-card-bg{transform:scale(1.07)}
+    [data-theme="light"] .ts-card-bg{background-image:url('light-open.png')}
+    [data-theme="dark"]  .ts-card-bg{background-image:url('dark-open.png')}
+    .ts-card-info{position:absolute;bottom:0;left:0;right:0;padding:2.5rem 1.5rem 1.5rem;background:linear-gradient(transparent,rgba(0,0,0,.92))}
+    .ts-card-label{display:block;font-family:var(--font-display);font-weight:600;font-size:1.45rem;letter-spacing:.22em;color:#d4af37;margin-bottom:.25rem}
+    .ts-card-sub{font-family:var(--font-body);font-style:italic;color:#807050;font-size:.85rem}
+
+    /* Opening screen */
+    #opening-screen{position:fixed;inset:0;z-index:40;background-size:cover;background-position:center;background-color:#060204;display:none;opacity:0;cursor:pointer;transition:opacity 1.2s ease;pointer-events:none}
+    #opening-screen.visible{opacity:1;pointer-events:auto}
+    .os-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);font-family:var(--font-body);font-style:italic;color:rgba(212,175,55,.6);font-size:.9rem;letter-spacing:.1em;white-space:nowrap;pointer-events:none;animation:pulseHint 2.4s ease-in-out infinite}
+    @keyframes pulseHint{0%,100%{opacity:.35}50%{opacity:.85}}
+
+    /* Auth overlay */
+    #auth-overlay{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.32);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .5s ease}
+    #auth-overlay.visible{opacity:1;pointer-events:all}
+    #auth-overlay.gone{display:none}
+    #auth-modal{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:2.2rem 2.5rem 2rem;width:420px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 32px 110px var(--shadow);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .am-header{text-align:center;margin-bottom:1.8rem}
+    .am-orn{color:var(--accent);font-size:1rem;letter-spacing:.35em;opacity:.65}
+    .am-title{font-family:var(--font-display);font-weight:700;font-size:1.65rem;color:var(--accent);letter-spacing:.22em;margin:.35rem 0 .15rem}
+    .am-sub{font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.85rem;letter-spacing:.04em}
+    .am-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+    .am-tab{flex:1;background:none;border:none;padding:.6rem .5rem;margin-bottom:-1px;font-family:var(--font-display);font-size:.8rem;letter-spacing:.12em;color:var(--text-muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .2s,border-color .2s}
+    .am-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .am-tab:hover:not(.active){color:var(--text)}
+    .auth-form{display:none}
+    .auth-form.active{display:block}
+    .form-group{margin-bottom:1.1rem}
+    .form-label{display:block;font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.86rem;margin-bottom:.32rem;letter-spacing:.03em}
+    .form-input{width:100%;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:1rem;padding:.62rem .85rem;border-radius:1px;outline:none;transition:border-color .2s,box-shadow .2s}
+    .form-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(212,175,55,.14)}
+    .form-input::placeholder{color:var(--text-muted);opacity:.45}
+    .btn{display:block;width:100%;padding:.78rem 1rem;border-radius:1px;cursor:pointer;letter-spacing:.13em;border:none;transition:background .2s,transform .1s;text-align:center}
+    .btn:active:not(:disabled){transform:scale(.98)}
+    .btn-primary{background:var(--btn-bg);color:var(--btn-text);font-family:var(--font-display);font-weight:600;font-size:.85rem}
+    .btn-primary:hover:not(:disabled){background:var(--btn-hover)}
+    .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+    .btn-ghost{background:transparent;color:var(--ghost-text);font-family:var(--font-body);font-style:italic;font-size:.95rem;letter-spacing:.04em;border:1px solid var(--ghost-border)}
+    .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-link{background:none;border:none;color:var(--text-muted);font-family:var(--font-body);font-style:italic;font-size:.86rem;cursor:pointer;padding:0;text-decoration:underline;text-decoration-style:dotted;transition:color .2s}
+    .btn-link:hover{color:var(--accent)}
+    .divider{display:flex;align-items:center;gap:.7rem;margin:1.2rem 0}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+    .divider span{color:var(--text-muted);font-style:italic;font-size:.82rem}
+    .msg{font-family:var(--font-body);font-size:.9rem;padding:.58rem .8rem;border-radius:1px;margin-bottom:1rem;display:none;border-left:3px solid}
+    .msg.error{color:var(--error-col);border-color:var(--error-col);background:rgba(139,0,0,.07)}
+    .msg.success{color:var(--success-col);border-color:var(--success-col);background:rgba(0,100,0,.07)}
+    .msg.show{display:block}
+    .am-back{margin-bottom:1.2rem}
+    .am-back-btn{background:none;border:none;color:var(--text-muted);font-family:var(--font-body);font-style:italic;font-size:.88rem;cursor:pointer;padding:0;transition:color .2s}
+    .am-back-btn:hover{color:var(--accent)}
+
+    /* App shell */
+    #app{position:fixed;inset:0;z-index:10;display:none;flex-direction:column}
+    #app.visible{display:flex}
+    #app-header{background:var(--header-bg);backdrop-filter:blur(12px);border-bottom:1px solid rgba(212,175,55,.18);padding:0 1rem;height:52px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:.5rem}
+    .ah-brand{font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--header-text);letter-spacing:.28em;white-space:nowrap}
+    .ah-right{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+    .ah-username{font-family:var(--font-body);font-style:italic;color:var(--header-text);font-size:.88rem;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:110px}
+    .ah-btn{background:none;border:1px solid rgba(212,175,55,.22);color:var(--header-text);cursor:pointer;font-family:var(--font-body);font-size:.72rem;letter-spacing:.08em;padding:.28rem .6rem;opacity:.7;display:flex;align-items:center;gap:.28rem;transition:opacity .2s,border-color .2s;white-space:nowrap}
+    .ah-btn:hover{opacity:1;border-color:var(--accent)}
+    .ah-btn svg{width:13px;height:13px;flex-shrink:0}
+    .ah-btn.muted{opacity:.35}
+    #guest-banner{background:rgba(100,55,0,.72);backdrop-filter:blur(6px);padding:.4rem 1rem;display:none;align-items:center;justify-content:center;gap:1rem;flex-shrink:0;font-family:var(--font-body);font-style:italic;font-size:.85rem;color:#f0d090}
+    .btn-claim{background:#d4af37;color:#1a0800;border:none;padding:.2rem .7rem;cursor:pointer;font-family:var(--font-display);font-size:.7rem;letter-spacing:.1em;transition:background .2s}
+    .btn-claim:hover{background:#f0cc50}
+
+    /* Planner layout */
+    #app-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+    #planner-toolbar{padding:.55rem .8rem .35rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:.8rem;border-bottom:1px solid rgba(212,175,55,.1)}
+    .pl-nav{display:flex;align-items:center;gap:.5rem}
+    .pl-nav-btn{background:none;border:1px solid var(--border);color:var(--text-muted);width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:border-color .2s,color .2s}
+    .pl-nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+    #planner-week-label{font-family:var(--font-display);font-size:.82rem;letter-spacing:.1em;color:var(--text);white-space:nowrap}
+    .btn-prepare{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:var(--btn-bg);color:var(--btn-text);border:none;padding:.38rem .9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
+    .btn-prepare:hover{background:var(--btn-hover)}
+    .btn-pause{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:none;color:var(--text-muted);border:1px solid var(--border);padding:.38rem .9rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+    .btn-pause:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-pause.active{background:rgba(200,140,0,.18);border-color:#c89000;color:#c89000}
+    #begin-again-bar{display:flex;align-items:center;gap:.7rem;padding:.45rem .8rem;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(200,140,0,.25);flex-shrink:0}
+    .ba-label{font-family:var(--font-display);font-size:.7rem;letter-spacing:.08em;color:var(--text-muted);white-space:nowrap}
+    .ba-time-input{font-family:var(--font-body);font-size:.8rem;background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:.28rem .5rem;cursor:pointer}
+    .ba-time-input:focus{outline:none;border-color:var(--accent)}
+    .btn-begin-again{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:rgba(40,130,40,.7);color:#d0ffd0;border:none;padding:.38rem .9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
+    .btn-begin-again:hover{background:rgba(40,160,40,.85)}
+    .slot-pause-chk{display:flex;align-items:center;gap:.3rem;font-family:var(--font-body);font-size:.68rem;font-style:italic;color:var(--text-muted);margin-top:3px;cursor:pointer;user-select:none}
+    .slot-pause-chk input{cursor:pointer;accent-color:#c89000;width:12px;height:12px}
+    .slot.slot-paused{opacity:.5;}
+    #planner-scroll{flex:1;overflow:auto;padding:.5rem .6rem .8rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    #planner-grid{display:grid;grid-template-columns:repeat(7,minmax(104px,1fr));gap:5px;min-width:748px}
+
+    /* Day column */
+    .planner-col{display:flex;flex-direction:column;gap:3px}
+    .col-header{position:sticky;top:0;z-index:5;background:var(--col-head-bg);backdrop-filter:blur(12px);border:1px solid var(--border);padding:.45rem .4rem .35rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.1rem}
+    .col-header.today{border-color:var(--accent)}
+    .col-day-name{font-family:var(--font-display);font-size:.65rem;letter-spacing:.15em;color:#000}
+    .col-header.today .col-day-name{color:#000}
+    .col-date{font-family:var(--font-display);font-size:.95rem;font-weight:600;color:#000;line-height:1.1}
+    .col-header.today .col-date{color:#000}
+    .col-today-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);margin:0 auto}
+    .col-edit-btn{position:absolute;top:.32rem;right:.32rem;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:.18rem;opacity:0;transition:opacity .2s;line-height:1}
+    .planner-col:hover .col-edit-btn{opacity:.55}
+    .col-edit-btn:hover{opacity:1!important;color:var(--accent)}
+    .col-slots{display:flex;flex-direction:column;gap:3px}
+    .col-empty{min-height:80px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);opacity:.55}
+    .col-empty-btn{background:none;border:none;font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.82rem;cursor:pointer;transition:color .2s;padding:.5rem}
+    .col-empty-btn:hover{color:var(--accent);opacity:1}
+
+    /* Slots */
+    .slot{position:relative;background:var(--slot-bg);border:1px solid var(--slot-border);border-left:3px solid var(--slot-color,var(--accent));padding:.3rem .38rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;backdrop-filter:blur(3px);transition:background .3s,border-left-color .3s}
+    .slot.slot-completed{background:rgba(28,92,28,.38)!important;border-color:rgba(45,130,45,.45)!important;border-left-color:#3c9a3c!important}
+    .slot.slot-failed{background:rgba(110,18,18,.38)!important;border-color:rgba(165,35,35,.45)!important;border-left-color:#c43030!important}
+    .slot-info{flex:1;min-height:0;overflow:hidden}
+    .slot-name{font-family:var(--font-body);font-size:.8rem;font-weight:600;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+    .slot-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:#000;line-height:1.2;display:flex;align-items:center;gap:.3rem}
+    .slot-bell{font-size:.65rem;opacity:.55;flex-shrink:0}
+    .chime-btn{font-size:.9rem;line-height:1;background:none;border:1px solid var(--border);width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,border-color .2s}
+    .chime-btn.off{opacity:.28}
+    .chime-btn:hover{border-color:var(--accent);opacity:1!important}
+    .slot-btns{display:flex;gap:3px;justify-content:flex-end;flex-shrink:0;margin-top:3px}
+    .slot-check,.slot-fail{width:20px;height:20px;border-radius:50%;border:1px solid transparent;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:all .15s;background:rgba(255,255,255,.06);color:var(--text-muted);padding:0}
+    .slot-check{border-color:rgba(55,140,55,.4)}
+    .slot-check:hover{background:rgba(55,140,55,.28);color:#50c050}
+    .slot-check.active{background:rgba(55,140,55,.42);color:#50c050;border-color:#50c050}
+    .slot-fail{border-color:rgba(165,50,50,.4)}
+    .slot-fail:hover{background:rgba(165,50,50,.28);color:#e05050}
+    .slot-fail.active{background:rgba(165,50,50,.42);color:#e05050;border-color:#e05050}
+    .col-notes{margin-top:3px}
+    .col-note{width:100%;min-height:54px;background:transparent;border:1px dashed var(--border);color:var(--text);font-family:var(--font-body);font-style:italic;font-size:.75rem;padding:.45rem .5rem;resize:vertical;outline:none;transition:border-color .2s;line-height:1.5}
+    .col-note::placeholder{color:var(--text-muted);opacity:.4}
+    .col-note:focus{border-color:var(--accent);border-style:solid}
+
+    /* Week setup overlay */
+    #week-setup-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.42);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .4s ease}
+    #week-setup-overlay.visible{opacity:1;pointer-events:all}
+    #week-setup-overlay.gone{display:none}
+    .setup-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:1.8rem 2rem;width:560px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 30px 100px var(--shadow);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .setup-section{margin-bottom:1.4rem}
+    .setup-label{font-family:var(--font-display);font-size:.7rem;letter-spacing:.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.55rem;display:flex;align-items:center;justify-content:space-between}
+    .act-row{border:1px solid var(--border);padding:.6rem;margin-bottom:.45rem;background:rgba(255,255,255,.02)}
+    .act-row-top{display:flex;gap:.45rem;align-items:center;margin-bottom:.45rem}
+    .act-name-input{flex:1;min-width:0}
+    .act-dur-group{display:flex;align-items:center;gap:.22rem;flex-shrink:0}
+    .dur-num{width:42px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:.9rem;padding:.38rem .35rem;text-align:center;outline:none;border-radius:1px}
+    .dur-num:focus{border-color:var(--accent)}
+    .dur-unit{font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.82rem}
+    .act-row-foot{display:flex;align-items:center;justify-content:space-between}
+    .act-colors{display:flex;gap:5px;flex-wrap:wrap}
+    .color-dot{width:17px;height:17px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;padding:0}
+    .color-dot:hover{transform:scale(1.2)}
+    .color-dot.sel{border-color:var(--text);transform:scale(1.18)}
+    .act-controls{display:flex;gap:3px}
+    .act-ctrl{background:none;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s}
+    .act-ctrl:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+    .act-ctrl:disabled{opacity:.28;cursor:not-allowed}
+    .act-del:hover:not(:disabled){border-color:var(--error-col)!important;color:var(--error-col)!important}
+    .btn-add-act{width:100%;background:none;border:1px dashed var(--border);color:var(--text-muted);font-family:var(--font-body);font-style:italic;font-size:.88rem;padding:.5rem;cursor:pointer;transition:border-color .2s,color .2s}
+    .btn-add-act:hover{border-color:var(--accent);color:var(--accent)}
+    .setup-empty-acts{font-family:var(--font-body);font-style:italic;color:var(--text-muted);text-align:center;padding:.7rem;font-size:.88rem;opacity:.65}
+    .setup-day-checks{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:.55rem}
+    .day-pill{display:flex;flex-direction:column;align-items:center;padding:.4rem .5rem;border:1px solid var(--border);cursor:pointer;min-width:44px;transition:all .2s}
+    .day-pill.on{border-color:var(--accent);background:rgba(212,175,55,.1);color:var(--accent)}
+    .day-pill-num{font-family:var(--font-display);font-size:.9rem;font-weight:600;line-height:1.1}
+    .day-pill-name{font-family:var(--font-body);font-style:italic;font-size:.67rem;letter-spacing:.04em}
+    .day-shortcuts{display:flex;gap:.4rem}
+    .day-shortcut{background:none;border:1px solid var(--border);color:var(--text-muted);font-family:var(--font-body);font-size:.78rem;padding:.25rem .55rem;cursor:pointer;transition:border-color .2s,color .2s}
+    .day-shortcut:hover{border-color:var(--accent);color:var(--accent)}
+    .setup-footer{display:flex;gap:.7rem;justify-content:flex-end;padding-top:1rem;border-top:1px solid var(--border);margin-top:.5rem}
+    .setup-msg{font-family:var(--font-body);font-size:.88rem;color:var(--error-col);margin-bottom:.7rem;display:none}
+    .setup-msg.show{display:block}
+    .setup-box .form-input{padding:.55rem .75rem;font-size:.95rem}
+
+    /* ── Settings overlay ────────────────────────────────────────── */
+    #settings-overlay{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .4s ease}
+    #settings-overlay.visible{opacity:1;pointer-events:all}
+    #settings-overlay.gone{display:none}
+    .settings-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:1.8rem 2rem;width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 30px 100px var(--shadow);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+    .settings-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem}
+    .settings-close{background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;padding:0;line-height:1;transition:color .2s;margin-top:.2rem}
+    .settings-close:hover{color:var(--accent)}
+    .set-section{margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
+    .set-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+    .set-section-title{font-family:var(--font-display);font-size:.68rem;letter-spacing:.18em;color:var(--text-muted);text-transform:uppercase;margin-bottom:.8rem}
+    .set-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.65rem;gap:1rem}
+    .set-row-label{font-family:var(--font-body);font-size:.95rem;color:var(--text)}
+    .set-row-hint{font-family:var(--font-body);font-style:italic;font-size:.82rem;color:var(--text-muted)}
+    .set-pills{display:flex;gap:.4rem}
+    .set-pill{display:flex;align-items:center;gap:.35rem;padding:.3rem .7rem;border:1px solid var(--border);cursor:pointer;font-family:var(--font-body);font-size:.88rem;color:var(--text-muted);transition:all .2s}
+    .set-pill input{display:none}
+    .set-pill.active{border-color:var(--accent);color:var(--accent);background:rgba(212,175,55,.1)}
+    .toggle{position:relative;display:inline-flex;width:42px;height:22px;cursor:pointer;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0}
+    .toggle-track{position:absolute;inset:0;background:var(--border);border-radius:11px;transition:background .22s}
+    .toggle-track::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:transform .22s}
+    .toggle input:checked + .toggle-track{background:var(--accent)}
+    .toggle input:checked + .toggle-track::before{transform:translateX(20px)}
+    .notif-note{font-family:var(--font-body);font-style:italic;font-size:.82rem;color:var(--error-col);margin-top:.4rem;display:none}
+    .notif-note.show{display:block}
+    #settings-msg{margin-bottom:.8rem;opacity:0;transition:opacity .3s}
+    #settings-msg.show{opacity:1}
+    .sv-back-btn{background:none;border:none;color:var(--text-muted);font-family:var(--font-body);font-style:italic;font-size:.88rem;cursor:pointer;padding:0;margin-bottom:1.2rem;display:block;transition:color .2s}
+    .sv-back-btn:hover{color:var(--accent)}
+    .sv{display:none}
+    .sv.active{display:block}
+
+    /* History */
+    .hist-day{border:1px solid var(--border);margin-bottom:.5rem;cursor:pointer;transition:border-color .2s}
+    .hist-day:hover{border-color:var(--accent)}
+    .hist-day-hdr{display:flex;align-items:center;justify-content:space-between;padding:.65rem .85rem}
+    .hist-date{font-family:var(--font-display);font-size:.78rem;letter-spacing:.05em;color:var(--text);margin-bottom:.18rem}
+    .hist-stats{font-family:var(--font-body);font-style:italic;font-size:.82rem;color:var(--text-muted)}
+    .hist-chevron{color:var(--text-muted);font-size:1.1rem;transition:transform .2s;flex-shrink:0}
+    .hist-day.open .hist-chevron{transform:rotate(90deg)}
+    .hist-body{display:none;padding:.5rem .85rem .7rem;border-top:1px solid var(--border)}
+    .hist-day.open .hist-body{display:block}
+    .hist-task{display:flex;gap:.5rem;font-family:var(--font-body);font-size:.88rem;padding:.18rem 0}
+    .hist-task-completed span:first-child{color:#50c050}
+    .hist-task-failed    span:first-child{color:#e05050}
+    .hist-note{font-family:var(--font-body);font-style:italic;font-size:.82rem;color:var(--text-muted);margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border);line-height:1.5}
+    .hist-empty{font-family:var(--font-body);font-style:italic;color:var(--text-muted);text-align:center;padding:2rem}
+    #history-load-more{display:none;margin-top:.8rem}
+
+    /* Danger button */
+    .btn-danger{background:transparent;color:var(--error-col);border:1px solid var(--error-col);font-family:var(--font-body);font-style:italic;font-size:.95rem;padding:.6rem 1rem;cursor:pointer;transition:background .2s}
+    .btn-danger:hover{background:rgba(139,0,0,.12)}
+
+    /* Scrollbars */
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:transparent}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    @media(max-width:600px){
+      .ts-cards{gap:1.2rem} .ts-card{width:210px;height:300px} .ts-title{font-size:1.9rem}
+      #auth-modal{padding:1.8rem 1.4rem} .setup-box,.settings-box{padding:1.5rem 1.2rem}
+      .ah-username{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<div id="stage-bg"></div>
+
+<!-- Theme selector -->
+<div id="theme-selector" class="hidden">
+  <div class="ts-eyebrow">Presented by the Structure Inflictor</div>
+  <div class="ts-title">THE INFLICTOR</div>
+  <div class="ts-subtitle">"Hold the mirror up to nature — and mark what is done."</div>
+  <div class="ts-instruct">Choose thy realm</div>
+  <div class="ts-cards">
+    <div class="ts-card" data-theme="light" onclick="App.selectTheme('light')">
+      <div class="ts-card-bg"></div>
+      <div class="ts-card-info"><span class="ts-card-label">LIGHT</span><span class="ts-card-sub">The Parchment Stage</span></div>
+    </div>
+    <div class="ts-card" data-theme="dark" onclick="App.selectTheme('dark')">
+      <div class="ts-card-bg"></div>
+      <div class="ts-card-info"><span class="ts-card-label">DARK</span><span class="ts-card-sub">The Midnight Stage</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- Opening screen -->
+<div id="opening-screen" onclick="App.skipOpening()">
+  <div class="os-hint">Click anywhere · The stage awaits</div>
+</div>
+
+<!-- Auth overlay -->
+<div id="auth-overlay">
+  <div id="auth-modal">
+    <div class="am-header">
+      <div class="am-orn">✦ ── ✦ ── ✦</div>
+      <div class="am-title">THE INFLICTOR</div>
+      <div class="am-sub">Weekly Accountability Theatre</div>
+    </div>
+    <div class="am-tabs" id="auth-tabs">
+      <button class="am-tab active" id="tab-login"    onclick="App.showTab('login')">Enter</button>
+      <button class="am-tab"        id="tab-register" onclick="App.showTab('register')">New Player</button>
+    </div>
+    <div class="msg" id="auth-msg"></div>
+    <form class="auth-form active" id="form-login" onsubmit="App.doLogin(event)">
+      <div class="form-group"><label class="form-label" for="l-user">Thy Name</label><input class="form-input" type="text" id="l-user" placeholder="username" autocomplete="username" required></div>
+      <div class="form-group"><label class="form-label" for="l-pass">Thy Secret</label><input class="form-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" required>
+        <div style="text-align:right;margin-top:.38rem"><button type="button" class="btn-link" onclick="App.showForm('forgot')">Forgot thy secret?</button></div>
+      </div>
+      <button class="btn btn-primary" type="submit" id="btn-login">Enter the Stage</button>
+      <div class="divider"><span>or</span></div>
+      <button class="btn btn-ghost" type="button" onclick="App.doGuest()">Enter as Groundling</button>
+    </form>
+    <form class="auth-form" id="form-register" onsubmit="App.doRegister(event)">
+      <div class="form-group"><label class="form-label" for="r-user">Choose a Name</label><input class="form-input" type="text" id="r-user" placeholder="3–30 chars, letters / numbers / _" autocomplete="username" required></div>
+      <div class="form-group"><label class="form-label" for="r-email">Thy Correspondence <span style="opacity:.45">(optional)</span></label><input class="form-input" type="email" id="r-email" placeholder="email@example.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label" for="r-pass">Create a Secret</label><input class="form-input" type="password" id="r-pass" placeholder="At least 8 characters" autocomplete="new-password" required></div>
+      <div class="form-group"><label class="form-label" for="r-confirm">Confirm thy Secret</label><input class="form-input" type="password" id="r-confirm" placeholder="••••••••" autocomplete="new-password" required></div>
+      <button class="btn btn-primary" type="submit" id="btn-register">Claim Thy Seat</button>
+      <div class="divider"><span>or</span></div>
+      <button class="btn btn-ghost" type="button" onclick="App.doGuest()">Enter as Groundling</button>
+    </form>
+    <form class="auth-form" id="form-forgot" onsubmit="App.doForgot(event)">
+      <div class="am-back"><button type="button" class="am-back-btn" onclick="App.showForm(null)">← Return to entrance</button></div>
+      <p style="font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.95rem;margin-bottom:1.2rem;line-height:1.65">Provide thy correspondence and a messenger shall be dispatched.</p>
+      <div class="form-group"><label class="form-label" for="f-email">Thy Correspondence</label><input class="form-input" type="email" id="f-email" placeholder="email@example.com" required></div>
+      <button class="btn btn-primary" type="submit" id="btn-forgot">Send the Messenger</button>
+    </form>
+    <form class="auth-form" id="form-reset" onsubmit="App.doReset(event)">
+      <p style="font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.95rem;margin-bottom:1.2rem;line-height:1.65">Choose a new secret for thy return to the stage.</p>
+      <div class="form-group"><label class="form-label" for="rs-pass">New Secret</label><input class="form-input" type="password" id="rs-pass" placeholder="At least 8 characters" autocomplete="new-password" required></div>
+      <div class="form-group"><label class="form-label" for="rs-confirm">Confirm New Secret</label><input class="form-input" type="password" id="rs-confirm" placeholder="••••••••" autocomplete="new-password" required></div>
+      <button class="btn btn-primary" type="submit" id="btn-reset">Restore My Secret</button>
+    </form>
+    <div class="auth-legal-links">
+      <button onclick="Legal.open('privacy')">Privacy Policy</button>
+      <button onclick="Legal.open('tos')">Terms of Service</button>
+      <button onclick="Legal.open('cookies')">Cookie Notice</button>
+    </div>
+  </div>
+</div>
+
+<!-- App shell -->
+<div id="app">
+  <header id="app-header">
+    <span class="ah-brand">THE INFLICTOR</span>
+    <div class="ah-right">
+      <div class="ah-avatar" id="ah-avatar" onclick="Settings.open()" title="Settings"></div>
+      <span class="ah-username" id="ah-username"></span>
+      <button class="ah-btn" id="sound-btn" onclick="Planner.toggleSound()" title="Toggle sounds">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path id="sound-waves" d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        Sound
+      </button>
+      <button class="ah-btn" onclick="Settings.open()" title="Settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+      <button class="ah-btn" onclick="App.logout()" title="Exit Stage">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Exit
+      </button>
+    </div>
+  </header>
+  <div id="guest-banner">
+    Viewing as a Groundling — thy progress shall not be saved.
+    <button class="btn-claim" onclick="App.claimSeat()">Claim a Seat</button>
+  </div>
+  <main id="app-main">
+    <div id="planner-toolbar">
+      <div class="pl-nav">
+        <button class="pl-nav-btn" onclick="Planner.prevWeek()">&#8592;</button>
+        <span id="planner-week-label">Loading…</span>
+        <button class="pl-nav-btn" onclick="Planner.nextWeek()">&#8594;</button>
+      </div>
+      <button class="btn-prepare" onclick="Planner.openSetup()">Prepare Week</button>
+      <button class="btn-pause" id="btn-pause" onclick="Planner.togglePause()">⏸ Pause</button>
+    </div>
+    <div id="begin-again-bar" class="gone">
+      <span class="ba-label">Resume at:</span>
+      <input type="time" id="begin-again-time" class="ba-time-input">
+      <button class="btn-begin-again" onclick="Planner.beginAgain()">▶ Begin Again</button>
+    </div>
+    <div id="planner-scroll"><div id="planner-grid"></div></div>
+  </main>
+</div>
+
+<!-- Week setup modal -->
+<div id="week-setup-overlay" class="gone">
+  <div class="setup-box">
+    <div class="am-header" style="margin-bottom:1.4rem">
+      <div class="am-orn">✦ ── ✦</div>
+      <div class="am-title" id="setup-title">PREPARE THE STAGE</div>
+      <div class="am-sub">Set thy week's programme</div>
+    </div>
+    <div class="setup-section">
+      <div class="setup-label">Rise at</div>
+      <input type="time" id="setup-wake-time" class="form-input" style="width:auto;min-width:130px">
+    </div>
+    <div class="setup-section">
+      <div class="setup-label">
+        <span>Acts of the Day</span>
+        <button class="day-shortcut" onclick="Planner.addActivity()" style="border-color:var(--accent);color:var(--accent)">+ Add Act</button>
+      </div>
+      <div id="setup-acts-list"></div>
+      <button class="btn-add-act" onclick="Planner.addActivity()">+ Add an Act</button>
+    </div>
+    <div class="setup-section" id="setup-days-section">
+      <div class="setup-label">
+        <span>Apply to</span>
+        <div class="day-shortcuts">
+          <button class="day-shortcut" onclick="Planner.selectAllDays(true)">All</button>
+          <button class="day-shortcut" onclick="Planner.selectWeekdays()">Weekdays</button>
+          <button class="day-shortcut" onclick="Planner.selectAllDays(false)">None</button>
+        </div>
+      </div>
+      <div id="setup-day-checks" class="setup-day-checks"></div>
+    </div>
+    <div class="setup-msg" id="setup-msg"></div>
+    <div class="setup-footer">
+      <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.1rem" onclick="Planner.closeSetup()">Dismiss</button>
+      <button class="btn btn-primary" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()">Set the Stage</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings overlay -->
+<div id="settings-overlay" class="gone">
+  <div class="settings-box">
+
+    <div class="settings-hdr">
+      <div>
+        <div class="am-orn" style="text-align:left;font-size:.85rem">✦</div>
+        <div class="am-title" style="font-size:1.4rem;text-align:left">BACKSTAGE</div>
+        <div class="am-sub" style="text-align:left">Settings &amp; Account</div>
+      </div>
+      <button class="settings-close" onclick="Settings.close()">✕</button>
+    </div>
+
+    <div class="msg" id="settings-msg"></div>
+
+    <!-- Main settings view -->
+    <div class="sv active" id="sv-main">
+
+      <div class="set-section" id="ss-profile">
+        <div class="set-section-title">Thy Profile</div>
+        <div class="form-group">
+          <label class="form-label">Display Name</label>
+          <div style="display:flex;gap:.5rem">
+            <input class="form-input" id="s-username" type="text" placeholder="username" autocomplete="off">
+            <button class="btn btn-primary" style="width:auto;padding:.6rem 1rem;white-space:nowrap" onclick="Settings.saveName()">Save</button>
+          </div>
+        </div>
+        <div class="set-row"><span class="set-row-label">Email</span><span class="set-row-hint" id="s-email"></span></div>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">The Stage</div>
+        <div class="set-row" style="align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+          <span class="set-row-label">Theme</span>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <label class="set-pill" id="sp-light"    onclick="Settings.setTheme('light')"><input type="radio" name="st-theme" value="light"> Light</label>
+            <label class="set-pill" id="sp-dark"     onclick="Settings.setTheme('dark')"><input type="radio" name="st-theme" value="dark"> Dark</label>
+            <label class="set-pill locked-pill" id="sp-crimson"  onclick="Settings.setPremiumTheme('crimson')" title="Premium"><input type="radio" name="st-theme" value="crimson"> Crimson</label>
+            <label class="set-pill locked-pill" id="sp-gilded"   onclick="Settings.setPremiumTheme('gilded')"  title="Premium"><input type="radio" name="st-theme" value="gilded"> Gilded</label>
+            <label class="set-pill locked-pill" id="sp-sapphire" onclick="Settings.setPremiumTheme('sapphire')" title="Premium"><input type="radio" name="st-theme" value="sapphire"> Sapphire</label>
+          </div>
+        </div>
+        <div class="set-row" style="margin-top:.6rem;align-items:flex-start;flex-wrap:wrap;gap:.5rem" id="ss-fonts">
+          <span class="set-row-label">Typography <span class="premium-badge">PREMIUM</span></span>
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <label class="set-pill" id="sf-classic"  onclick="Settings.setFont('classic')"><input type="radio" name="sf-font" value="classic"> Classical</label>
+            <label class="set-pill locked-pill" id="sf-modern"  onclick="Settings.setPremiumFont('modern')"><input type="radio" name="sf-font" value="modern"> Modern</label>
+            <label class="set-pill locked-pill" id="sf-romantic" onclick="Settings.setPremiumFont('romantic')"><input type="radio" name="sf-font" value="romantic"> Romantic</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">The Programme</div>
+        <div class="set-row">
+          <span class="set-row-label">Rise at</span>
+          <input type="time" id="s-wake-time" class="form-input" style="width:auto;min-width:130px">
+        </div>
+        <div class="set-row">
+          <span class="set-row-label">Prepare week on</span>
+          <div class="set-pills">
+            <label class="set-pill" id="sp-sun" onclick="Settings.setWeekDay(0)"><input type="radio" name="sw-day" value="0"> Sun</label>
+            <label class="set-pill" id="sp-mon" onclick="Settings.setWeekDay(1)"><input type="radio" name="sw-day" value="1"> Mon</label>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.1rem;margin-top:.3rem" onclick="Settings.saveSchedule()">Save Schedule Settings</button>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">Sounds &amp; Calls</div>
+        <div class="set-row">
+          <span class="set-row-label">Sound effects</span>
+          <label class="toggle"><input type="checkbox" id="s-sound" onchange="Settings.setSoundEnabled(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div class="set-row">
+          <span class="set-row-label">Notifications</span>
+          <label class="toggle"><input type="checkbox" id="s-notif" onchange="Settings.setNotifEnabled(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <div id="s-repeat-row" class="set-row" style="display:none">
+          <span class="set-row-label">Repeat alert</span>
+          <div style="display:flex;align-items:center;gap:.5rem">
+            <input class="dur-num" type="number" id="s-notif-repeat" min="1" max="10" value="1" style="width:52px" onchange="Settings.setRepeat(+this.value)">
+            <span class="set-row-hint">time(s)</span>
+          </div>
+        </div>
+        <div class="notif-note" id="s-notif-note"></div>
+      </div>
+
+      <div class="set-section">
+        <div class="set-section-title">History</div>
+        <p class="set-row-hint" style="margin-bottom:.7rem;font-size:.88rem">A record of thy completed and failed acts, day by day.</p>
+        <button class="btn btn-ghost" style="width:auto" onclick="Settings.showView('history')">View Thy Ledger</button>
+      </div>
+
+      <div class="set-section" id="ss-account">
+        <div class="set-section-title">Thy Account</div>
+        <div style="display:flex;flex-direction:column;gap:.6rem">
+          <button class="btn btn-ghost" style="width:auto" onclick="Settings.showView('password')">Change Password</button>
+          <button class="btn btn-ghost" style="width:auto" onclick="Settings.exportData()">Export My Data</button>
+          <button class="btn-danger" onclick="Settings.showView('delete')">Delete Account</button>
+        </div>
+      </div>
+
+      <div class="set-section" id="ss-guest-note" style="display:none">
+        <div class="set-section-title">Thy Account</div>
+        <p class="set-row-hint" style="line-height:1.65;margin-bottom:.7rem">Thou art a Groundling. Create an account to save thy schedule, history and settings across devices.</p>
+        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" onclick="Settings.close();App.claimSeat()">Claim Thy Seat</button>
+      </div>
+
+      <div class="set-section" id="ss-premium-free">
+        <div class="set-section-title">Premium</div>
+        <p class="set-row-hint" style="line-height:1.65;margin-bottom:.8rem">Unlock Crimson, Gilded &amp; Sapphire themes, custom typography, and a profile avatar. Includes a 7-day free trial.</p>
+        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" onclick="Premium.open()">Start Free Trial</button>
+      </div>
+      <div class="set-section" id="ss-premium-active" style="display:none">
+        <div class="set-section-title">Premium <span class="premium-badge" id="pm-badge">ACTIVE</span></div>
+        <div class="set-row"><span class="set-row-label">Status</span><span class="set-row-hint" id="pm-status-text"></span></div>
+        <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem">
+          <button class="btn btn-ghost" style="width:auto" onclick="Premium.portal()">Manage Subscription</button>
+        </div>
+      </div>
+      <div class="set-section">
+        <div class="set-section-title">Legal</div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-ghost" style="width:auto;font-size:.82rem;padding:.4rem .7rem" onclick="Legal.open('privacy')">Privacy Policy</button>
+          <button class="btn btn-ghost" style="width:auto;font-size:.82rem;padding:.4rem .7rem" onclick="Legal.open('tos')">Terms of Service</button>
+          <button class="btn btn-ghost" style="width:auto;font-size:.82rem;padding:.4rem .7rem" onclick="Legal.open('cookies')">Cookie Notice</button>
+        </div>
+      </div>
+
+    </div><!-- /sv-main -->
+
+    <!-- History view -->
+    <div class="sv" id="sv-history">
+      <button class="sv-back-btn" onclick="Settings.showView('main')">← Back to Settings</button>
+      <div class="am-title" style="font-size:1.2rem;margin-bottom:.4rem">THY LEDGER</div>
+      <div class="am-sub" style="margin-bottom:1.2rem">A chronicle of thy past performances</div>
+      <div id="history-list"></div>
+      <button class="btn btn-ghost" id="history-load-more" onclick="Settings.loadMore()">Load More</button>
+    </div>
+
+    <!-- Change password view -->
+    <div class="sv" id="sv-password">
+      <button class="sv-back-btn" onclick="Settings.showView('main')">← Back to Settings</button>
+      <div class="am-title" style="font-size:1.2rem;margin-bottom:1rem">CHANGE SECRET</div>
+      <div class="msg" id="sp-msg"></div>
+      <div class="form-group"><label class="form-label">Current Secret</label><input class="form-input" type="password" id="sp-current" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="form-group"><label class="form-label">New Secret</label><input class="form-input" type="password" id="sp-new" placeholder="At least 8 characters" autocomplete="new-password"></div>
+      <div class="form-group"><label class="form-label">Confirm New Secret</label><input class="form-input" type="password" id="sp-confirm" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn btn-primary" id="btn-change-pass" onclick="Settings.savePassword()">Change Secret</button>
+    </div>
+
+    <!-- Delete account view -->
+    <div class="sv" id="sv-delete">
+      <button class="sv-back-btn" onclick="Settings.showView('main')">← Back to Settings</button>
+      <div class="am-title" style="font-size:1.2rem;margin-bottom:.5rem">DELETE ACCOUNT</div>
+      <p style="font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.95rem;line-height:1.65;margin-bottom:1.2rem">
+        This action cannot be undone. All thy schedules, history, and notes shall be removed from the stage permanently.
+      </p>
+      <div class="msg" id="sd-msg"></div>
+      <div class="form-group" id="sd-pass-group">
+        <label class="form-label">Confirm with thy Secret</label>
+        <input class="form-input" type="password" id="sd-password" placeholder="••••••••">
+      </div>
+      <button class="btn-danger" id="btn-confirm-delete" onclick="Settings.deleteAccount()" style="width:100%;padding:.78rem">Delete My Account</button>
+    </div>
+
+  </div><!-- /settings-box -->
+</div><!-- /settings-overlay -->
+
+<!-- Upgrade overlay -->
+<div id="upgrade-overlay" class="gone">
+  <div class="upgrade-box">
+    <button class="settings-close" style="position:absolute;top:1rem;right:1rem" onclick="Premium.close()">✕</button>
+    <div class="am-orn">★</div>
+    <div class="am-title" style="font-size:1.4rem">PREMIUM</div>
+    <div class="am-sub">Unlock the full stage experience</div>
+    <div class="upgrade-features">
+      <div class="upgrade-feature">🎭 Three exclusive stage themes: Crimson, Gilded &amp; Sapphire</div>
+      <div class="upgrade-feature">✒️ Alternative typography: Modern &amp; Romantic</div>
+      <div class="upgrade-feature">👤 Custom profile avatar colour</div>
+      <div class="upgrade-feature">⭐ 7-day free trial — no charge until day 8</div>
+    </div>
+    <div class="upgrade-price" id="upgrade-price">Then $4.99 / month</div>
+    <button class="btn btn-primary" id="btn-upgrade" onclick="Premium.checkout()">Start Free Trial</button>
+    <p class="upgrade-small">Cancel anytime via Settings → Manage Subscription</p>
+    <div class="msg" id="upgrade-msg" style="margin-top:.8rem;margin-bottom:0"></div>
+  </div>
+</div>
+
+<!-- Legal overlay -->
+<div id="legal-overlay" class="gone">
+  <div class="legal-box">
+    <div class="legal-title" id="legal-title"></div>
+    <div class="legal-body" id="legal-body"></div>
+    <div class="legal-footer">
+      <button class="btn btn-ghost" style="width:auto;padding:.5rem 1rem" onclick="Legal.close()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  APP MODULE
+// ════════════════════════════════════════════════
+(() => {
+  'use strict';
+  const S = { theme: localStorage.getItem('inflictor_theme'), token: localStorage.getItem('inflictor_token'), user: null, openingTimer: null };
+  if (S.theme) document.body.classList.add(`theme-${S.theme}`);
+  const el = id => document.getElementById(id);
+
+  async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json' };
+    if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
+    try {
+      const r = await fetch(`/api/${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
+      const data = await r.json().catch(() => ({}));
+      return { ok: r.ok, status: r.status, data };
+    } catch { return { ok: false, status: 0, data: { error: 'Could not reach the stage.' } }; }
+  }
+
+  function applyTheme(theme) {
+    document.body.classList.remove('theme-light','theme-dark','theme-crimson','theme-gilded','theme-sapphire');
+    document.body.classList.add(`theme-${theme}`);
+    S.theme = theme;
+  }
+
+  function applyFont(font) {
+    document.body.classList.remove('font-classic','font-modern','font-romantic');
+    if (font && font !== 'classic') document.body.classList.add(`font-${font}`);
+  }
+
+  function setBgImages(theme) {
+    const premiumBase = ['crimson','gilded','sapphire'];
+    if (premiumBase.includes(theme)) {
+      // Background set by CSS filter rules — just ensure base image is present
+      el('stage-bg').style.backgroundImage = "url('dark-stage.png')";
+      el('opening-screen').style.backgroundImage = "url('dark-open.png')";
+    } else {
+      el('stage-bg').style.backgroundImage = `url('${theme}-stage.png')`;
+      el('opening-screen').style.backgroundImage = `url('${theme}-open.png')`;
+    }
+  }
+
+  function avatarColor(username) {
+    const palette = ['#d4af37','#4a8f3a','#3a5f8f','#7a3f8f','#8f3a3a','#2a8f7a','#8f5a1a'];
+    let h = 0; for (const c of (username||'?')) h = (h<<5)-h+c.charCodeAt(0)|0;
+    return palette[Math.abs(h) % palette.length];
+  }
+
+  function msg(type, text) {
+    const m = el('auth-msg'); m.className = 'msg';
+    if (!text) return;
+    m.classList.add(type, 'show'); m.textContent = text;
+  }
+  function clearMsg() { msg('', ''); }
+  function busy(btnId, on, label, busyLabel = 'One moment…') {
+    const b = el(btnId); if (!b) return; b.disabled = on; b.textContent = on ? busyLabel : label;
+  }
+
+  function showThemeSelector() { el('theme-selector').classList.remove('hidden'); }
+  function hideThemeSelector(cb) {
+    const ts = el('theme-selector'); ts.classList.add('fading');
+    setTimeout(() => { ts.classList.add('hidden'); if (cb) cb(); }, 650);
+  }
+  function showOpening() {
+    const os = el('opening-screen'); setBgImages(S.theme);
+    os.style.display = 'block'; void os.offsetWidth;
+    os.classList.add('visible');
+    S.openingTimer = setTimeout(transitionToStage, 3500);
+  }
+  function transitionToStage() {
+    clearTimeout(S.openingTimer);
+    el('opening-screen').classList.remove('visible');
+    el('stage-bg').classList.add('visible');
+    setTimeout(checkAuth, 1300);
+  }
+
+  async function checkAuth() {
+    if (!S.token) { showAuthOverlay(); return; }
+    const { ok, data } = await api('auth/me');
+    if (ok && data.user) { S.user = data.user; await syncTheme(); enterApp(); }
+    else { localStorage.removeItem('inflictor_token'); S.token = null; showAuthOverlay(); }
+  }
+  async function syncTheme() {
+    if (!S.user || S.user.is_guest) return;
+    const { ok, data } = await api('settings');
+    if (ok && data.theme && data.theme !== S.theme) {
+      applyTheme(data.theme); localStorage.setItem('inflictor_theme', data.theme); setBgImages(data.theme);
+    }
+  }
+
+  function showAuthOverlay() {
+    el('opening-screen').style.display = 'none';
+    const o = el('auth-overlay'); o.classList.remove('gone'); void o.offsetWidth; o.classList.add('visible');
+  }
+  function hideAuthOverlay() {
+    const o = el('auth-overlay'); o.classList.remove('visible'); setTimeout(() => o.classList.add('gone'), 550);
+  }
+
+  window.App = {};
+  App.showTab = tab => {
+    ['login','register'].forEach(t => { el(`tab-${t}`).classList.toggle('active', t === tab); el(`form-${t}`).classList.toggle('active', t === tab); });
+    clearMsg();
+  };
+  App.showForm = form => {
+    ['login','register','forgot','reset'].forEach(f => el(`form-${f}`).classList.remove('active'));
+    if (form === 'forgot' || form === 'reset') { el('auth-tabs').style.display = 'none'; el(`form-${form}`).classList.add('active'); }
+    else { el('auth-tabs').style.display = ''; App.showTab(form || 'login'); }
+    clearMsg();
+  };
+  App.selectTheme = theme => { applyTheme(theme); localStorage.setItem('inflictor_theme', theme); hideThemeSelector(() => showOpening()); };
+  App.skipOpening = () => transitionToStage();
+
+  App.doLogin = async e => {
+    e.preventDefault(); clearMsg();
+    const username = el('l-user').value.trim(), password = el('l-pass').value;
+    busy('btn-login', true, 'Enter the Stage');
+    const { ok, data } = await api('auth/login', { method: 'POST', body: { username, password } });
+    busy('btn-login', false, 'Enter the Stage');
+    if (ok) { S.token = data.token; S.user = data.user; localStorage.setItem('inflictor_token', S.token); await syncTheme(); hideAuthOverlay(); enterApp(); }
+    else msg('error', data.error || 'Something hath gone awry.');
+  };
+  App.doRegister = async e => {
+    e.preventDefault(); clearMsg();
+    const username = el('r-user').value.trim(), email = el('r-email').value.trim(), password = el('r-pass').value, confirm = el('r-confirm').value;
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) return msg('error', 'Username must be 3–30 chars: letters, numbers, or underscore.');
+    if (password.length < 8) return msg('error', 'Thy secret must be at least 8 characters.');
+    if (password !== confirm) return msg('error', 'Thy secrets do not match.');
+    busy('btn-register', true, 'Claim Thy Seat');
+    const { ok, data } = await api('auth/register', { method: 'POST', body: { username, password, email: email || undefined } });
+    busy('btn-register', false, 'Claim Thy Seat');
+    if (ok) { S.token = data.token; S.user = data.user; localStorage.setItem('inflictor_token', S.token); await api('settings', { method: 'PUT', body: { theme: S.theme } }); hideAuthOverlay(); enterApp(); }
+    else msg('error', data.error || 'Something hath gone awry.');
+  };
+  App.doGuest = async () => {
+    clearMsg();
+    const { ok, data } = await api('auth/guest', { method: 'POST' });
+    if (ok) { S.token = data.token; S.user = data.user; localStorage.setItem('inflictor_token', S.token); hideAuthOverlay(); enterApp(); }
+    else msg('error', 'The stage is momentarily unavailable.');
+  };
+  App.doForgot = async e => {
+    e.preventDefault(); clearMsg();
+    busy('btn-forgot', true, 'Send the Messenger');
+    const { ok, data } = await api('auth/forgot-password', { method: 'POST', body: { email: el('f-email').value.trim() } });
+    busy('btn-forgot', false, 'Send the Messenger');
+    msg(ok ? 'success' : 'error', data.message || data.error || 'Something hath gone awry.');
+  };
+  App.doReset = async e => {
+    e.preventDefault(); clearMsg();
+    const password = el('rs-pass').value, confirm = el('rs-confirm').value;
+    const token = new URLSearchParams(window.location.search).get('reset');
+    if (password.length < 8) return msg('error', 'Thy secret must be at least 8 characters.');
+    if (password !== confirm) return msg('error', 'Thy secrets do not match.');
+    busy('btn-reset', true, 'Restore My Secret');
+    const { ok, data } = await api('auth/reset-password', { method: 'POST', body: { token, password } });
+    busy('btn-reset', false, 'Restore My Secret');
+    if (ok) { msg('success', data.message || 'Password restored. Please enter the stage.'); window.history.replaceState({}, '', window.location.pathname); setTimeout(() => App.showForm(null), 2800); }
+    else msg('error', data.error || 'Something hath gone awry.');
+  };
+  App.logout = async () => {
+    await api('auth/logout', { method: 'POST' }); S.token = null; S.user = null; localStorage.removeItem('inflictor_token');
+    el('app').classList.remove('visible'); clearMsg(); App.showForm(null); showAuthOverlay();
+  };
+  App.claimSeat = () => { clearMsg(); App.showTab('register'); el('auth-tabs').style.display = ''; showAuthOverlay(); };
+
+  async function enterApp() {
+    const u = S.user;
+    el('ah-username').textContent = u?.username || '';
+    // Avatar
+    const av = el('ah-avatar');
+    if (av) { av.textContent = (u?.username||'?')[0].toUpperCase(); av.style.background = avatarColor(u?.username||''); }
+    el('guest-banner').style.display = u?.is_guest ? 'flex' : 'none';
+    el('app').classList.add('visible');
+    // Sync font + avatar colour from settings
+    const { ok, data } = await api('settings');
+    if (ok && data) {
+      if (data.font_style) applyFont(data.font_style);
+      if (data.avatar_color && av) av.style.background = data.avatar_color;
+    }
+    Planner.init();
+    // Handle ?premium= redirect from Stripe
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('premium') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname);
+      // Refresh user to get updated premium_status
+      const r = await api('auth/me');
+      if (r.ok && r.data.user) { S.user = r.data.user; }
+      setTimeout(() => Settings.open(), 600);
+    } else if (params.get('premium') === 'cancelled') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
+
+  function init() {
+    const reset = new URLSearchParams(window.location.search).get('reset');
+    if (!S.theme) { showThemeSelector(); return; }
+    applyTheme(S.theme); setBgImages(S.theme);
+    if (reset) { el('stage-bg').classList.add('visible'); showAuthOverlay(); App.showForm('reset'); }
+    else showOpening();
+  }
+
+  App.api = api;
+  App.applyTheme = applyTheme;
+  App.applyFont = applyFont;
+  App.avatarColor = avatarColor;
+  App.getUser = () => S.user;
+  App.updateUsername = name => { if (S.user) { S.user.username = name; el('ah-username').textContent = name; const av=el('ah-avatar'); if(av) av.textContent=name[0].toUpperCase(); } };
+  init();
+})();
+
+
+// ════════════════════════════════════════════════
+//  PLANNER MODULE
+// ════════════════════════════════════════════════
+window.Planner = (() => {
+  'use strict';
+  const COLORS    = ['#d4af37','#4a8f3a','#3a5f8f','#7a3f8f','#8f3a3a','#2a8f7a','#8f5a1a','#8f3a6f'];
+  const DAY_NAMES = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const NOTE_DELAY = 1500;
+
+  let weekStart = null, weekData = null, taskStatus = {}, noteTimers = {};
+  let soundEnabled = true, notifEnabled = false, notifRepeat = 1, notifTimers = [];
+  let isPaused = false, pausedSlotKeys = new Set(), pauseOffset = 0;
+
+  const setup = { activities: [], wakeTime: '07:00', days: Array(7).fill(true), editingDate: null };
+  const sndCrowd = new Audio('sounds/crowd.mp3');
+  const sndFail  = new Audio('sounds/uncheck.mp3');
+
+  const uid   = () => Math.random().toString(36).slice(2, 10);
+  const esc   = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const toISO = d => d.toISOString().split('T')[0];
+  const api   = (p, o) => App.api(p, o);
+
+  function getMonday(base = new Date()) {
+    const d = new Date(base), day = d.getDay();
+    d.setDate(d.getDate() + (day === 0 ? -6 : 1 - day)); d.setHours(0,0,0,0); return d;
+  }
+  function getWeekDays() {
+    return Array.from({ length: 7 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; });
+  }
+  function isToday(d) { const t = new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
+  function fmtDur(m) { if (m<60) return `${m}m`; const h=Math.floor(m/60),r=m%60; return r?`${h}h ${r}m`:`${h}h`; }
+  function slotPx(m) { return Math.max(40, m * 1.5); }
+  function playSound(type) { if (!soundEnabled) return; const s = type==='crowd'?sndCrowd:sndFail; s.currentTime=0; s.play().catch(()=>{}); }
+
+  // ── Notifications ──────────────────────────────────────────────
+  function scheduleNotifs() {
+    notifTimers.forEach(clearTimeout); notifTimers = [];
+    if (!notifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+    const today = new Date(), todayStr = toISO(today);
+    const sched = getDaySchedule(todayStr);
+    if (!sched?.activities?.length) return;
+    const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
+    const base = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime();
+    let cursor = base, offsetApplied = false;
+    for (const act of sched.activities) {
+      cursor += act.duration_minutes * 60000;
+      if (act.chime_enabled === false) continue;
+      const key = `${todayStr}:${act.id}`;
+      const status = taskStatus[key];
+      if (!offsetApplied && pauseOffset !== 0 && status !== 'completed' && status !== 'failed') {
+        cursor += pauseOffset * 60000;
+        offsetApplied = true;
+      }
+      const delay = cursor - Date.now();
+      if (delay <= 0) continue;
+      for (let r = 0; r < notifRepeat; r++) {
+        const name = act.name;
+        notifTimers.push(setTimeout(() => {
+          try { new Notification('The Inflictor', { body: `Thy time for "${name}" hath concluded.`, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+        }, delay + r * 60000));
+      }
+    }
+  }
+  function scheduleMidnight() {
+    const now = new Date();
+    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1, 0);
+    setTimeout(() => { loadWeek().then(() => { render(); scheduleNotifs(); scheduleMidnight(); }); }, next.getTime() - now.getTime());
+  }
+
+  // ── Data ───────────────────────────────────────────────────────
+  async function loadWeek() {
+    const { ok, data } = await api(`week?start=${toISO(weekStart)}`);
+    if (ok) {
+      weekData = data; taskStatus = {};
+      for (const l of data.taskLogs || []) taskStatus[`${l.date}:${l.task_id||l.task_name}`] = l.status;
+    } else { weekData = { schedule: null, dailyOverrides: {}, notes: {}, taskLogs: [] }; }
+  }
+  function getDaySchedule(ds) { return weekData?.dailyOverrides?.[ds] ?? weekData?.schedule ?? null; }
+
+  // ── Render ─────────────────────────────────────────────────────
+  function render() {
+    const days = getWeekDays();
+    const s = days[0], e = days[6];
+    document.getElementById('planner-week-label').textContent = `${s.getDate()} – ${e.getDate()} ${e.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
+    document.getElementById('planner-grid').innerHTML = days.map((d,i) => renderCol(d,i)).join('');
+    days.forEach(day => {
+      const ds = toISO(day), ta = document.getElementById(`note-${ds}`);
+      if (!ta) return;
+      ta.value = weekData?.notes?.[ds] || '';
+      ta.addEventListener('input', () => { clearTimeout(noteTimers[ds]); noteTimers[ds] = setTimeout(() => api('note',{method:'PUT',body:{date:ds,content:ta.value}}), NOTE_DELAY); });
+    });
+  }
+
+  function renderCol(day, i) {
+    const ds = toISO(day), today = isToday(day);
+    const mon = day.toLocaleDateString('en-GB',{month:'short'});
+    const hdr = `<div class="col-header${today?' today':''}">
+      <div class="col-day-name">${DAY_NAMES[i]}</div>
+      <div class="col-date">${day.getDate()} ${mon}</div>
+      ${today?'<div class="col-today-dot"></div>':''}
+      <button class="col-edit-btn" onclick="Planner.openSetup('${ds}')" title="Edit day">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      </button></div>`;
+    const acts = getDaySchedule(ds)?.activities || [];
+    const slots = acts.length ? acts.map(act => {
+      const key = `${ds}:${act.id}`, status = taskStatus[key]||'none', px = slotPx(act.duration_minutes);
+      const isPausedSlot = pausedSlotKeys.has(key);
+      const pauseChk = (isPaused && today && status !== 'completed' && status !== 'failed')
+        ? `<label class="slot-pause-chk"><input type="checkbox" ${isPausedSlot?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Slept</label>`
+        : '';
+      return `<div class="slot slot-${status}${isPausedSlot?' slot-paused':''}" style="height:${px}px;--slot-color:${act.color||COLORS[0]}" data-key="${esc(key)}">
+        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div><div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
+        <div class="slot-btns">
+          <button class="slot-check${status==='completed'?' active':''}" onclick="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','completed')" title="Complete">✓</button>
+          <button class="slot-fail${status==='failed'?' active':''}" onclick="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','failed')" title="Failed">✗</button>
+        </div>${pauseChk}</div>`;
+    }).join('') : `<div class="col-empty"><button class="col-empty-btn" onclick="Planner.openSetup('${ds}')">+ Prepare Day</button></div>`;
+    return `<div class="planner-col" data-date="${ds}">${hdr}<div class="col-slots">${slots}</div><div class="col-notes"><textarea id="note-${ds}" class="col-note" placeholder="Stage directions…"></textarea></div></div>`;
+  }
+
+  function setStatus(dateStr, actId, actName, newStatus) {
+    const key = `${dateStr}:${actId}`, current = taskStatus[key];
+    if (current === newStatus) { delete taskStatus[key]; }
+    else { taskStatus[key] = newStatus; playSound(newStatus==='completed'?'crowd':'uncheck'); api('task-log',{method:'POST',body:{date:dateStr,task_id:actId,task_name:actName,status:newStatus}}); }
+    const slot = document.querySelector(`.slot[data-key="${CSS.escape(key)}"]`);
+    if (!slot) return;
+    const s = taskStatus[key]||'none';
+    slot.className = `slot slot-${s}`;
+    slot.querySelector('.slot-check')?.classList.toggle('active', s==='completed');
+    slot.querySelector('.slot-fail')?.classList.toggle('active', s==='failed');
+  }
+
+  // ── Pause / Begin Again ────────────────────────────────────────
+  function togglePause() {
+    isPaused = !isPaused;
+    pausedSlotKeys.clear();
+    document.getElementById('btn-pause')?.classList.toggle('active', isPaused);
+    const bar = document.getElementById('begin-again-bar');
+    if (isPaused) {
+      bar.classList.remove('gone');
+      const now = new Date();
+      document.getElementById('begin-again-time').value =
+        `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    } else {
+      bar.classList.add('gone');
+    }
+    render();
+  }
+
+  function togglePauseSlot(key, checked) {
+    if (checked) pausedSlotKeys.add(key);
+    else pausedSlotKeys.delete(key);
+    const slot = document.querySelector(`.slot[data-key="${CSS.escape(key)}"]`);
+    if (slot) slot.classList.toggle('slot-paused', checked);
+  }
+
+  function beginAgain() {
+    const timeInput = document.getElementById('begin-again-time');
+    if (!timeInput.value) return;
+    const [hours, mins] = timeInput.value.split(':').map(Number);
+    const today = new Date(), todayStr = toISO(today);
+    const beginAgainMs = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, mins, 0, 0).getTime();
+    const sched = getDaySchedule(todayStr);
+    let firstUnpausedMs = null;
+    if (sched?.activities?.length) {
+      const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
+      let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime();
+      for (const act of sched.activities) {
+        const key = `${todayStr}:${act.id}`, status = taskStatus[key];
+        if (status === 'completed' || status === 'failed' || pausedSlotKeys.has(key)) {
+          cursor += act.duration_minutes * 60000;
+          continue;
+        }
+        firstUnpausedMs = cursor;
+        break;
+      }
+    }
+    if (firstUnpausedMs !== null) {
+      pauseOffset = Math.round((beginAgainMs - firstUnpausedMs) / 60000);
+      localStorage.setItem('inflictor_pause_offset_' + todayStr, String(pauseOffset));
+    }
+    playSound('crowd');
+    isPaused = false;
+    pausedSlotKeys.clear();
+    document.getElementById('begin-again-bar')?.classList.add('gone');
+    document.getElementById('btn-pause')?.classList.remove('active');
+    scheduleNotifs();
+    render();
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('sound-btn')?.classList.toggle('muted', !soundEnabled);
+    api('settings',{method:'PUT',body:{sound_enabled:soundEnabled?1:0}});
+  }
+  function setSoundEnabled(v) { soundEnabled = v; document.getElementById('sound-btn')?.classList.toggle('muted', !v); }
+  function setNotifEnabled(v) { notifEnabled = v; scheduleNotifs(); }
+  function setNotifRepeat(n) { notifRepeat = Math.max(1,Math.min(10,n)); scheduleNotifs(); }
+
+  // ── Setup modal ────────────────────────────────────────────────
+  function captureDOM() {
+    setup.activities.forEach(act => {
+      const row = document.querySelector(`#setup-acts-list .act-row[data-id="${act.id}"]`);
+      if (!row) return;
+      act.name  = row.querySelector('.act-name-input')?.value ?? act.name;
+      const ns  = row.querySelectorAll('.dur-num');
+      act.hours = +ns[0]?.value || act.hours;
+      act.mins  = +ns[1]?.value || act.mins;
+    });
+  }
+
+  function openSetup(date = null) {
+    setup.editingDate = date;
+    const existing = date ? getDaySchedule(date) : weekData?.schedule;
+    setup.wakeTime  = existing?.wake_time || '07:00';
+    setup.activities = (existing?.activities||[]).map(a => ({ id: uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: a.chime_enabled !== false }));
+    if (!setup.activities.length) addAct();
+    if (date) {
+      const name = new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase();
+      document.getElementById('setup-title').textContent = `EDIT ${name}`;
+      setup.days = Array(7).fill(false);
+      const idx = getWeekDays().findIndex(d => toISO(d) === date);
+      if (idx >= 0) setup.days[idx] = true;
+    } else { document.getElementById('setup-title').textContent = 'PREPARE THE STAGE'; setup.days = Array(7).fill(true); }
+    document.getElementById('setup-msg').classList.remove('show');
+    renderSetup();
+    const ov = document.getElementById('week-setup-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+  }
+  function closeSetup() { const ov = document.getElementById('week-setup-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 450); }
+
+  function renderSetup() {
+    document.getElementById('setup-wake-time').value = setup.wakeTime;
+    renderActs(); renderDays();
+    document.getElementById('setup-days-section').style.display = setup.editingDate ? 'none' : '';
+  }
+  function renderActs() {
+    const list = document.getElementById('setup-acts-list');
+    if (!setup.activities.length) { list.innerHTML = '<div class="setup-empty-acts">The programme is bare — add an act below.</div>'; return; }
+    list.innerHTML = setup.activities.map((act, i) => `
+      <div class="act-row" data-id="${act.id}">
+        <div class="act-row-top">
+          <input class="form-input act-name-input" type="text" placeholder="Act name…" value="${esc(act.name)}">
+          <div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>
+        </div>
+        <div class="act-row-foot">
+          <div class="act-colors">${COLORS.map(c=>`<button class="color-dot${c===act.color?' sel':''}" style="background:${c}" onclick="Planner.setColor('${act.id}','${c}')"></button>`).join('')}</div>
+          <div class="act-controls">
+            <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
+              title="${act.chime_enabled!==false?'Chime at end — click to silence':'No chime — click to enable'}">🔔</button>
+            <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',-1)" ${i===0?'disabled':''}>↑</button>
+            <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
+            <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  function renderDays() {
+    const days = getWeekDays();
+    document.getElementById('setup-day-checks').innerHTML = DAY_NAMES.map((n,i) => `
+      <label class="day-pill${setup.days[i]?' on':''}">
+        <input type="checkbox" style="display:none" ${setup.days[i]?'checked':''} onchange="Planner.toggleDay(${i},this.checked)">
+        <span class="day-pill-num">${days[i].getDate()}</span><span class="day-pill-name">${n}</span>
+      </label>`).join('');
+  }
+
+  function addAct()   { setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true}); renderActs(); }
+
+  function toggleChime(id) {
+    captureDOM();
+    const a = setup.activities.find(a => a.id === id);
+    if (a) a.chime_enabled = !(a.chime_enabled !== false);
+    renderActs();
+  }
+  function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
+  function setColor(id,c) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.color=c; renderActs(); }
+  function moveAct(id,dir) {
+    captureDOM(); const idx=setup.activities.findIndex(a=>a.id===id), swap=idx+dir;
+    if(idx<0||swap<0||swap>=setup.activities.length) return;
+    [setup.activities[idx],setup.activities[swap]]=[setup.activities[swap],setup.activities[idx]]; renderActs();
+  }
+  function toggleDay(i,v) { setup.days[i]=v; renderDays(); }
+  function selectAllDays(v) { setup.days=Array(7).fill(v); renderDays(); }
+  function selectWeekdays() { setup.days=[true,true,true,true,true,false,false]; renderDays(); }
+
+  async function saveSetup() {
+    captureDOM();
+    const activities = setup.activities.filter(a=>a.name.trim()).map(a=>({id:a.id,name:a.name.trim(),duration_minutes:Math.max(15,a.hours*60+a.mins),color:a.color,chime_enabled:a.chime_enabled!==false}));
+    if (!activities.length) { const m=document.getElementById('setup-msg'); m.textContent='Add at least one act.'; m.classList.add('show'); return; }
+    const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
+    const sched = {wake_time:wakeTime,activities}, empty = {wake_time:wakeTime,activities:[]};
+    if (setup.editingDate) {
+      await api('day-override',{method:'PUT',body:{date:setup.editingDate,schedule_data:JSON.stringify(sched)}});
+      if (!weekData.dailyOverrides) weekData.dailyOverrides={};
+      weekData.dailyOverrides[setup.editingDate]=sched;
+    } else {
+      const start=toISO(weekStart), days=getWeekDays();
+      if (!weekData.dailyOverrides) weekData.dailyOverrides={};
+      await Promise.all([
+        api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}),
+        ...days.map((d,i) => { const ds=toISO(d),data=setup.days[i]?sched:empty; weekData.dailyOverrides[ds]=data; return api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}); }),
+      ]);
+      weekData.schedule=sched;
+    }
+    closeSetup(); render(); scheduleNotifs();
+  }
+
+  async function init() {
+    weekStart = getMonday();
+    const todayKey = toISO(new Date());
+    pauseOffset = parseInt(localStorage.getItem('inflictor_pause_offset_' + todayKey) || '0');
+    const {ok,data} = await api('settings');
+    if (ok && data) {
+      soundEnabled     = data.sound_enabled !== 0;
+      notifEnabled     = data.notification_enabled === 1;
+      notifRepeat      = data.notification_repeat || 1;
+    }
+    document.getElementById('sound-btn')?.classList.toggle('muted', !soundEnabled);
+    await loadWeek(); render(); scheduleNotifs(); scheduleMidnight();
+  }
+
+  return {
+    init, render,
+    openSetup, closeSetup,
+    addActivity: addAct, removeAct, setColor, moveAct,
+    toggleDay, selectAllDays, selectWeekdays,
+    saveSetup, setStatus, toggleChime,
+    toggleSound, setSoundEnabled, setNotifEnabled, setNotifRepeat,
+    rescheduleNotifs: scheduleNotifs,
+    togglePause, togglePauseSlot, beginAgain,
+    prevWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()-7); loadWeek().then(render); },
+    nextWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+7); loadWeek().then(render); },
+  };
+})();
+
+
+// ════════════════════════════════════════════════
+//  SETTINGS MODULE
+// ════════════════════════════════════════════════
+window.Settings = (() => {
+  'use strict';
+  const api  = (p, o) => App.api(p, o);
+  const el   = id => document.getElementById(id);
+  const esc  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let historyOffset = 0;
+
+  function showView(view) {
+    ['main','history','password','delete'].forEach(v => {
+      const e = el(`sv-${v}`); if (e) { e.classList.remove('active'); e.style.display = v===view?'':'none'; }
+    });
+    const active = el(`sv-${view}`); if (active) { active.style.display=''; active.classList.add('active'); }
+    if (view === 'history') { historyOffset = 0; loadHistory(); }
+    if (view === 'password') { el('sp-msg')?.classList.remove('show'); ['sp-current','sp-new','sp-confirm'].forEach(id=>{const e=el(id);if(e)e.value='';}); }
+    if (view === 'delete') { el('sd-msg')?.classList.remove('show'); const e=el('sd-password');if(e)e.value=''; }
+  }
+
+  async function open() {
+    const user = App.getUser();
+    if (!user) return;
+    const isGuest = user.is_guest;
+    el('ss-profile').style.display = isGuest ? 'none' : '';
+    el('ss-account').style.display = isGuest ? 'none' : '';
+    el('ss-guest-note').style.display = isGuest ? '' : 'none';
+    if (!isGuest) { el('s-username').value = user.username; el('s-email').textContent = user.email || 'No email on record'; }
+    el('settings-msg')?.classList.remove('show');
+
+    const {ok,data} = await api('settings');
+    if (ok && data) {
+      const theme = data.theme || 'light';
+      const isPremium = Premium.isPremium();
+      ['light','dark','crimson','gilded','sapphire'].forEach(t => {
+        const pill = el(`sp-${t}`);
+        if (!pill) return;
+        pill.classList.toggle('active', theme === t);
+        pill.classList.toggle('locked-pill', ['crimson','gilded','sapphire'].includes(t) && !isPremium);
+      });
+      if (el('s-wake-time')) el('s-wake-time').value = data.wake_time || '07:00';
+      ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', (data.week_start_day||0)===i));
+      if (el('s-sound')) el('s-sound').checked = data.sound_enabled !== 0;
+      const notifOn = data.notification_enabled === 1;
+      if (el('s-notif')) el('s-notif').checked = notifOn;
+      if (el('s-notif-repeat')) el('s-notif-repeat').value = data.notification_repeat || 1;
+      if (el('s-repeat-row')) el('s-repeat-row').style.display = notifOn ? '' : 'none';
+      updateNotifNote();
+      // Font pills
+      const font = data.font_style || 'classic';
+      ['classic','modern','romantic'].forEach(f => {
+        const pill = el(`sf-${f}`);
+        if (!pill) return;
+        pill.classList.toggle('active', font === f);
+        pill.classList.toggle('locked-pill', ['modern','romantic'].includes(f) && !isPremium);
+      });
+      // Premium section visibility
+      const pStatus = App.getUser()?.premium_status;
+      const hasPremium = isPremium || pStatus === 'past_due';
+      el('ss-premium-free').style.display   = hasPremium ? 'none' : '';
+      el('ss-premium-active').style.display = hasPremium ? '' : 'none';
+      if (hasPremium) {
+        const badge = el('pm-badge');
+        const txt   = el('pm-status-text');
+        if (badge) badge.textContent = pStatus === 'trial' ? 'TRIAL' : pStatus === 'past_due' ? 'PAST DUE' : 'ACTIVE';
+        if (txt)   txt.textContent   = pStatus === 'trial' ? '7-day free trial active' : pStatus === 'past_due' ? 'Payment issue — update card to continue' : 'Premium active';
+      }
+    }
+    showView('main');
+    const ov = el('settings-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+  }
+
+  function close() {
+    const ov = el('settings-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 450);
+  }
+
+  function flashMsg(text, type) {
+    const m = el('settings-msg'); if (!m) return;
+    m.className = `msg ${type} show`; m.textContent = text;
+    setTimeout(() => m.classList.remove('show'), 3200);
+  }
+
+  // ── Profile ──────────────────────────────────────────────────────
+  async function saveName() {
+    const name = el('s-username')?.value.trim();
+    if (!name || !/^[a-zA-Z0-9_]{3,30}$/.test(name)) return flashMsg('Username must be 3–30 chars: letters, numbers, underscore.','error');
+    const {ok,data} = await api('account',{method:'PUT',body:{new_username:name}});
+    if (ok) { App.updateUsername(name); flashMsg('Name hath been updated.','success'); }
+    else flashMsg(data.error||'Something went awry.','error');
+  }
+
+  // ── Stage (theme) ─────────────────────────────────────────────────
+  function setTheme(t) {
+    App.applyTheme(t); localStorage.setItem('inflictor_theme', t);
+    document.getElementById('stage-bg').style.backgroundImage = `url('${t}-stage.png')`;
+    ['light','dark'].forEach(n => el(`sp-${n}`)?.classList.toggle('active', n===t));
+    api('settings',{method:'PUT',body:{theme:t}});
+  }
+
+  // ── Programme ────────────────────────────────────────────────────
+  function setWeekDay(v) {
+    ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', i===v));
+  }
+  async function saveSchedule() {
+    const wakeTime = el('s-wake-time')?.value || '07:00';
+    const weekDay  = document.querySelector('[name="sw-day"]:checked')?.value ?? el('sp-mon')?.classList.contains('active') ? '1' : '0';
+    await api('settings',{method:'PUT',body:{wake_time:wakeTime, week_start_day:parseInt(weekDay)}});
+    Planner.rescheduleNotifs();
+    flashMsg('Schedule settings saved.','success');
+  }
+
+  // ── Sounds & Notifications ────────────────────────────────────────
+  function setSoundEnabled(v) { Planner.setSoundEnabled(v); api('settings',{method:'PUT',body:{sound_enabled:v?1:0}}); }
+
+  async function setNotifEnabled(v) {
+    const note = el('s-notif-note'), repeatRow = el('s-repeat-row');
+    if (note) note.classList.remove('show');
+    if (repeatRow) repeatRow.style.display = v ? '' : 'none';
+    if (v) {
+      if (!('Notification' in window)) {
+        if (el('s-notif')) el('s-notif').checked = false;
+        if (note) { note.textContent = 'Thy browser doth not support notifications.'; note.classList.add('show'); } return;
+      }
+      if (Notification.permission === 'denied') {
+        if (el('s-notif')) el('s-notif').checked = false;
+        if (note) { note.textContent = 'Notification permission is denied. Enable it in thy browser settings.'; note.classList.add('show'); } return;
+      }
+      if (Notification.permission !== 'granted') {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') {
+          if (el('s-notif')) el('s-notif').checked = false;
+          if (note) { note.textContent = 'Permission was not granted. Notifications remain silent.'; note.classList.add('show'); } return;
+        }
+      }
+    }
+    Planner.setNotifEnabled(v);
+    api('settings',{method:'PUT',body:{notification_enabled:v?1:0}});
+  }
+
+  function setRepeat(n) { n = Math.max(1,Math.min(10,n)); Planner.setNotifRepeat(n); api('settings',{method:'PUT',body:{notification_repeat:n}}); }
+
+  function updateNotifNote() {
+    const note = el('s-notif-note'); if (!note) return;
+    if (!('Notification' in window)) { note.textContent = 'Thy browser doth not support notifications.'; note.classList.add('show'); }
+    else if (Notification.permission === 'denied') { note.textContent = 'Notification permission is denied — enable it in thy browser settings.'; note.classList.add('show'); }
+    else note.classList.remove('show');
+  }
+
+  // ── History ───────────────────────────────────────────────────────
+  async function loadHistory() {
+    const list = el('history-list'); if (!list) return;
+    if (historyOffset === 0) list.innerHTML = '<div class="hist-empty">Loading the ledger…</div>';
+    const {ok,data} = await api(`history?limit=20&offset=${historyOffset}`);
+    if (!ok) { list.innerHTML = '<div class="hist-empty">The ledger could not be retrieved.</div>'; return; }
+    if (!data.days?.length && historyOffset === 0) { list.innerHTML = '<div class="hist-empty">No past performances have been recorded yet.</div>'; el('history-load-more').style.display='none'; return; }
+    const html = data.days.map(day => {
+      const d = new Date(day.date+'T12:00:00');
+      const dateStr = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+      const logs = (day.logs||[]).map(l => `<div class="hist-task hist-task-${l.status}"><span>${l.status==='completed'?'✓':'✗'}</span><span>${esc(l.task_name)}</span></div>`).join('');
+      const note = day.note ? `<div class="hist-note">${esc(day.note.substring(0,120))}${day.note.length>120?'…':''}</div>` : '';
+      return `<div class="hist-day" onclick="this.classList.toggle('open')">
+        <div class="hist-day-hdr"><div><div class="hist-date">${dateStr}</div><div class="hist-stats">${day.tasks_completed} completed · ${day.tasks_failed} failed</div></div><div class="hist-chevron">›</div></div>
+        <div class="hist-body">${logs}${note}</div></div>`;
+    }).join('');
+    if (historyOffset === 0) list.innerHTML = html; else list.insertAdjacentHTML('beforeend', html);
+    el('history-load-more').style.display = data.has_more ? '' : 'none';
+  }
+  function loadMore() { historyOffset += 20; loadHistory(); }
+
+  // ── Export ────────────────────────────────────────────────────────
+  async function exportData() {
+    const {ok,data} = await api('export');
+    if (!ok) { flashMsg('Export failed. Please try again.','error'); return; }
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url  = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = `inflictor-data-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    flashMsg('Thy data hath been exported.','success');
+  }
+
+  // ── Change password ───────────────────────────────────────────────
+  async function savePassword() {
+    const current = el('sp-current')?.value, nw = el('sp-new')?.value, confirm = el('sp-confirm')?.value;
+    const spMsg = el('sp-msg'); if (spMsg) { spMsg.className='msg'; }
+    if (!nw || nw.length < 8) { if(spMsg){spMsg.className='msg error show';spMsg.textContent='New secret must be at least 8 characters.';} return; }
+    if (nw !== confirm)       { if(spMsg){spMsg.className='msg error show';spMsg.textContent='Secrets do not match.';} return; }
+    const btn = el('btn-change-pass'); if(btn){btn.disabled=true;btn.textContent='One moment…';}
+    const {ok,data} = await api('account',{method:'PUT',body:{current_password:current,new_password:nw}});
+    if(btn){btn.disabled=false;btn.textContent='Change Secret';}
+    if (ok) { if(spMsg){spMsg.className='msg success show';spMsg.textContent='Password hath been changed.';} setTimeout(()=>showView('main'),2000); }
+    else if(spMsg){spMsg.className='msg error show';spMsg.textContent=data.error||'Something went awry.';}
+  }
+
+  // ── Delete account ────────────────────────────────────────────────
+  async function deleteAccount() {
+    const password = el('sd-password')?.value;
+    const sdMsg = el('sd-msg'); if(sdMsg) sdMsg.className='msg';
+    const btn = el('btn-confirm-delete'); if(btn){btn.disabled=true;btn.textContent='Removing…';}
+    const {ok,data} = await api('account',{method:'DELETE',body:{password}});
+    if(btn){btn.disabled=false;btn.textContent='Delete My Account';}
+    if (ok) { localStorage.removeItem('inflictor_token'); window.location.reload(); }
+    else if(sdMsg){sdMsg.className='msg error show';sdMsg.textContent=data.error||'Something went awry.';}
+  }
+
+  // ── Stage / font setters ──────────────────────────────────────────
+  function setTheme(t) {
+    App.applyTheme(t); localStorage.setItem('inflictor_theme', t);
+    document.getElementById('stage-bg').style.backgroundImage = ['crimson','gilded','sapphire'].includes(t) ? "url('dark-stage.png')" : `url('${t}-stage.png')`;
+    ['light','dark','crimson','gilded','sapphire'].forEach(n => el(`sp-${n}`)?.classList.toggle('active', n===t));
+    api('settings',{method:'PUT',body:{theme:t}});
+  }
+
+  function setPremiumTheme(t) {
+    if (!Premium.isPremium()) { Premium.open(); return; }
+    setTheme(t);
+  }
+
+  function setFont(f) {
+    App.applyFont(f);
+    ['classic','modern','romantic'].forEach(n => el(`sf-${n}`)?.classList.toggle('active', n===f));
+    api('settings',{method:'PUT',body:{font_style:f}});
+  }
+
+  function setPremiumFont(f) {
+    if (!Premium.isPremium()) { Premium.open(); return; }
+    setFont(f);
+  }
+
+  return {
+    open, close, showView, loadMore,
+    saveName, setTheme, setPremiumTheme, setFont, setPremiumFont,
+    setWeekDay, saveSchedule,
+    setSoundEnabled, setNotifEnabled, setRepeat,
+    exportData, savePassword, deleteAccount,
+  };
+})();
+
+
+// ════════════════════════════════════════════════
+//  PREMIUM MODULE
+// ════════════════════════════════════════════════
+window.Premium = (() => {
+  'use strict';
+  const api = (p,o) => App.api(p,o);
+  const el  = id => document.getElementById(id);
+
+  function isPremium() {
+    const u = App.getUser();
+    if (!u) return false;
+    return u.premium_status === 'premium' || u.premium_status === 'trial';
+  }
+
+  function open() {
+    const ov = el('upgrade-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+  }
+  function close() {
+    const ov = el('upgrade-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 400);
+  }
+
+  async function checkout() {
+    const btn = el('btn-upgrade'), m = el('upgrade-msg');
+    if (btn) { btn.disabled=true; btn.textContent='Preparing…'; }
+    if (m)   { m.className='msg'; }
+    const {ok,data} = await api('stripe/create-checkout',{method:'POST'});
+    if (btn) { btn.disabled=false; btn.textContent='Start Free Trial'; }
+    if (ok && data.url) { window.location.href = data.url; }
+    else if (m) { m.className='msg error show'; m.textContent = data.error || 'Could not connect to Stripe. Please try again.'; }
+  }
+
+  async function portal() {
+    const {ok,data} = await api('stripe/portal',{method:'POST'});
+    if (ok && data.url) window.location.href = data.url;
+    else Settings.close(); // fallback
+  }
+
+  return { open, close, checkout, portal, isPremium };
+})();
+
+
+// ════════════════════════════════════════════════
+//  LEGAL MODULE
+// ════════════════════════════════════════════════
+window.Legal = (() => {
+  'use strict';
+  const el = id => document.getElementById(id);
+
+  const CONTENT = {
+    privacy: {
+      title: 'PRIVACY POLICY',
+      body: `
+        <p>Last updated: May 2026. This policy explains how The Inflictor collects, uses, and protects your personal information in compliance with GDPR and PIPEDA.</p>
+        <h3>What we collect</h3>
+        <p>When you register: your username and optionally your email address. When you use the app: your weekly schedule, daily activity completions/failures, and daily notes. These are stored in Cloudflare D1 servers in the United States.</p>
+        <h3>How we use it</h3>
+        <p>Solely to provide the service — displaying your planner, history, and enabling account recovery. We do not sell your data, share it with third parties, or use it for advertising. Premium payments are processed by Stripe; we store only your Stripe customer ID.</p>
+        <h3>Your rights (GDPR / PIPEDA)</h3>
+        <p>You have the right to access, correct, or delete your data at any time. Use Settings → Export My Data to download everything, or Settings → Delete Account to permanently erase your account and all associated data. For requests or questions, contact us at the email below.</p>
+        <h3>Data retention</h3>
+        <p>We retain your data for as long as your account is active. Guest sessions expire after 24 hours. You may delete your account at any time.</p>
+        <h3>Cookies</h3>
+        <p>We do not use tracking cookies. Your session token is stored in the browser's localStorage.</p>
+        <h3>Contact</h3>
+        <p>For privacy enquiries: privacy@inflictor.app</p>
+      `
+    },
+    tos: {
+      title: 'TERMS OF SERVICE',
+      body: `
+        <p>Last updated: May 2026. By using The Inflictor you agree to these terms.</p>
+        <h3>Use of the service</h3>
+        <p>The Inflictor is a personal productivity tool. You may use it only for lawful purposes. You may not attempt to circumvent security, access other users' data, or use the service to store unlawful content.</p>
+        <h3>Accounts</h3>
+        <p>You are responsible for maintaining the confidentiality of your password. Guest accounts expire after 24 hours. You must be at least 13 years of age to use this service.</p>
+        <h3>Premium subscriptions</h3>
+        <p>Premium plans are billed monthly via Stripe. A 7-day free trial is available to new subscribers; no charge is made until the trial period ends. You may cancel at any time via Settings → Manage Subscription. If you cancel, premium features remain available until the end of your current billing period. If a payment fails, premium features will be suspended after a brief grace period.</p>
+        <h3>Termination</h3>
+        <p>We reserve the right to terminate accounts that violate these terms. You may delete your account at any time from Settings.</p>
+        <h3>Disclaimer</h3>
+        <p>The Inflictor is provided "as is" without warranties of any kind. We are not liable for any loss of data or indirect damages arising from use of the service.</p>
+        <h3>Changes to these terms</h3>
+        <p>We may update these terms. Continued use after changes constitutes acceptance. Material changes will be communicated via the app.</p>
+      `
+    },
+    cookies: {
+      title: 'COOKIE &amp; DATA NOTICE',
+      body: `
+        <p>The Inflictor does not use tracking cookies, advertising cookies, or third-party analytics cookies.</p>
+        <h3>What we store in your browser</h3>
+        <p><strong>localStorage:</strong> your session token (to keep you logged in) and your chosen theme. These are stored on your device and are never sent to third parties.</p>
+        <h3>Third-party services</h3>
+        <p>Stripe may set cookies during the payment checkout flow. Stripe's privacy policy governs that data. Google Fonts is used for typography — Google may log your IP address when loading fonts.</p>
+        <h3>Your choices</h3>
+        <p>You can clear all stored data by logging out (which removes the session token) or by clearing your browser's localStorage. Deleting your account removes all server-side data.</p>
+      `
+    }
+  };
+
+  function open(page) {
+    const c = CONTENT[page]; if (!c) return;
+    const title = el('legal-title'), body = el('legal-body');
+    if (title) title.innerHTML = c.title;
+    if (body)  body.innerHTML  = c.body;
+    const ov = el('legal-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+  }
+  function close() {
+    const ov = el('legal-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 350);
+  }
+
+  return { open, close };
+})();
+</script>
+</body>
+</html>

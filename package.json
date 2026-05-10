@@ -1,0 +1,15 @@
+{
+  "name": "inflictor",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev":           "wrangler pages dev . --d1=DB",
+    "deploy":        "wrangler pages deploy .",
+    "db:create":     "wrangler d1 create inflictor-db",
+    "db:init":       "wrangler d1 execute inflictor-db --file=schema.sql",
+    "db:init:local": "wrangler d1 execute inflictor-db --local --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.78.0"
+  }
+}
