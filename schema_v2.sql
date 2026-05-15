@@ -1,6 +1,7 @@
 -- The Inflictor — Stage 4 migration
--- Run with: wrangler d1 execute inflictor-db --file=schema_v2.sql
--- (append --local for dev)
-
-ALTER TABLE settings ADD COLUMN avatar_color TEXT DEFAULT '#d4af37';
-ALTER TABLE settings ADD COLUMN font_style   TEXT DEFAULT 'classic';
+-- NOTE: avatar_color and font_style are now included directly in schema.sql.
+-- This file is intentionally empty to prevent duplicate-column errors on
+-- databases that were initialised with the updated schema.sql.
+-- For databases created before the schema.sql update, run:
+--   wrangler d1 execute inflictor-db --remote --command="ALTER TABLE settings ADD COLUMN avatar_color TEXT DEFAULT '#d4af37'"
+--   wrangler d1 execute inflictor-db --remote --command="ALTER TABLE settings ADD COLUMN font_style TEXT DEFAULT 'classic'"

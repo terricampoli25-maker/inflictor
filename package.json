@@ -6,8 +6,10 @@
     "dev":           "wrangler pages dev . --d1=DB",
     "deploy":        "wrangler pages deploy .",
     "db:create":     "wrangler d1 create inflictor-db",
-    "db:init":       "wrangler d1 execute inflictor-db --file=schema.sql",
-    "db:init:local": "wrangler d1 execute inflictor-db --local --file=schema.sql"
+    "db:init":       "wrangler d1 execute inflictor-db --remote --file=schema.sql",
+    "db:migrate":    "wrangler d1 execute inflictor-db --remote --file=schema_v2.sql",
+    "db:init:local": "wrangler d1 execute inflictor-db --local --file=schema.sql",
+    "db:migrate:local": "wrangler d1 execute inflictor-db --local --file=schema_v2.sql"
   },
   "devDependencies": {
     "wrangler": "^3.78.0"

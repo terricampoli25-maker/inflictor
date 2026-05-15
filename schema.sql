@@ -40,6 +40,8 @@ CREATE TABLE IF NOT EXISTS settings (
   notification_enabled INTEGER NOT NULL DEFAULT 0,
   notification_repeat  INTEGER NOT NULL DEFAULT 1,
   week_start_day       INTEGER NOT NULL DEFAULT 0,   -- 0=Sunday 1=Monday
+  avatar_color         TEXT             DEFAULT '#d4af37',
+  font_style           TEXT             DEFAULT 'classic',
   updated_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

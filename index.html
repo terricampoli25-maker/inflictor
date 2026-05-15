@@ -13,12 +13,12 @@
     :root { --font-display:'Cinzel','Palatino Linotype',serif; --font-body:'Crimson Text',Georgia,serif; }
 
     .theme-light {
-      --surface:rgba(255,248,228,.93); --text:#1e0c00; --text-muted:#7a4a20;
+      --surface:rgba(255,248,228,.99); --text:#000000; --text-muted:#222222;
       --accent:#8b5a00; --accent-hi:#c07a10; --border:#c0943a;
-      --input-bg:rgba(255,252,240,.98); --btn-bg:#7a4a00; --btn-hover:#a06a10; --btn-text:#fff5e0;
-      --ghost-border:#c0943a; --ghost-text:#7a4a20; --error-col:#8b0000; --success-col:#1a5c1a;
+      --input-bg:rgba(255,252,240,1); --btn-bg:#7a4a00; --btn-hover:#a06a10; --btn-text:#fff5e0;
+      --ghost-border:#c0943a; --ghost-text:#222222; --error-col:#8b0000; --success-col:#1a5c1a;
       --shadow:rgba(80,40,0,.45); --header-bg:rgba(20,8,0,.62); --header-text:#f0d898;
-      --slot-bg:rgba(250,237,210,.62); --slot-border:rgba(190,145,70,.38); --col-head-bg:rgba(242,218,170,.90);
+      --slot-bg:rgba(250,237,210,.97); --slot-border:rgba(190,145,70,.6); --col-head-bg:rgba(242,218,170,.99);
     }
     .theme-dark {
       --surface:rgba(12,7,30,.94); --text:#e5d09a; --text-muted:#907850;
@@ -177,12 +177,14 @@
     .btn-pause{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:none;color:var(--text-muted);border:1px solid var(--border);padding:.38rem .9rem;cursor:pointer;transition:all .2s;white-space:nowrap}
     .btn-pause:hover{border-color:var(--accent);color:var(--accent)}
     .btn-pause.active{background:rgba(200,140,0,.18);border-color:#c89000;color:#c89000}
-    #begin-again-bar{display:flex;align-items:center;gap:.7rem;padding:.45rem .8rem;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(200,140,0,.25);flex-shrink:0}
+    #begin-again-bar{display:flex;align-items:center;gap:.7rem;padding:.45rem .8rem;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(200,140,0,.25);flex-shrink:0;flex-wrap:wrap}
     .ba-label{font-family:var(--font-display);font-size:.7rem;letter-spacing:.08em;color:var(--text-muted);white-space:nowrap}
     .ba-time-input{font-family:var(--font-body);font-size:.8rem;background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:.28rem .5rem;cursor:pointer}
     .ba-time-input:focus{outline:none;border-color:var(--accent)}
     .btn-begin-again{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:rgba(40,130,40,.7);color:#d0ffd0;border:none;padding:.38rem .9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
     .btn-begin-again:hover{background:rgba(40,160,40,.85)}
+    .ba-cancel{background:none;border:1px solid var(--border);color:var(--text-muted);padding:.28rem .5rem;cursor:pointer;font-size:.8rem;line-height:1;transition:border-color .2s,color .2s;margin-left:auto}
+    .ba-cancel:hover{border-color:var(--error-col);color:var(--error-col)}
     .slot-pause-chk{display:flex;align-items:center;gap:.3rem;font-family:var(--font-body);font-size:.68rem;font-style:italic;color:var(--text-muted);margin-top:3px;cursor:pointer;user-select:none}
     .slot-pause-chk input{cursor:pointer;accent-color:#c89000;width:12px;height:12px}
     .slot.slot-paused{opacity:.5;}
@@ -193,10 +195,10 @@
     .planner-col{display:flex;flex-direction:column;gap:3px}
     .col-header{position:sticky;top:0;z-index:5;background:var(--col-head-bg);backdrop-filter:blur(12px);border:1px solid var(--border);padding:.45rem .4rem .35rem;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.1rem}
     .col-header.today{border-color:var(--accent)}
-    .col-day-name{font-family:var(--font-display);font-size:.65rem;letter-spacing:.15em;color:#000}
-    .col-header.today .col-day-name{color:#000}
-    .col-date{font-family:var(--font-display);font-size:.95rem;font-weight:600;color:#000;line-height:1.1}
-    .col-header.today .col-date{color:#000}
+    .col-day-name{font-family:var(--font-display);font-size:.65rem;letter-spacing:.15em;color:var(--text)}
+    .col-header.today .col-day-name{color:var(--accent)}
+    .col-date{font-family:var(--font-display);font-size:.95rem;font-weight:600;color:var(--text);line-height:1.1}
+    .col-header.today .col-date{color:var(--accent)}
     .col-today-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);margin:0 auto}
     .col-edit-btn{position:absolute;top:.32rem;right:.32rem;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:.18rem;opacity:0;transition:opacity .2s;line-height:1}
     .planner-col:hover .col-edit-btn{opacity:.55}
@@ -211,8 +213,8 @@
     .slot.slot-completed{background:rgba(28,92,28,.38)!important;border-color:rgba(45,130,45,.45)!important;border-left-color:#3c9a3c!important}
     .slot.slot-failed{background:rgba(110,18,18,.38)!important;border-color:rgba(165,35,35,.45)!important;border-left-color:#c43030!important}
     .slot-info{flex:1;min-height:0;overflow:hidden}
-    .slot-name{font-family:var(--font-body);font-size:.8rem;font-weight:600;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
-    .slot-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:#000;line-height:1.2;display:flex;align-items:center;gap:.3rem}
+    .slot-name{font-family:var(--font-body);font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+    .slot-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:var(--text);line-height:1.2;display:flex;align-items:center;gap:.3rem}
     .slot-bell{font-size:.65rem;opacity:.55;flex-shrink:0}
     .chime-btn{font-size:.9rem;line-height:1;background:none;border:1px solid var(--border);width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,border-color .2s}
     .chime-btn.off{opacity:.28}
@@ -450,9 +452,10 @@
       <button class="btn-pause" id="btn-pause" onclick="Planner.togglePause()">⏸ Pause</button>
     </div>
     <div id="begin-again-bar" class="gone">
-      <span class="ba-label">Resume at:</span>
+      <span class="ba-label">Resuming at:</span>
       <input type="time" id="begin-again-time" class="ba-time-input">
       <button class="btn-begin-again" onclick="Planner.beginAgain()">▶ Begin Again</button>
+      <button class="ba-cancel" onclick="Planner.cancelPause()" title="Cancel">✕</button>
     </div>
     <div id="planner-scroll"><div id="planner-grid"></div></div>
   </main>
@@ -473,10 +476,10 @@
     <div class="setup-section">
       <div class="setup-label">
         <span>Acts of the Day</span>
-        <button class="day-shortcut" onclick="Planner.addActivity()" style="border-color:var(--accent);color:var(--accent)">+ Add Act</button>
+        <button class="day-shortcut" onclick="Planner.addActivity()" style="border-color:var(--accent);color:var(--accent)">+ Add Activity</button>
       </div>
       <div id="setup-acts-list"></div>
-      <button class="btn-add-act" onclick="Planner.addActivity()">+ Add an Act</button>
+      <button class="btn-add-act" onclick="Planner.addActivity()">+ Add Activity</button>
     </div>
     <div class="setup-section" id="setup-days-section">
       <div class="setup-label">
@@ -777,9 +780,10 @@
 
   async function checkAuth() {
     if (!S.token) { showAuthOverlay(); return; }
-    const { ok, data } = await api('auth/me');
+    const { ok, status, data } = await api('auth/me');
     if (ok && data.user) { S.user = data.user; await syncTheme(); enterApp(); }
-    else { localStorage.removeItem('inflictor_token'); S.token = null; showAuthOverlay(); }
+    else if (status === 401) { localStorage.removeItem('inflictor_token'); S.token = null; showAuthOverlay(); }
+    else { showAuthOverlay(); }
   }
   async function syncTheme() {
     if (!S.user || S.user.is_guest) return;
@@ -836,7 +840,7 @@
     clearMsg();
     const { ok, data } = await api('auth/guest', { method: 'POST' });
     if (ok) { S.token = data.token; S.user = data.user; localStorage.setItem('inflictor_token', S.token); hideAuthOverlay(); enterApp(); }
-    else msg('error', 'The stage is momentarily unavailable.');
+    else msg('error', data.error || 'The stage is momentarily unavailable.');
   };
   App.doForgot = async e => {
     e.preventDefault(); clearMsg();
@@ -1017,7 +1021,7 @@ window.Planner = (() => {
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none', px = slotPx(act.duration_minutes);
       const isPausedSlot = pausedSlotKeys.has(key);
       const pauseChk = (isPaused && today && status !== 'completed' && status !== 'failed')
-        ? `<label class="slot-pause-chk"><input type="checkbox" ${isPausedSlot?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Slept</label>`
+        ? `<label class="slot-pause-chk"><input type="checkbox" ${isPausedSlot?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Paused</label>`
         : '';
       return `<div class="slot slot-${status}${isPausedSlot?' slot-paused':''}" style="height:${px}px;--slot-color:${act.color||COLORS[0]}" data-key="${esc(key)}">
         <div class="slot-info"><div class="slot-name">${esc(act.name)}</div><div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
@@ -1043,18 +1047,21 @@ window.Planner = (() => {
 
   // ── Pause / Begin Again ────────────────────────────────────────
   function togglePause() {
-    isPaused = !isPaused;
+    if (isPaused) return;
+    isPaused = true;
+    document.getElementById('btn-pause')?.classList.add('active');
+    document.getElementById('begin-again-bar')?.classList.remove('gone');
+    const now = new Date();
+    document.getElementById('begin-again-time').value =
+      `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    render();
+  }
+
+  function cancelPause() {
+    isPaused = false;
     pausedSlotKeys.clear();
-    document.getElementById('btn-pause')?.classList.toggle('active', isPaused);
-    const bar = document.getElementById('begin-again-bar');
-    if (isPaused) {
-      bar.classList.remove('gone');
-      const now = new Date();
-      document.getElementById('begin-again-time').value =
-        `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    } else {
-      bar.classList.add('gone');
-    }
+    document.getElementById('btn-pause')?.classList.remove('active');
+    document.getElementById('begin-again-bar')?.classList.add('gone');
     render();
   }
 
@@ -1070,9 +1077,9 @@ window.Planner = (() => {
     if (!timeInput.value) return;
     const [hours, mins] = timeInput.value.split(':').map(Number);
     const today = new Date(), todayStr = toISO(today);
-    const beginAgainMs = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, mins, 0, 0).getTime();
+    const resumeMs = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, mins, 0, 0).getTime();
     const sched = getDaySchedule(todayStr);
-    let firstUnpausedMs = null;
+    let firstActiveMs = null;
     if (sched?.activities?.length) {
       const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
       let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime();
@@ -1082,12 +1089,12 @@ window.Planner = (() => {
           cursor += act.duration_minutes * 60000;
           continue;
         }
-        firstUnpausedMs = cursor;
+        firstActiveMs = cursor;
         break;
       }
     }
-    if (firstUnpausedMs !== null) {
-      pauseOffset = Math.round((beginAgainMs - firstUnpausedMs) / 60000);
+    if (firstActiveMs !== null) {
+      pauseOffset = Math.round((resumeMs - firstActiveMs) / 60000);
       localStorage.setItem('inflictor_pause_offset_' + todayStr, String(pauseOffset));
     }
     playSound('crowd');
@@ -1150,7 +1157,7 @@ window.Planner = (() => {
     list.innerHTML = setup.activities.map((act, i) => `
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
-          <input class="form-input act-name-input" type="text" placeholder="Act name…" value="${esc(act.name)}">
+          <input class="form-input act-name-input" type="text" placeholder="Activity name…" value="${esc(act.name)}">
           <div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>
         </div>
         <div class="act-row-foot">
@@ -1237,7 +1244,7 @@ window.Planner = (() => {
     saveSetup, setStatus, toggleChime,
     toggleSound, setSoundEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
-    togglePause, togglePauseSlot, beginAgain,
+    togglePause, cancelPause, togglePauseSlot, beginAgain,
     prevWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()-7); loadWeek().then(render); },
     nextWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+7); loadWeek().then(render); },
   };
