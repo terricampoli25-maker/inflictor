@@ -199,8 +199,12 @@ async function handlePlanner(segments, request, env) {
     if (!start) return json({ error: 'start param required' }, 400);
     const days = Array.from({length:7},(_,i)=>{ const d=new Date(`${start}T12:00:00Z`); d.setUTCDate(d.getUTCDate()+i); return d.toISOString().split('T')[0]; });
     const end = days[6];
+    // Find Monday-aligned week key for schedule lookup
+    const sd=new Date(`${start}T12:00:00Z`), dow=sd.getUTCDay(), monDate=new Date(sd);
+    monDate.setUTCDate(sd.getUTCDate()+(dow===0?-6:1-dow));
+    const monStr=monDate.toISOString().split('T')[0];
     const [schedRow,ovr,notes,logs] = await Promise.all([
-      db.prepare('SELECT schedule_data FROM weekly_schedules WHERE user_id=? AND week_start=?').bind(uid,start).first(),
+      db.prepare('SELECT schedule_data FROM weekly_schedules WHERE user_id=? AND week_start=?').bind(uid,monStr).first(),
       db.prepare('SELECT date,schedule_data FROM daily_schedules WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
       db.prepare('SELECT date,content FROM notes WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
       db.prepare('SELECT date,task_id,task_name,status FROM task_logs WHERE user_id=? AND date>=? AND date<=? ORDER BY logged_at DESC').bind(uid,start,end).all(),

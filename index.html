@@ -996,7 +996,8 @@ window.Planner = (() => {
   function render() {
     const days = getWeekDays();
     const s = days[0], e = days[6];
-    document.getElementById('planner-week-label').textContent = `${s.getDate()} – ${e.getDate()} ${e.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
+    const sLabel=s.toLocaleDateString('en-GB',{day:'numeric',month:'short'}), eLabel=e.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    document.getElementById('planner-week-label').textContent = `${sLabel} – ${eLabel}`;
     document.getElementById('planner-grid').innerHTML = days.map((d,i) => renderCol(d,i)).join('');
     days.forEach(day => {
       const ds = toISO(day), ta = document.getElementById(`note-${ds}`);
@@ -1010,7 +1011,7 @@ window.Planner = (() => {
     const ds = toISO(day), today = isToday(day);
     const mon = day.toLocaleDateString('en-GB',{month:'short'});
     const hdr = `<div class="col-header${today?' today':''}">
-      <div class="col-day-name">${DAY_NAMES[i]}</div>
+      <div class="col-day-name">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][day.getDay()===0?6:day.getDay()-1]}</div>
       <div class="col-date">${day.getDate()} ${mon}</div>
       ${today?'<div class="col-today-dot"></div>':''}
       <button class="col-edit-btn" onclick="Planner.openSetup('${ds}')" title="Edit day">
@@ -1174,11 +1175,13 @@ window.Planner = (() => {
   }
   function renderDays() {
     const days = getWeekDays();
-    document.getElementById('setup-day-checks').innerHTML = DAY_NAMES.map((n,i) => `
-      <label class="day-pill${setup.days[i]?' on':''}">
+    document.getElementById('setup-day-checks').innerHTML = days.map((d,i) => {
+      const n = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d.getDay()===0?6:d.getDay()-1];
+      return `<label class="day-pill${setup.days[i]?' on':''}">
         <input type="checkbox" style="display:none" ${setup.days[i]?'checked':''} onchange="Planner.toggleDay(${i},this.checked)">
-        <span class="day-pill-num">${days[i].getDate()}</span><span class="day-pill-name">${n}</span>
-      </label>`).join('');
+        <span class="day-pill-num">${d.getDate()}</span><span class="day-pill-name">${n}</span>
+      </label>`;
+    }).join('');
   }
 
   function addAct()   { setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true}); renderActs(); }
@@ -1198,7 +1201,7 @@ window.Planner = (() => {
   }
   function toggleDay(i,v) { setup.days[i]=v; renderDays(); }
   function selectAllDays(v) { setup.days=Array(7).fill(v); renderDays(); }
-  function selectWeekdays() { setup.days=[true,true,true,true,true,false,false]; renderDays(); }
+  function selectWeekdays() { const days=getWeekDays(); setup.days=days.map(d=>{const dow=d.getDay();return dow!==0&&dow!==6;}); renderDays(); }
 
   async function saveSetup() {
     captureDOM();
@@ -1211,7 +1214,7 @@ window.Planner = (() => {
       if (!weekData.dailyOverrides) weekData.dailyOverrides={};
       weekData.dailyOverrides[setup.editingDate]=sched;
     } else {
-      const start=toISO(weekStart), days=getWeekDays();
+      const start=toISO(getMonday(weekStart)), days=getWeekDays();
       if (!weekData.dailyOverrides) weekData.dailyOverrides={};
       await Promise.all([
         api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}),
@@ -1223,7 +1226,7 @@ window.Planner = (() => {
   }
 
   async function init() {
-    weekStart = getMonday();
+    weekStart = new Date(); weekStart.setHours(0,0,0,0);
     const todayKey = toISO(new Date());
     pauseOffset = parseInt(localStorage.getItem('inflictor_pause_offset_' + todayKey) || '0');
     const {ok,data} = await api('settings');
@@ -1233,16 +1236,20 @@ window.Planner = (() => {
       notifRepeat      = data.notification_repeat || 1;
     }
     document.getElementById('sound-btn')?.classList.toggle('muted', !soundEnabled);
-    await loadWeek(); render(); scheduleNotifs(); scheduleMidnight(); scrollToToday();
+    await loadWeek(); render(); scheduleNotifs(); scheduleMidnight();
   }
 
   function scrollToToday() {
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       const todayStr = toISO(new Date());
       const col = document.querySelector(`.planner-col[data-date="${todayStr}"]`);
       const scroll = document.getElementById('planner-scroll');
-      if (col && scroll) scroll.scrollLeft = col.offsetLeft;
-    });
+      if (col && scroll) {
+        const colRect = col.getBoundingClientRect();
+        const scrollRect = scroll.getBoundingClientRect();
+        scroll.scrollLeft += colRect.left - scrollRect.left;
+      }
+    }, 50);
   }
 
   return {
@@ -1254,8 +1261,8 @@ window.Planner = (() => {
     toggleSound, setSoundEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain,
-    prevWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()-7); loadWeek().then(render); },
-    nextWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+7); loadWeek().then(render); },
+    prevWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()-1); loadWeek().then(render); },
+    nextWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+1); loadWeek().then(render); },
   };
 })();
 
