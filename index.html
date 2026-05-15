@@ -178,7 +178,7 @@
     .btn-pause:hover{border-color:var(--accent);color:var(--accent)}
     .btn-pause.active{background:rgba(200,140,0,.18);border-color:#c89000;color:#c89000}
     #begin-again-bar{display:flex;align-items:center;gap:.7rem;padding:.45rem .8rem;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(200,140,0,.25);flex-shrink:0;flex-wrap:wrap}
-    .ba-label{font-family:var(--font-display);font-size:.7rem;letter-spacing:.08em;color:var(--text-muted);white-space:nowrap}
+    .ba-label{font-family:var(--font-display);font-size:.95rem;letter-spacing:.08em;color:#000;white-space:nowrap;font-weight:600}
     .ba-time-input{font-family:var(--font-body);font-size:.8rem;background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:.28rem .5rem;cursor:pointer}
     .ba-time-input:focus{outline:none;border-color:var(--accent)}
     .btn-begin-again{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:rgba(40,130,40,.7);color:#d0ffd0;border:none;padding:.38rem .9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
@@ -204,8 +204,8 @@
     .planner-col:hover .col-edit-btn{opacity:.55}
     .col-edit-btn:hover{opacity:1!important;color:var(--accent)}
     .col-slots{display:flex;flex-direction:column;gap:3px}
-    .col-empty{min-height:80px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border);opacity:.55}
-    .col-empty-btn{background:none;border:none;font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.82rem;cursor:pointer;transition:color .2s;padding:.5rem}
+    .col-empty{min-height:80px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border)}
+    .col-empty-btn{background:none;border:none;font-family:var(--font-body);font-style:italic;color:var(--text);font-size:.82rem;cursor:pointer;transition:color .2s;padding:.5rem}
     .col-empty-btn:hover{color:var(--accent);opacity:1}
 
     /* Slots */
@@ -229,7 +229,7 @@
     .slot-fail.active{background:rgba(165,50,50,.42);color:#e05050;border-color:#e05050}
     .col-notes{margin-top:3px}
     .col-note{width:100%;min-height:54px;background:transparent;border:1px dashed var(--border);color:var(--text);font-family:var(--font-body);font-style:italic;font-size:.75rem;padding:.45rem .5rem;resize:vertical;outline:none;transition:border-color .2s;line-height:1.5}
-    .col-note::placeholder{color:var(--text-muted);opacity:.4}
+    .col-note::placeholder{color:#000;opacity:1}
     .col-note:focus{border-color:var(--accent);border-style:solid}
 
     /* Week setup overlay */
@@ -1030,7 +1030,7 @@ window.Planner = (() => {
           <button class="slot-fail${status==='failed'?' active':''}" onclick="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','failed')" title="Failed">✗</button>
         </div>${pauseChk}</div>`;
     }).join('') : `<div class="col-empty"><button class="col-empty-btn" onclick="Planner.openSetup('${ds}')">+ Prepare Day</button></div>`;
-    return `<div class="planner-col" data-date="${ds}">${hdr}<div class="col-slots">${slots}</div><div class="col-notes"><textarea id="note-${ds}" class="col-note" placeholder="Stage directions…"></textarea></div></div>`;
+    return `<div class="planner-col" data-date="${ds}">${hdr}<div class="col-slots">${slots}</div><div class="col-notes"><textarea id="note-${ds}" class="col-note" placeholder="Activity…"></textarea></div></div>`;
   }
 
   function setStatus(dateStr, actId, actName, newStatus) {
@@ -1233,7 +1233,16 @@ window.Planner = (() => {
       notifRepeat      = data.notification_repeat || 1;
     }
     document.getElementById('sound-btn')?.classList.toggle('muted', !soundEnabled);
-    await loadWeek(); render(); scheduleNotifs(); scheduleMidnight();
+    await loadWeek(); render(); scheduleNotifs(); scheduleMidnight(); scrollToToday();
+  }
+
+  function scrollToToday() {
+    requestAnimationFrame(() => {
+      const todayStr = toISO(new Date());
+      const col = document.querySelector(`.planner-col[data-date="${todayStr}"]`);
+      const scroll = document.getElementById('planner-scroll');
+      if (col && scroll) scroll.scrollLeft = col.offsetLeft;
+    });
   }
 
   return {
