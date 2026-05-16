@@ -177,16 +177,25 @@
     .btn-pause{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:none;color:var(--text-muted);border:1px solid var(--border);padding:.38rem .9rem;cursor:pointer;transition:all .2s;white-space:nowrap}
     .btn-pause:hover{border-color:var(--accent);color:var(--accent)}
     .btn-pause.active{background:rgba(200,140,0,.18);border-color:#c89000;color:#c89000}
-    #begin-again-bar{display:flex;align-items:center;gap:.7rem;padding:.45rem .8rem;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(200,140,0,.25);flex-shrink:0;flex-wrap:wrap}
+    #daily-bar{display:flex;align-items:center;justify-content:space-between;gap:.7rem;padding:.45rem .8rem;background:rgba(0,0,0,.18);border-bottom:1px solid rgba(200,140,0,.25);flex-shrink:0;flex-wrap:wrap}
+    .daily-bar-left{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+    .daily-bar-right{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
     .ba-label{font-family:var(--font-display);font-size:.95rem;letter-spacing:.08em;color:#000;white-space:nowrap;font-weight:600}
     .ba-time-input{font-family:var(--font-body);font-size:.8rem;background:var(--input-bg);color:var(--text);border:1px solid var(--border);padding:.28rem .5rem;cursor:pointer}
     .ba-time-input:focus{outline:none;border-color:var(--accent)}
+    .wake-adjust-label{display:flex;align-items:center;gap:.35rem;font-family:var(--font-body);font-size:.78rem;color:#000;cursor:pointer;user-select:none}
+    .wake-adjust-label input{cursor:pointer;accent-color:var(--accent);width:13px;height:13px}
     .btn-begin-again{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:rgba(40,130,40,.7);color:#d0ffd0;border:none;padding:.38rem .9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
     .btn-begin-again:hover{background:rgba(40,160,40,.85)}
-    .ba-cancel{background:none;border:1px solid var(--border);color:var(--text-muted);padding:.28rem .5rem;cursor:pointer;font-size:.8rem;line-height:1;transition:border-color .2s,color .2s;margin-left:auto}
-    .ba-cancel:hover{border-color:var(--error-col);color:var(--error-col)}
-    .slot-pause-chk{display:flex;align-items:center;gap:.3rem;font-family:var(--font-body);font-size:.68rem;font-style:italic;color:var(--text-muted);margin-top:3px;cursor:pointer;user-select:none}
-    .slot-pause-chk input{cursor:pointer;accent-color:#c89000;width:12px;height:12px}
+    .slot-indicators{display:flex;align-items:center;gap:5px;margin-top:4px;flex-wrap:wrap}
+    .slot-pause-chk{display:flex;align-items:center;gap:.25rem;font-family:var(--font-body);font-size:.65rem;font-style:italic;color:var(--text-muted);cursor:pointer;user-select:none}
+    .slot-pause-chk input{cursor:pointer;accent-color:#c89000;width:11px;height:11px}
+    .slot-chk-complete,.slot-chk-fail{width:13px;height:13px;cursor:pointer;appearance:none;-webkit-appearance:none;border-radius:2px;position:relative;flex-shrink:0;transition:background .15s,border-color .15s}
+    .slot-chk-complete{border:1.5px solid rgba(55,160,55,.55)}
+    .slot-chk-complete:checked{background:#3c9a3c;border-color:#3c9a3c}
+    .slot-chk-complete:checked::after,.slot-chk-fail:checked::after{content:'';position:absolute;top:1px;left:3px;width:4px;height:7px;border:1.5px solid #fff;border-top:none;border-left:none;transform:rotate(45deg)}
+    .slot-chk-fail{border:1.5px solid rgba(180,55,55,.55)}
+    .slot-chk-fail:checked{background:#c43030;border-color:#c43030}
     .slot.slot-paused{opacity:.5;}
     #planner-scroll{flex:1;overflow:auto;padding:.5rem .6rem .8rem;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
     #planner-grid{display:grid;grid-template-columns:repeat(7,minmax(104px,1fr));gap:5px;min-width:748px}
@@ -219,14 +228,6 @@
     .chime-btn{font-size:.9rem;line-height:1;background:none;border:1px solid var(--border);width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,border-color .2s}
     .chime-btn.off{opacity:.28}
     .chime-btn:hover{border-color:var(--accent);opacity:1!important}
-    .slot-btns{display:flex;gap:3px;justify-content:flex-end;flex-shrink:0;margin-top:3px}
-    .slot-check,.slot-fail{width:20px;height:20px;border-radius:50%;border:1px solid transparent;cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:all .15s;background:rgba(255,255,255,.06);color:var(--text-muted);padding:0}
-    .slot-check{border-color:rgba(55,140,55,.4)}
-    .slot-check:hover{background:rgba(55,140,55,.28);color:#50c050}
-    .slot-check.active{background:rgba(55,140,55,.42);color:#50c050;border-color:#50c050}
-    .slot-fail{border-color:rgba(165,50,50,.4)}
-    .slot-fail:hover{background:rgba(165,50,50,.28);color:#e05050}
-    .slot-fail.active{background:rgba(165,50,50,.42);color:#e05050;border-color:#e05050}
     .col-notes{margin-top:3px}
     .col-note{width:100%;min-height:54px;background:transparent;border:1px dashed var(--border);color:var(--text);font-family:var(--font-body);font-style:italic;font-size:.75rem;padding:.45rem .5rem;resize:vertical;outline:none;transition:border-color .2s;line-height:1.5}
     .col-note::placeholder{color:#000;opacity:1}
@@ -451,11 +452,19 @@
       <button class="btn-prepare" onclick="Planner.openSetup()">Prepare Week</button>
       <button class="btn-pause" id="btn-pause" onclick="Planner.togglePause()">⏸ Pause</button>
     </div>
-    <div id="begin-again-bar" class="gone">
-      <span class="ba-label">Resuming at:</span>
-      <input type="time" id="begin-again-time" class="ba-time-input">
-      <button class="btn-begin-again" onclick="Planner.beginAgain()">▶ Begin Again</button>
-      <button class="ba-cancel" onclick="Planner.cancelPause()" title="Cancel">✕</button>
+    <div id="daily-bar">
+      <div class="daily-bar-left">
+        <span class="ba-label">Woke up at:</span>
+        <input type="time" id="actual-wake-time" class="ba-time-input" onchange="Planner.applyWakeTime()">
+        <label class="wake-adjust-label">
+          <input type="checkbox" id="wake-adjust-chk" onchange="Planner.applyWakeTime()"> Adjust schedule
+        </label>
+      </div>
+      <div class="daily-bar-right gone" id="begin-again-section">
+        <span class="ba-label">Resuming at:</span>
+        <input type="time" id="begin-again-time" class="ba-time-input">
+        <button class="btn-begin-again" onclick="Planner.beginAgain()">▶ Begin Again</button>
+      </div>
     </div>
     <div id="planner-scroll"><div id="planner-grid"></div></div>
   </main>
@@ -924,11 +933,12 @@ window.Planner = (() => {
 
   let weekStart = null, weekData = null, taskStatus = {}, noteTimers = {};
   let soundEnabled = true, notifEnabled = false, notifRepeat = 1, notifTimers = [];
-  let isPaused = false, pausedSlotKeys = new Set(), pauseOffset = 0;
+  let isPaused = false, pausedSlotKeys = new Set(), pauseOffset = 0, wakeOffset = 0;
 
   const setup = { activities: [], wakeTime: '07:00', days: Array(7).fill(true), editingDate: null };
   const sndCrowd = new Audio('sounds/crowd.mp3');
   const sndFail  = new Audio('sounds/uncheck.mp3');
+  const sndChime = new Audio('sounds/chime.mp3');
 
   const uid   = () => Math.random().toString(36).slice(2, 10);
   const esc   = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -945,7 +955,36 @@ window.Planner = (() => {
   function isToday(d) { const t = new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
   function fmtDur(m) { if (m<60) return `${m}m`; const h=Math.floor(m/60),r=m%60; return r?`${h}h ${r}m`:`${h}h`; }
   function slotPx(m) { return Math.max(40, m * 1.5); }
-  function playSound(type) { if (!soundEnabled) return; const s = type==='crowd'?sndCrowd:sndFail; s.currentTime=0; s.play().catch(()=>{}); }
+  function playSound(type) { if (!soundEnabled) return; const s = type==='crowd'?sndCrowd:type==='chime'?sndChime:sndFail; s.currentTime=0; s.play().catch(()=>{}); }
+
+  function launchConfetti(cx, cy) {
+    const canvas = document.createElement('canvas');
+    canvas.style.cssText='position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:9999';
+    document.body.appendChild(canvas);
+    canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+    const ctx=canvas.getContext('2d');
+    const colors=['#d4af37','#4CAF50','#2196F3','#E91E63','#FF5722','#9C27B0','#00BCD4','#FF9800','#fff'];
+    const pts=Array.from({length:90},()=>({x:cx,y:cy,vx:(Math.random()-.5)*9,vy:Math.random()*-9-2,r:Math.random()*5+2,color:colors[Math.floor(Math.random()*colors.length)],alpha:1}));
+    function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);let alive=false;for(const p of pts){p.vy+=.28;p.x+=p.vx;p.y+=p.vy;p.alpha-=.013;if(p.alpha>0){alive=true;ctx.save();ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();ctx.restore();}}if(alive)requestAnimationFrame(draw);else canvas.remove();}
+    draw();
+  }
+
+  function applyWakeTime() {
+    const timeInput = document.getElementById('actual-wake-time');
+    const adjChk = document.getElementById('wake-adjust-chk');
+    const todayStr = toISO(new Date());
+    if (adjChk?.checked && timeInput?.value) {
+      const [ah,am] = timeInput.value.split(':').map(Number);
+      const sched = getDaySchedule(todayStr);
+      const [wh,wm] = (sched?.wake_time||'07:00').split(':').map(Number);
+      wakeOffset = (ah*60+am)-(wh*60+wm);
+      localStorage.setItem('inflictor_wake_offset_'+todayStr, String(wakeOffset));
+    } else {
+      wakeOffset = 0;
+      localStorage.removeItem('inflictor_wake_offset_'+todayStr);
+    }
+    scheduleNotifs();
+  }
 
   // ── Notifications ──────────────────────────────────────────────
   function scheduleNotifs() {
@@ -955,7 +994,7 @@ window.Planner = (() => {
     const sched = getDaySchedule(todayStr);
     if (!sched?.activities?.length) return;
     const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
-    const base = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime();
+    const base = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime() + wakeOffset * 60000;
     let cursor = base, offsetApplied = false;
     for (const act of sched.activities) {
       cursor += act.duration_minutes * 60000;
@@ -1021,29 +1060,40 @@ window.Planner = (() => {
     const slots = acts.length ? acts.map(act => {
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none', px = slotPx(act.duration_minutes);
       const isPausedSlot = pausedSlotKeys.has(key);
-      const pauseChk = (isPaused && today && status !== 'completed' && status !== 'failed')
-        ? `<label class="slot-pause-chk"><input type="checkbox" ${isPausedSlot?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Paused</label>`
-        : '';
       return `<div class="slot slot-${status}${isPausedSlot?' slot-paused':''}" style="height:${px}px;--slot-color:${act.color||COLORS[0]}" data-key="${esc(key)}">
         <div class="slot-info"><div class="slot-name">${esc(act.name)}</div><div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
-        <div class="slot-btns">
-          <button class="slot-check${status==='completed'?' active':''}" onclick="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','completed')" title="Complete">✓</button>
-          <button class="slot-fail${status==='failed'?' active':''}" onclick="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','failed')" title="Failed">✗</button>
-        </div>${pauseChk}</div>`;
+        <div class="slot-indicators">
+          <label class="slot-pause-chk"><input type="checkbox" ${isPausedSlot?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Pause</label>
+          <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','completed',this.checked)" title="Completed">
+          <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','failed',this.checked)" title="Not completed">
+        </div></div>`;
     }).join('') : `<div class="col-empty"><button class="col-empty-btn" onclick="Planner.openSetup('${ds}')">+ Prepare Day</button></div>`;
     return `<div class="planner-col" data-date="${ds}">${hdr}<div class="col-slots">${slots}</div><div class="col-notes"><textarea id="note-${ds}" class="col-note" placeholder="Activity…"></textarea></div></div>`;
   }
 
-  function setStatus(dateStr, actId, actName, newStatus) {
-    const key = `${dateStr}:${actId}`, current = taskStatus[key];
-    if (current === newStatus) { delete taskStatus[key]; }
-    else { taskStatus[key] = newStatus; playSound(newStatus==='completed'?'crowd':'uncheck'); api('task-log',{method:'POST',body:{date:dateStr,task_id:actId,task_name:actName,status:newStatus}}); }
+  function setStatus(dateStr, actId, actName, newStatus, isChecked) {
+    const key = `${dateStr}:${actId}`;
     const slot = document.querySelector(`.slot[data-key="${CSS.escape(key)}"]`);
+    if (isChecked) {
+      taskStatus[key] = newStatus;
+      if (newStatus === 'completed') {
+        playSound('chime');
+        if (slot) { const r=slot.getBoundingClientRect(); launchConfetti(r.left+r.width/2, r.top+r.height/2); }
+        if (slot) { const f=slot.querySelector('.slot-chk-fail'); if(f) f.checked=false; }
+      } else {
+        playSound('uncheck');
+        if (slot) { const c=slot.querySelector('.slot-chk-complete'); if(c) c.checked=false; }
+      }
+      api('task-log',{method:'POST',body:{date:dateStr,task_id:actId,task_name:actName,status:newStatus}});
+    } else {
+      if (newStatus === 'completed') playSound('uncheck');
+      delete taskStatus[key];
+      api('task-log',{method:'POST',body:{date:dateStr,task_id:actId,task_name:actName,status:'none'}});
+    }
     if (!slot) return;
     const s = taskStatus[key]||'none';
     slot.className = `slot slot-${s}`;
-    slot.querySelector('.slot-check')?.classList.toggle('active', s==='completed');
-    slot.querySelector('.slot-fail')?.classList.toggle('active', s==='failed');
+    if (slot) { const c=slot.querySelector('.slot-chk-complete'),f=slot.querySelector('.slot-chk-fail'); if(c)c.checked=s==='completed'; if(f)f.checked=s==='failed'; }
   }
 
   // ── Pause / Begin Again ────────────────────────────────────────
@@ -1051,7 +1101,7 @@ window.Planner = (() => {
     if (isPaused) return;
     isPaused = true;
     document.getElementById('btn-pause')?.classList.add('active');
-    document.getElementById('begin-again-bar')?.classList.remove('gone');
+    document.getElementById('begin-again-section')?.classList.remove('gone');
     const now = new Date();
     document.getElementById('begin-again-time').value =
       `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
@@ -1062,7 +1112,7 @@ window.Planner = (() => {
     isPaused = false;
     pausedSlotKeys.clear();
     document.getElementById('btn-pause')?.classList.remove('active');
-    document.getElementById('begin-again-bar')?.classList.add('gone');
+    document.getElementById('begin-again-section')?.classList.add('gone');
     render();
   }
 
@@ -1083,7 +1133,7 @@ window.Planner = (() => {
     let firstActiveMs = null;
     if (sched?.activities?.length) {
       const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
-      let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime();
+      let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime() + wakeOffset * 60000;
       for (const act of sched.activities) {
         const key = `${todayStr}:${act.id}`, status = taskStatus[key];
         if (status === 'completed' || status === 'failed' || pausedSlotKeys.has(key)) {
@@ -1101,7 +1151,7 @@ window.Planner = (() => {
     playSound('crowd');
     isPaused = false;
     pausedSlotKeys.clear();
-    document.getElementById('begin-again-bar')?.classList.add('gone');
+    document.getElementById('begin-again-section')?.classList.add('gone');
     document.getElementById('btn-pause')?.classList.remove('active');
     scheduleNotifs();
     render();
@@ -1229,6 +1279,18 @@ window.Planner = (() => {
     weekStart = new Date(); weekStart.setHours(0,0,0,0);
     const todayKey = toISO(new Date());
     pauseOffset = parseInt(localStorage.getItem('inflictor_pause_offset_' + todayKey) || '0');
+    wakeOffset  = parseInt(localStorage.getItem('inflictor_wake_offset_'  + todayKey) || '0');
+    // Restore wake time input if offset was saved
+    if (wakeOffset !== 0) {
+      const sched = getDaySchedule(todayKey);
+      const [wh,wm] = (sched?.wake_time||'07:00').split(':').map(Number);
+      const totalMins = wh*60+wm+wakeOffset;
+      const ah=Math.floor(((totalMins%1440)+1440)%1440/60), am=((totalMins%1440)+1440)%1440%60;
+      const wtInput = document.getElementById('actual-wake-time');
+      const adjChk  = document.getElementById('wake-adjust-chk');
+      if (wtInput) wtInput.value = `${String(ah).padStart(2,'0')}:${String(am).padStart(2,'0')}`;
+      if (adjChk)  adjChk.checked = true;
+    }
     const {ok,data} = await api('settings');
     if (ok && data) {
       soundEnabled     = data.sound_enabled !== 0;
@@ -1260,7 +1322,7 @@ window.Planner = (() => {
     saveSetup, setStatus, toggleChime,
     toggleSound, setSoundEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
-    togglePause, cancelPause, togglePauseSlot, beginAgain,
+    togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
     prevWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()-1); loadWeek().then(render); },
     nextWeek: () => { weekStart=new Date(weekStart); weekStart.setDate(weekStart.getDate()+1); loadWeek().then(render); },
   };
