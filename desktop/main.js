@@ -63,7 +63,7 @@ function startServer(callback) {
       res.end(data);
     });
   });
-  srv.listen(0, '127.0.0.1', () => callback(srv.address().port));
+  srv.listen(37842, '127.0.0.1', () => callback(srv.address().port));
 }
 
 // ── Windows ───────────────────────────────────────────────────
