@@ -16,7 +16,10 @@ jobs:
 
       - run: npm install
 
-      - run: npx wrangler pages deploy . --project-name=inflictor --commit-dirty=true
+      - run: npx wrangler --version
+
+      - run: npx wrangler pages deploy . --project-name=inflictor --commit-dirty=true --branch=main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          NODE_OPTIONS: --use-system-ca
