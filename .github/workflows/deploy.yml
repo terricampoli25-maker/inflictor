@@ -14,18 +14,16 @@ jobs:
         with:
           node-version: '24'
 
-      - run: npm install
+      - name: Install Wrangler
+        run: npm install -g wrangler
 
-      - name: Verify Cloudflare token
+      - name: Verify token
         run: |
-          curl -s -o response.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-            https://api.cloudflare.com/client/v4/user/tokens/verify > status.txt
-          echo "HTTP status: $(cat status.txt)"
-          cat response.json
+          curl -s -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify
 
-      - run: npx wrangler pages deploy . --project-name=inflictor --commit-dirty=true --branch=main
+      - name: Deploy
+        run: wrangler pages deploy . --project-name=inflictor --commit-dirty=true --branch=main
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          NODE_OPTIONS: --use-system-ca
