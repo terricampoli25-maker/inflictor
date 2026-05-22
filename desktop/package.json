@@ -1,0 +1,37 @@
+{
+  "name": "inflictor-desktop",
+  "version": "1.0.0",
+  "description": "The Inflictor — Desktop",
+  "main": "main.js",
+  "scripts": {
+    "build:app": "node build.js",
+    "start":     "npm run build:app && electron .",
+    "build:win": "npm run build:app && electron-builder --win"
+  },
+  "build": {
+    "appId": "com.inflictor.app",
+    "productName": "The Inflictor",
+    "directories": { "output": "dist" },
+    "files": [
+      "main.js",
+      "activation.js",
+      "activate.html",
+      "app/**/*"
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "app/icons/inflictor-icon-256x256.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "The Inflictor"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.0.0"
+  }
+}

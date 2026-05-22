@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>The Inflictor — Activation</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#060204;color:#f0d898;font-family:'Georgia',serif;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden;user-select:none}
+  .box{text-align:center;padding:2.5rem 3rem;border:1px solid #4a3010;background:rgba(20,8,0,.88);max-width:460px;width:94vw}
+  h1{font-size:1.6rem;letter-spacing:.18em;margin-bottom:.35rem;color:#d4af37}
+  .sub{font-size:.78rem;letter-spacing:.12em;color:#7a6030;margin-bottom:2rem}
+  label{display:block;font-size:.75rem;letter-spacing:.1em;color:#9a7838;margin-bottom:.45rem;text-align:left}
+  input{width:100%;padding:.6rem .8rem;background:#100808;border:1px solid #4a3010;color:#f0d898;font-family:'Courier New',monospace;font-size:1rem;letter-spacing:.1em;outline:none;margin-bottom:1.2rem;text-transform:uppercase}
+  input:focus{border-color:#d4af37}
+  button{width:100%;padding:.65rem;background:#d4af37;color:#060204;font-family:'Georgia',serif;font-size:.82rem;letter-spacing:.14em;border:none;cursor:pointer;transition:background .2s}
+  button:hover{background:#e8c84a}
+  button:disabled{opacity:.45;cursor:default}
+  .msg{font-size:.78rem;margin-top:.9rem;min-height:1.2em;letter-spacing:.04em}
+  .msg.error{color:#c43030}
+  .msg.ok{color:#3c9a3c}
+  .msg.warn{color:#c89000}
+  .grace{font-size:.72rem;color:#9a7838;margin-top:.6rem}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>THE INFLICTOR</h1>
+  <div class="sub">ACTIVATION REQUIRED</div>
+
+  <div id="form-area">
+    <label for="key-input">Enter your serial number</label>
+    <input id="key-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" spellcheck="false" autocomplete="off" maxlength="24">
+    <button id="btn-activate" onclick="doActivate()">Activate</button>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div id="grace-area" style="display:none">
+    <div class="msg warn" id="grace-msg"></div>
+    <div class="grace">You may continue using the app during the grace period.</div>
+    <br>
+    <button onclick="proceed()">Continue</button>
+  </div>
+
+  <div id="expired-area" style="display:none">
+    <div class="msg error">Your subscription has expired.</div>
+    <div class="grace" style="margin-top:.8rem">Please renew your subscription to continue using The Inflictor.</div>
+  </div>
+</div>
+
+<script>
+// ── Inline activation logic (adapted from lib/validate.js) ───
+// Set these two values before shipping:
+const ACTIVATION_HOST = 'https://serial-activation.YOUR_SUBDOMAIN.workers.dev'; // ← replace
+const PUBLIC_KEY      = 'REPLACE_WITH_PUBLIC_KEY_FROM_GENERATE_KEYS_SCRIPT';     // ← replace
+
+const CHECKIN_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+const OFFLINE_GRACE_MS    = 7 * 24 * 60 * 60 * 1000;
+const KEY_TOKEN           = 'sa_token';
+const KEY_MACHINE_ID      = 'sa_machine_id';
+const KEY_CHECKIN         = 'sa_last_checkin';
+
+const { ipcRenderer } = require('electron');
+
+function getMachineId() {
+  let id = localStorage.getItem(KEY_MACHINE_ID);
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem(KEY_MACHINE_ID, id); }
+  return id;
+}
+
+async function getPublicKey() {
+  const keyBytes = Uint8Array.from(atob(PUBLIC_KEY), c => c.charCodeAt(0));
+  return crypto.subtle.importKey('raw', keyBytes.buffer, { name: 'Ed25519' }, false, ['verify']);
+}
+
+async function verifyToken(tokenString) {
+  if (!tokenString) return null;
+  const dot = tokenString.indexOf('.');
+  if (dot === -1) return null;
+  let payload;
+  try { payload = JSON.parse(atob(tokenString.slice(0, dot))); } catch { return null; }
+  try {
+    const key  = await getPublicKey();
+    const data = new TextEncoder().encode(JSON.stringify(payload));
+    const sig  = Uint8Array.from(atob(tokenString.slice(dot + 1)), c => c.charCodeAt(0));
+    if (!await crypto.subtle.verify('Ed25519', key, sig, data)) return null;
+  } catch { return null; }
+  if (payload.expiresAt && new Date(payload.expiresAt) < new Date()) return null;
+  return payload;
+}
+
+async function fetchCheckin(serial, machineId) {
+  try {
+    const res = await fetch(`${ACTIVATION_HOST}/checkin`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serial, machineId }),
+    });
+    if (!res.ok) return false;
+    const { token } = await res.json();
+    localStorage.setItem(KEY_TOKEN, token);
+    localStorage.setItem(KEY_CHECKIN, new Date().toISOString());
+    return true;
+  } catch { return false; }
+}
+
+async function checkLicense() {
+  const tokenString = localStorage.getItem(KEY_TOKEN);
+  const machineId   = getMachineId();
+  if (!tokenString) return { status: 'unactivated' };
+
+  const payload = await verifyToken(tokenString);
+  if (payload) {
+    if (payload.type === 'subscription') {
+      const msSince = Date.now() - new Date(localStorage.getItem(KEY_CHECKIN) || 0).getTime();
+      if (msSince >= CHECKIN_INTERVAL_MS) fetchCheckin(payload.serial, machineId).catch(() => {});
+    }
+    return { status: 'active', payload };
+  }
+
+  let storedSerial = null;
+  try { storedSerial = JSON.parse(atob(tokenString.split('.')[0]))?.serial; } catch {}
+  if (storedSerial) {
+    const refreshed = await fetchCheckin(storedSerial, machineId);
+    if (refreshed) {
+      const newPayload = await verifyToken(localStorage.getItem(KEY_TOKEN));
+      if (newPayload) return { status: 'active', payload: newPayload };
+    }
+  }
+
+  const lastCheckin = localStorage.getItem(KEY_CHECKIN);
+  if (lastCheckin) {
+    const msOffline = Date.now() - new Date(lastCheckin).getTime();
+    if (msOffline <= OFFLINE_GRACE_MS) {
+      const daysRemaining = Math.ceil((OFFLINE_GRACE_MS - msOffline) / (1000 * 60 * 60 * 24));
+      return { status: 'grace', daysRemaining: Math.max(daysRemaining, 1) };
+    }
+  }
+  return { status: 'expired' };
+}
+
+function proceed() { ipcRenderer.send('activation-success'); }
+function setMsg(text, type = 'error') {
+  const el = document.getElementById('msg');
+  el.textContent = text; el.className = 'msg ' + type;
+}
+function setBtn(disabled) { document.getElementById('btn-activate').disabled = disabled; }
+
+async function doActivate() {
+  const key = document.getElementById('key-input').value.trim().toUpperCase();
+  if (!key) { setMsg('Please enter your serial number.'); return; }
+  setBtn(true); setMsg('Checking…', 'ok');
+  try {
+    const res = await fetch(`${ACTIVATION_HOST}/activate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serial: key, machineId: getMachineId() }),
+    });
+    if (res.ok) {
+      const { token } = await res.json();
+      localStorage.setItem(KEY_TOKEN, token);
+      localStorage.setItem(KEY_CHECKIN, new Date().toISOString());
+      setMsg('Activated! Opening…', 'ok');
+      setTimeout(proceed, 800);
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setMsg(body.error || 'Activation failed. Check your serial number and try again.');
+      setBtn(false);
+    }
+  } catch {
+    setMsg('Could not reach the activation server. Check your internet connection.', 'error');
+    setBtn(false);
+  }
+}
+
+document.getElementById('key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doActivate();
+});
+
+// ── On load: check existing license ──────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  const result = await checkLicense();
+  if (result.status === 'active') {
+    proceed();
+  } else if (result.status === 'grace') {
+    document.getElementById('form-area').style.display  = 'none';
+    document.getElementById('grace-area').style.display = 'block';
+    document.getElementById('grace-msg').textContent =
+      `Offline — license check pending. ${result.daysRemaining} day${result.daysRemaining !== 1 ? 's' : ''} remaining in grace period.`;
+  } else if (result.status === 'expired') {
+    document.getElementById('form-area').style.display    = 'none';
+    document.getElementById('expired-area').style.display = 'block';
+    ipcRenderer.send('activation-failed-permanently');
+  }
+  // else 'unactivated' — show the form (default)
+});
+</script>
+</body>
+</html>

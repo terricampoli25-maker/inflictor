@@ -720,14 +720,57 @@
   if (S.theme) document.body.classList.add(`theme-${S.theme}`);
   const el = id => document.getElementById(id);
 
+  // ── Offline queue ─────────────────────────────────────────────
+  const OFFLINE_KEY = 'inflictor_offline_queue';
+  function enqueueOffline(path, opts) {
+    const q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    q.push({ path, method: opts.method, body: opts.body, t: Date.now() });
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(q));
+    showOfflineBanner(true);
+  }
+  async function flushOfflineQueue() {
+    const q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    if (!q.length) return;
+    const remaining = [];
+    for (const op of q) {
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
+        const r = await fetch(`/api/${op.path}`, { method: op.method, headers, body: op.body !== undefined ? JSON.stringify(op.body) : undefined });
+        if (!r.ok) remaining.push(op);
+      } catch { remaining.push(op); break; }
+    }
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(remaining));
+    showOfflineBanner(remaining.length > 0);
+  }
+  function showOfflineBanner(show) {
+    let b = document.getElementById('offline-banner');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'offline-banner';
+      b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:9000;background:#8b4500;color:#ffe0a0;font-family:Georgia,serif;font-size:.78rem;letter-spacing:.08em;text-align:center;padding:.4rem;display:none';
+      document.body.appendChild(b);
+    }
+    b.textContent = show ? '⚠ Offline — changes saved locally and will sync when connection returns.' : '';
+    b.style.display = show ? 'block' : 'none';
+  }
+  window.addEventListener('online',  () => flushOfflineQueue());
+  window.addEventListener('offline', () => showOfflineBanner(true));
+
   async function api(path, opts = {}) {
     const headers = { 'Content-Type': 'application/json' };
     if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
     try {
       const r = await fetch(`/api/${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
       const data = await r.json().catch(() => ({}));
+      // Flush any queued offline ops now that we're connected
+      if (r.ok) flushOfflineQueue();
       return { ok: r.ok, status: r.status, data };
-    } catch { return { ok: false, status: 0, data: { error: 'Could not reach the stage.' } }; }
+    } catch {
+      // Queue write operations; reads just fail gracefully
+      if (opts.method && opts.method !== 'GET') enqueueOffline(path, opts);
+      return { ok: false, status: 0, data: { error: 'Could not reach the stage.' } };
+    }
   }
 
   function applyTheme(theme) {
@@ -1023,11 +1066,21 @@ window.Planner = (() => {
 
   // ── Data ───────────────────────────────────────────────────────
   async function loadWeek() {
+    const cacheKey = `inflictor_week_${toISO(weekStart)}`;
     const { ok, data } = await api(`week?start=${toISO(weekStart)}`);
     if (ok) {
       weekData = data; taskStatus = {};
       for (const l of data.taskLogs || []) taskStatus[`${l.date}:${l.task_id||l.task_name}`] = l.status;
-    } else { weekData = { schedule: null, dailyOverrides: {}, notes: {}, taskLogs: [] }; }
+      // Cache for offline use
+      try { localStorage.setItem(cacheKey, JSON.stringify({ weekData, taskStatus })); } catch {}
+    } else {
+      // Try offline cache
+      try {
+        const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+        if (cached) { weekData = cached.weekData; taskStatus = cached.taskStatus || {}; return; }
+      } catch {}
+      weekData = { schedule: null, dailyOverrides: {}, notes: {}, taskLogs: [] };
+    }
   }
   function getDaySchedule(ds) { return weekData?.dailyOverrides?.[ds] ?? weekData?.schedule ?? null; }
 
