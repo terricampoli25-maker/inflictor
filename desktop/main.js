@@ -71,7 +71,7 @@ function createMainWindow() {
   mainWin = new BrowserWindow({
     width: 1280, height: 820, minWidth: 900, minHeight: 600,
     title: 'The Inflictor',
-    icon: path.join(APP_DIR, 'icons', 'inflictor-icon-256x256.png'),
+    icon: path.join(__dirname, '../icons/inflictor.ico'),
     webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
   mainWin.loadURL(`http://127.0.0.1:${staticPort}/`);
@@ -83,7 +83,7 @@ function createActivationWindow() {
   actWin = new BrowserWindow({
     width: 520, height: 440, resizable: false,
     title: 'The Inflictor — Activation',
-    icon: path.join(APP_DIR, 'icons', 'inflictor-icon-256x256.png'),
+    icon: path.join(__dirname, '../icons/inflictor.ico'),
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,

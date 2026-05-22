@@ -20,7 +20,7 @@
     ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
-      "icon": "app/icons/inflictor-icon-256x256.png"
+      "icon": "app/icons/../icons/inflictor.ico"
     },
     "nsis": {
       "oneClick": false,
