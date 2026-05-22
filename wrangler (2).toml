@@ -1,0 +1,34 @@
+name = "serial-activation"
+main = "worker/index.js"
+compatibility_date = "2024-09-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "serial-activation-db"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+
+[vars]
+FROM_EMAIL = "Your App <noreply@yourdomain.com>"
+
+# -----------------------------------------------------------------------
+# Secrets — set these via CLI, never put real values in this file:
+#
+#   wrangler secret put SIGNING_PRIVATE_KEY    (from scripts/generate-keys.js)
+#   wrangler secret put STRIPE_WEBHOOK_SECRET  (from Stripe dashboard → Webhooks)
+#   wrangler secret put RESEND_API_KEY         (from Resend dashboard)
+#
+# -----------------------------------------------------------------------
+
+# -----------------------------------------------------------------------
+# Setup checklist:
+#
+# 1. node scripts/generate-keys.js              → copy keys
+# 2. wrangler d1 create serial-activation-db    → copy database_id above
+# 3. wrangler d1 execute serial-activation-db --file=schema.sql
+# 4. Set the three secrets above
+# 5. Update FROM_EMAIL above
+# 6. wrangler deploy
+# 7. In Stripe: add metadata  product_code: TEST  to each product
+# 8. In Stripe: create a webhook pointing to  https://serial-activation.<subdomain>.workers.dev/webhook/stripe
+#    Events to send: checkout.session.completed, customer.subscription.deleted
+# -----------------------------------------------------------------------
