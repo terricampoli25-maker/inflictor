@@ -16,7 +16,13 @@ jobs:
 
       - run: npm install
 
-      - run: npx wrangler --version
+      - name: Verify Cloudflare token
+        run: |
+          curl -s -o response.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            https://api.cloudflare.com/client/v4/user/tokens/verify > status.txt
+          echo "HTTP status: $(cat status.txt)"
+          cat response.json
 
       - run: npx wrangler pages deploy . --project-name=inflictor --commit-dirty=true --branch=main
         env:
