@@ -4,6 +4,10 @@ Running list of things to do during beta prep. Newest items welcome at the botto
 move finished items to **Done**.
 
 ## Up next / open
+- [ ] **Bundle fonts locally** (Cinzel/Crimson Text/etc.). Currently loaded from Google
+      Fonts over the internet (`fonts.googleapis.com`) — fragile for a desktop app
+      (offline testers lose them) and the likely cause of the "capital O fades at the
+      bottom" rendering. Download + self-host the .woff2 files in the app.
 - [ ] **Profile picture upload.** Let users upload a photo where their name/avatar
       shows (currently a coloured initial circle). Needs image storage (likely upload
       to the Cloudflare backend so it follows the account). NOTE: Premium section

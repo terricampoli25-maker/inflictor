@@ -241,6 +241,7 @@
     .slot:hover .slot-memo-btn{opacity:.85}
     .slot-memo-btn:hover{opacity:1!important}
     .slot-memo-btn.has-memo{opacity:1;color:#3b82f6}
+    .slot-time{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--accent);line-height:1.15;margin:1px 0}
     .slot-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:var(--text);line-height:1.2;display:flex;align-items:center;gap:.3rem}
     .slot-bell{font-size:.65rem;opacity:.55;flex-shrink:0}
     .chime-btn{font-size:.9rem;line-height:1;background:none;border:1px solid var(--border);width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,border-color .2s}
@@ -277,6 +278,10 @@
     .act-row-top{display:flex;gap:.45rem;align-items:center;margin-bottom:.45rem}
     .act-name-input{flex:1;min-width:0}
     .act-dur-group{display:flex;align-items:center;gap:.22rem;flex-shrink:0}
+    .act-fixed-group{display:flex;align-items:center;gap:.3rem;flex-shrink:0}
+    .act-goal-group{display:flex;align-items:center;gap:.25rem;flex-shrink:0}
+    .goal-ish{font-family:var(--font-body);font-style:italic;font-size:.72rem;color:var(--text-muted)}
+    .fixed-tt,.goal-tt{font-family:var(--font-body);font-size:.78rem;background:transparent;border:1px solid var(--border);color:var(--text);padding:.25rem .3rem}
     .dur-num{width:42px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:.9rem;padding:.38rem .35rem;text-align:center;outline:none;border-radius:1px}
     .dur-num:focus{border-color:var(--accent)}
     .dur-unit{font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.82rem}
@@ -731,7 +736,14 @@
         </div>
         <div class="guide-block">
           <h4>1 · Build your week</h4>
-          <p>Click <b>Prepare Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes. Pick which days it applies to with <b>All</b>, <b>Weekdays</b>, or by clicking individual days, then click <b>Set the Stage</b>.</p>
+          <p>Click <b>Prepare Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes, and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). Then click <b>Set the Stage</b>. On the planner, a longer activity shows as a <b>taller block</b>, so you can see the shape of your day at a glance.</p>
+        </div>
+        <div class="guide-block">
+          <h4>Fixed, Flexible &amp; Anytime</h4>
+          <p>Each activity has a timing type:</p>
+          <p><b>Fixed</b> — happens at a set clock time you can't move (an appointment, your meds). Enter a <b>start and end time</b>; it always shows that time and never shifts.</p>
+          <p><b>Flexible</b> — has a duration, plus an optional <b>"-ish" time</b> (beside the toggles) for *about* when you'd like to do it. Set it and the block shows "~that time"; leave it blank and no time shows. Flexible activities can <b>shift</b> if you wake late or pause.</p>
+          <p><b>Anytime</b> — no set time at all; it just needs doing that day. It appears in <b>"Sometime Today"</b> at the bottom of the day.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -763,7 +775,14 @@
         </div>
         <div class="guide-block">
           <h4>1 · Build thy week</h4>
-          <p>Press <b>Prepare Week</b> (top-left of the planner). Add an <b>Act</b> for each thing thou dost — give it a name and a length in hours and minutes. Choose which days it applies to with <b>All</b>, <b>Weekdays</b>, or by tapping individual days, then press <b>Set the Stage</b>.</p>
+          <p>Press <b>Prepare Week</b> (top-left of the planner). Add an <b>Act</b> for each thing thou dost — give it a name and a length in hours and minutes, and choose the days it keeps with its row of <b>weekday buttons</b> (Mon–Sun). Then press <b>Set the Stage</b>. Upon the stage, a longer act stands as a <b>taller block</b>, that thou mayest see the shape of thy day at a glance.</p>
+        </div>
+        <div class="guide-block">
+          <h4>Fixed, Flexible &amp; Anytime</h4>
+          <p>Each act hath a manner of timing:</p>
+          <p><b>Fixed</b> — bound to an hour thou canst not move (an appointment, thy medicine). Give it a <b>start and end</b>; it holds that hour and never strays.</p>
+          <p><b>Flexible</b> — hath a length, and a hopeful <b>"-ish" hour</b> (beside the toggles) for *about* when thou wouldst do it. Set it and the block shows "~that hour"; leave it bare and no hour shows. Flexible acts may <b>shift</b> shouldst thou wake late or pause.</p>
+          <p><b>Anytime</b> — bound to no hour; it need only be done that day. It rests in <b>"Sometime Today"</b> at the foot of the day.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -1243,7 +1262,28 @@ window.Planner = (() => {
   }
   function isToday(d) { const t = new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
   function fmtDur(m) { if (m<60) return `${m}m`; const h=Math.floor(m/60),r=m%60; return r?`${h}h ${r}m`:`${h}h`; }
-  function slotPx(m) { return Math.max(40, m * 1.5); }
+  function slotPx(m) { return Math.max(80, m * 1.5); }   // floor so short acts still fit name + controls
+  function parseTime(t) { const [h,m]=(t||'07:00').split(':').map(Number); return (h||0)*60+(m||0); }
+  function fmtClock(min) { min=((Math.round(min)%1440)+1440)%1440; const h=Math.floor(min/60),m=min%60,ap=h<12?'a':'p',h12=h%12||12; return `${h12}:${String(m).padStart(2,'0')}${ap}`; }
+  function minToTime(min) { min=((Math.round(min)%1440)+1440)%1440; return `${String(Math.floor(min/60)).padStart(2,'0')}:${String(min%60).padStart(2,'0')}`; }
+  // Walk a day's timed activities and compute each one's start/end clock time (minutes).
+  // Flexible items cascade from wake time; Fixed items sit at their own clock time.
+  // Times come ONLY from what the user set: Fixed = its start/end; Flexible = its
+  // optional ~goal time. No auto-sequencing. Anytime has none.
+  function computeDayTimes(acts) {
+    const out = {};
+    for (const a of acts || []) {
+      const timing = a.timing || 'flexible';
+      if (timing === 'fixed' && a.fixed_start) {
+        const start = parseTime(a.fixed_start);
+        const end = a.fixed_end ? parseTime(a.fixed_end) : start + (a.duration_minutes || 0);
+        out[a.id] = { start, end: Math.max(end, start), fixed: true };
+      } else if (timing === 'flexible' && a.goal_time) {
+        out[a.id] = { start: parseTime(a.goal_time), fixed: false };
+      }
+    }
+    return out;
+  }
   function playSound(type) {
     if (!soundEnabled) return;                                   // master mute (header button)
     const positive = (type === 'crowd' || type === 'chime');
@@ -1399,18 +1439,19 @@ window.Planner = (() => {
       <button class="col-edit-btn" onclick="Planner.openSetup('${ds}')" title="Edit day">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
       </button></div>`;
-    const acts = getDaySchedule(ds)?.activities || [];
+    const daySched = getDaySchedule(ds);
+    const acts = daySched?.activities || [];
+    const times = computeDayTimes(acts);
     const isAnytime = a => (a.timing || 'flexible') === 'anytime';
     const timedHtml = acts.map((act, ai) => {
       if (isAnytime(act)) return '';   // anytime activities render in "Sometime Today" below
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none', px = slotPx(act.duration_minutes);
       const isPausedSlot = pausedSlotKeys.has(key);
       const hasMemo = !!getMemo(ds, act.id);
+      const t = times[act.id];
+      const timeBig = t ? (t.fixed ? `${fmtClock(t.start)}–${fmtClock(t.end)}` : `~${fmtClock(t.start)}`) : '';
       return `<div class="slot slot-${status}${isPausedSlot?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
-        <button class="slot-edit-btn" onclick="Planner.openSetup('${ds}',${ai})" title="Edit this activity">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div><div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
+        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
           <span class="slot-check-group">
@@ -1545,10 +1586,16 @@ window.Planner = (() => {
       const row = document.querySelector(`#setup-acts-list .act-row[data-id="${act.id}"]`);
       if (!row) return;
       act.name  = row.querySelector('.act-name-input')?.value ?? act.name;
-      const ns  = row.querySelectorAll('.dur-num');
-      const h = parseInt(ns[0]?.value, 10); if (!isNaN(h) && h >= 0) act.hours = h;
-      const m = parseInt(ns[1]?.value, 10); if (!isNaN(m) && m >= 0) act.mins  = m;
-      const tt = row.querySelector('.timing-time'); if (tt && tt.value) act.fixed_time = tt.value;
+      if ((act.timing || 'flexible') === 'fixed') {
+        const fs = row.querySelector('.fixed-start'), fe = row.querySelector('.fixed-end');
+        if (fs) act.fixed_start = fs.value;   // may be '' (cleared) — keep it
+        if (fe) act.fixed_end = fe.value;
+      } else {
+        const ns = row.querySelectorAll('.dur-num');
+        const h = parseInt(ns[0]?.value, 10); if (!isNaN(h) && h >= 0) act.hours = h;
+        const m = parseInt(ns[1]?.value, 10); if (!isNaN(m) && m >= 0) act.mins  = m;
+        const gt = row.querySelector('.goal-tt'); if (gt) act.goal_time = gt.value;   // optional ~time
+      }
     });
   }
 
@@ -1556,7 +1603,11 @@ window.Planner = (() => {
     setup.editingDate = date;
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
     setup.wakeTime  = existing?.wake_time || '07:00';
-    setup.activities = (existing?.activities||[]).map(a => ({ id: uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: a.chime_enabled !== false, timing: a.timing || 'flexible', fixed_time: a.fixed_time || '12:00', days: Array.isArray(a.days) ? a.days.slice() : Array(7).fill(true) }));
+    setup.activities = (existing?.activities||[]).map(a => ({
+      id: uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: a.chime_enabled !== false, timing: a.timing || 'flexible',
+      fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
+      days: Array.isArray(a.days) ? a.days.slice() : Array(7).fill(true)
+    }));
     if (!setup.activities.length) addAct();
     if (date) {
       const name = new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase();
@@ -1591,15 +1642,17 @@ window.Planner = (() => {
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
           <input class="form-input act-name-input" type="text" placeholder="Activity name…" value="${esc(act.name)}">
-          <div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>
+          ${act.timing==='fixed'
+            ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Start time"><span class="dur-unit">to</span><input class="fixed-tt fixed-end" type="time" value="${esc(act.fixed_end||'')}" title="End time"></div>`
+            : `<div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`}
         </div>
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
         <div class="act-row-foot">
           <div class="act-timing">
             <button class="timing-opt${act.timing==='fixed'?' on':''}" onclick="Planner.setTiming('${act.id}','fixed')" title="Pinned to a clock time — never moves">Fixed</button>
-            <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="Flows in sequence and shifts with your wake time">Flexible</button>
+            <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="Optional ~goal time; can shift when you wake late or pause">Flexible</button>
             <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="No set time — just sometime that day">Anytime</button>
-            ${act.timing==='fixed' ? `<input class="timing-time" type="time" value="${esc(act.fixed_time||'12:00')}" title="Time this must happen">` : ''}
+            ${act.timing==='flexible' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
             <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
@@ -1622,7 +1675,7 @@ window.Planner = (() => {
     }).join('');
   }
 
-  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true,timing:'flexible',fixed_time:'12:00',days:Array(7).fill(true)}); renderActs(); }
+  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   function setActDay(id,di) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ if(!Array.isArray(a.days)) a.days=Array(7).fill(true); a.days[di]=!a.days[di]; } renderActs(); }
 
   function toggleChime(id) {
@@ -1645,7 +1698,17 @@ window.Planner = (() => {
 
   async function saveSetup() {
     captureDOM();
-    const activities = setup.activities.filter(a=>a.name.trim()).map(a=>({id:a.id,name:a.name.trim(),duration_minutes:Math.max(15,a.hours*60+a.mins),color:a.color,chime_enabled:a.chime_enabled!==false,timing:a.timing||'flexible',fixed_time:a.timing==='fixed'?(a.fixed_time||'12:00'):undefined,days:Array.isArray(a.days)?a.days:Array(7).fill(true)}));
+    const activities = setup.activities.filter(a=>a.name.trim()).map(a=>{
+      const timing=a.timing||'flexible';
+      const isFixed=timing==='fixed';
+      const hasRange = isFixed && a.fixed_start && a.fixed_end;
+      const duration = hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(15,(a.hours||0)*60+(a.mins||0));
+      return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_enabled:a.chime_enabled!==false,timing,
+        fixed_start:isFixed&&a.fixed_start?a.fixed_start:undefined,
+        fixed_end:isFixed&&a.fixed_end?a.fixed_end:undefined,
+        goal_time:(timing==='flexible'&&a.goal_time)?a.goal_time:undefined,
+        days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
+    });
     // Either a single day or the whole week may be left empty (a clean/blank slate).
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
     const sched = {wake_time:wakeTime,activities}, empty = {wake_time:wakeTime,activities:[]};

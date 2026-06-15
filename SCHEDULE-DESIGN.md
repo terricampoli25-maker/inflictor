@@ -75,7 +75,20 @@ The examples above are illustrative, not final.
   - Bake in: **stronger highlight** for chosen days, and the **10 day pills on one line**.
   - Data impact: each activity stores `days`; saving builds each day's schedule from the
     activities whose `days` include it (maps onto existing per-date day-overrides).
-### Time inputs in the box (Phase 3 detail)
+### REVISED timing model (user, 2026-06-15) — no auto-cascade
+- **No automatic sequencing.** The old cascade (each flexible activity auto-starting where
+  the previous ended → 4:00, 5:00, 6:00 piled together) is WRONG and removed. Times are
+  only what the user explicitly sets.
+- **Fixed** = start + end time inputs, **blank by default** (user fills them). Shows the
+  range on the planner; nothing if left blank.
+- **Flexible** = a duration **plus an OPTIONAL "~ish" goal time** the user can set.
+  - If set → planner shows "~that time".
+  - If blank → **no time shows** for that activity (just the activity itself).
+  - "Flexible" means ONLY: these times may **shift** when the user wakes late or pauses.
+- **Anytime** = no time, lives in "Sometime Today".
+- **Per-activity edit pencil removed** (it duplicated the day-edit). Day-header pencil stays.
+
+### Time inputs in the box (Phase 3 detail — superseded by REVISED model above)
 - **Three linked fields — set any TWO, the third auto-computes:**
   - start + end → **duration** (4:20→5:40 = 1h20m)
   - start + duration → **end** (4:20 + 1h20m = 5:40)

@@ -115,21 +115,34 @@ function createActivationWindow() {
   actWin.on('closed', () => { actWin = null; });
 }
 
-// ── Boot ──────────────────────────────────────────────────────
-app.whenReady().then(() => {
-  // Windows app identity — lets the installed app group & pin correctly on the taskbar
-  if (process.platform === 'win32') app.setAppUserModelId('com.inflictor.app');
-  startServer(port => {
-    staticPort = port;
-    if (!ACTIVATION_ENABLED) {
-      // Beta mode — go straight to app
-      createMainWindow();
-    } else {
-      // Production mode — show activation gate first
-      createActivationWindow();
-    }
+// ── Single instance ───────────────────────────────────────────
+// The app serves on a fixed port (37842); two copies would fight over it and
+// hang. Allow only one instance — a second launch focuses the existing window.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    const win = mainWin || actWin;
+    if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
   });
-});
+
+  // ── Boot ──────────────────────────────────────────────────────
+  app.whenReady().then(() => {
+    // Windows app identity — lets the installed app group & pin correctly on the taskbar
+    if (process.platform === 'win32') app.setAppUserModelId('com.inflictor.app');
+    startServer(port => {
+      staticPort = port;
+      if (!ACTIVATION_ENABLED) {
+        // Beta mode — go straight to app
+        createMainWindow();
+      } else {
+        // Production mode — show activation gate first
+        createActivationWindow();
+      }
+    });
+  });
+}
 
 // ── Activation IPC (renderer → main) ─────────────────────────
 ipcMain.on('activation-success', () => {
