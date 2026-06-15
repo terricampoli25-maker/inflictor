@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, net } = require('electron');
 const path    = require('path');
 const http    = require('http');
 const https   = require('https');
@@ -24,24 +24,40 @@ function startServer(callback) {
   const srv = http.createServer((req, res) => {
 
     if (req.url.startsWith('/api/')) {
-      const target    = new URL(req.url, CLOUDFLARE_API);
-      const transport = target.protocol === 'https:' ? https : http;
-      const options   = {
-        hostname: target.hostname,
-        port:     target.port || (target.protocol === 'https:' ? 443 : 80),
-        path:     target.pathname + target.search,
-        method:   req.method,
-        headers:  { ...req.headers, host: target.hostname },
-      };
-      const proxy = transport.request(options, pres => {
-        res.writeHead(pres.statusCode, pres.headers);
-        pres.pipe(res);
+      const target = new URL(req.url, CLOUDFLARE_API);
+
+      // Proxy via Electron's net module (Chromium network stack) rather than
+      // Node's https. Chromium trusts the OS certificate store — the same one
+      // the browser uses — so connections still work when a VPN/antivirus
+      // intercepts HTTPS with its own certificate. Node's bundled CA list does
+      // not include those, which caused UNABLE_TO_VERIFY_LEAF_SIGNATURE.
+      // Forward only the headers the API needs. Forwarding raw browser
+      // headers (sec-fetch-*, origin, content-length, etc.) makes Electron's
+      // net reject the request with ERR_INVALID_ARGUMENT. net computes
+      // Host/Content-Length itself from the URL and the body we write.
+      const FORWARD = ['content-type', 'authorization', 'cookie', 'accept'];
+      const proxy = net.request({ method: req.method, url: target.href });
+      for (const name of FORWARD) {
+        const v = req.headers[name];
+        if (v !== undefined) proxy.setHeader(name, v);
+      }
+      proxy.on('response', pres => {
+        // Electron's net already decompressed the body, so drop the upstream
+        // content-encoding/length (and transfer-encoding) — otherwise the page
+        // tries to decompress plain JSON again and ends up with an empty body.
+        const h = { ...pres.headers };
+        delete h['content-encoding']; delete h['content-length']; delete h['transfer-encoding'];
+        res.writeHead(pres.statusCode, h);
+        pres.on('data', chunk => res.write(chunk));
+        pres.on('end',  ()    => res.end());
       });
-      proxy.on('error', () => {
+      proxy.on('error', (err) => {
+        console.error('[PROXY ERROR]', req.method, req.url, '->', target.href, '|', err.code || err.message, err);
         res.writeHead(503, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: 'offline' }));
       });
-      req.pipe(proxy);
+      req.on('data', chunk => proxy.write(chunk));
+      req.on('end',  ()    => proxy.end());
       return;
     }
 
@@ -76,6 +92,10 @@ function createMainWindow() {
   });
   mainWin.loadURL(`http://127.0.0.1:${staticPort}/`);
   mainWin.setMenuBarVisibility(false);
+  // TEMP DIAGNOSTIC: forward the renderer's console (logs + errors) to stdout
+  mainWin.webContents.on('console-message', (_e, level, message, line, sourceId) => {
+    console.log(`[renderer:${level}] ${message}` + (sourceId ? `  (${sourceId}:${line})` : ''));
+  });
   mainWin.on('closed', () => { mainWin = null; });
 }
 
@@ -97,6 +117,8 @@ function createActivationWindow() {
 
 // ── Boot ──────────────────────────────────────────────────────
 app.whenReady().then(() => {
+  // Windows app identity — lets the installed app group & pin correctly on the taskbar
+  if (process.platform === 'win32') app.setAppUserModelId('com.inflictor.app');
   startServer(port => {
     staticPort = port;
     if (!ACTIVATION_ENABLED) {
