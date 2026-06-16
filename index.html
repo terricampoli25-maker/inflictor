@@ -242,6 +242,9 @@
     .slot-memo-btn:hover{opacity:1!important}
     .slot-memo-btn.has-memo{opacity:1;color:#3b82f6}
     .slot-time{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--accent);line-height:1.15;margin:1px 0}
+    .t-star{color:#000;font-size:.6rem;font-weight:400;vertical-align:middle}
+    .spill-section{margin-bottom:4px}
+    .spill-section .slot{border-left-color:#c77a30}
     .slot-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:var(--text);line-height:1.2;display:flex;align-items:center;gap:.3rem}
     .slot-bell{font-size:.65rem;opacity:.55;flex-shrink:0}
     .chime-btn{font-size:.9rem;line-height:1;background:none;border:1px solid var(--border);width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,border-color .2s}
@@ -327,6 +330,12 @@
     #memo-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s ease}
     #memo-overlay.visible{opacity:1;pointer-events:all}
     #memo-overlay.gone{display:none}
+    #conflict-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s ease}
+    #conflict-overlay.visible{opacity:1;pointer-events:all}
+    #conflict-overlay.gone{display:none}
+    .conflict-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-top:4px solid #3b82f6;border-radius:2px;padding:1.5rem 1.6rem;width:min(430px,92vw);text-align:center;box-shadow:0 30px 100px var(--shadow)}
+    .conflict-icon{width:46px;height:46px;border-radius:50%;background:#3b82f6;color:#fff;font-family:var(--font-display);font-size:1.7rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto .8rem}
+    .conflict-msg{font-family:var(--font-body);font-size:.95rem;line-height:1.6;color:var(--text);margin-bottom:1.2rem}
     .memo-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:1.4rem 1.5rem;width:460px;max-width:94vw;box-shadow:0 30px 100px var(--shadow)}
     .memo-title{font-family:var(--font-display);font-size:1rem;letter-spacing:.06em;color:var(--text);margin-bottom:.7rem}
     .memo-textarea{width:100%;min-height:130px;background:transparent;border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:.85rem;padding:.6rem;resize:vertical;outline:none;line-height:1.5}
@@ -575,6 +584,15 @@
   </div>
 </div>
 
+<!-- Conflict reminder overlay (blue, friendly heads-up — never a block) -->
+<div id="conflict-overlay" class="gone">
+  <div class="conflict-box">
+    <div class="conflict-icon">!</div>
+    <div class="conflict-msg" id="conflict-msg"></div>
+    <button class="btn btn-primary" style="width:auto;padding:.5rem 1.5rem" onclick="Planner.closeConflict()">OK</button>
+  </div>
+</div>
+
 <!-- Settings overlay -->
 <div id="settings-overlay" class="gone">
   <div class="settings-box">
@@ -609,6 +627,14 @@
           </div>
         </div>
         <div class="set-row"><span class="set-row-label">Email</span><span class="set-row-hint" id="s-email"></span></div>
+        <div class="set-row">
+          <span class="set-row-label">Profile picture</span>
+          <div style="display:flex;gap:.4rem;align-items:center">
+            <button class="btn btn-ghost" style="width:auto;padding:.4rem .8rem;font-size:.82rem" onclick="document.getElementById('avatar-file').click()">Upload</button>
+            <button class="btn btn-ghost" style="width:auto;padding:.4rem .8rem;font-size:.82rem" onclick="Settings.removeAvatar()">Remove</button>
+            <input type="file" id="avatar-file" accept="image/*" style="display:none" onchange="Settings.uploadAvatar(this)">
+          </div>
+        </div>
       </div>
 
       <div class="set-section">
@@ -741,9 +767,9 @@
         <div class="guide-block">
           <h4>Fixed, Flexible &amp; Anytime</h4>
           <p>Each activity has a timing type:</p>
-          <p><b>Fixed</b> — happens at a set clock time you can't move (an appointment, your meds). Enter a <b>start and end time</b>; it always shows that time and never shifts.</p>
-          <p><b>Flexible</b> — has a duration, plus an optional <b>"-ish" time</b> (beside the toggles) for *about* when you'd like to do it. Set it and the block shows "~that time"; leave it blank and no time shows. Flexible activities can <b>shift</b> if you wake late or pause.</p>
-          <p><b>Anytime</b> — no set time at all; it just needs doing that day. It appears in <b>"Sometime Today"</b> at the bottom of the day.</p>
+          <p><b>Fixed</b> — a set <b>start and end time that never moves</b> (an appointment, your meds). Shown with a <b>★</b> on the planner.</p>
+          <p><b>Flexible</b> — also a <b>start and end time</b>, but it <b>can shift</b> if you wake late or pause. Shown with a <b>~</b> on the planner.</p>
+          <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -780,9 +806,9 @@
         <div class="guide-block">
           <h4>Fixed, Flexible &amp; Anytime</h4>
           <p>Each act hath a manner of timing:</p>
-          <p><b>Fixed</b> — bound to an hour thou canst not move (an appointment, thy medicine). Give it a <b>start and end</b>; it holds that hour and never strays.</p>
-          <p><b>Flexible</b> — hath a length, and a hopeful <b>"-ish" hour</b> (beside the toggles) for *about* when thou wouldst do it. Set it and the block shows "~that hour"; leave it bare and no hour shows. Flexible acts may <b>shift</b> shouldst thou wake late or pause.</p>
-          <p><b>Anytime</b> — bound to no hour; it need only be done that day. It rests in <b>"Sometime Today"</b> at the foot of the day.</p>
+          <p><b>Fixed</b> — a set <b>start and end thou canst not move</b> (an appointment, thy medicine). Marked with a <b>★</b> upon the stage.</p>
+          <p><b>Flexible</b> — likewise a <b>start and end</b>, yet it <b>may shift</b> shouldst thou wake late or pause. Marked with a <b>~</b>.</p>
+          <p><b>Anytime</b> — bound to no hour; it need only be done that day. It rests in <b>"Sometime Today"</b>, and thou mayest set an <b>"-ish" hour</b> as a hopeful mark.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -969,6 +995,13 @@
     let h = 0; for (const c of (username||'?')) h = (h<<5)-h+c.charCodeAt(0)|0;
     return palette[Math.abs(h) % palette.length];
   }
+  // Show the user's uploaded picture in the avatar circle (stored on device), else the initial.
+  function applyAvatar() {
+    const av = el('ah-avatar'); if (!av) return;
+    const img = localStorage.getItem('inflictor_avatar');
+    if (img) { av.style.backgroundImage = `url('${img}')`; av.style.backgroundSize = 'cover'; av.style.backgroundPosition = 'center'; av.textContent = ''; }
+    else { av.style.backgroundImage = ''; av.textContent = (S.user?.username || '?')[0].toUpperCase(); }
+  }
 
   function msg(type, text) {
     const m = el('auth-msg'); m.className = 'msg';
@@ -1095,7 +1128,7 @@
     el('ah-username').textContent = u?.username || '';
     // Avatar
     const av = el('ah-avatar');
-    if (av) { av.textContent = (u?.username||'?')[0].toUpperCase(); av.style.background = avatarColor(u?.username||''); }
+    if (av) { av.textContent = (u?.username||'?')[0].toUpperCase(); av.style.background = avatarColor(u?.username||''); applyAvatar(); }
     el('guest-banner').style.display = u?.is_guest ? 'flex' : 'none';
     el('app').classList.add('visible');
     // Sync font + avatar colour from settings
@@ -1130,6 +1163,7 @@
   App.applyTheme = applyTheme;
   App.applyFont = applyFont;
   App.avatarColor = avatarColor;
+  App.applyAvatar = applyAvatar;
   App.getUser = () => S.user;
   App.updateUsername = name => { if (S.user) { S.user.username = name; el('ah-username').textContent = name; const av=el('ah-avatar'); if(av) av.textContent=name[0].toUpperCase(); } };
   init();
@@ -1270,17 +1304,17 @@ window.Planner = (() => {
   // Flexible items cascade from wake time; Fixed items sit at their own clock time.
   // Times come ONLY from what the user set: Fixed = its start/end; Flexible = its
   // optional ~goal time. No auto-sequencing. Anytime has none.
-  function computeDayTimes(acts) {
+  function computeDayTimes(acts, offset = 0) {
     const out = {};
     for (const a of acts || []) {
       const timing = a.timing || 'flexible';
-      if (timing === 'fixed' && a.fixed_start) {
-        const start = parseTime(a.fixed_start);
-        const end = a.fixed_end ? parseTime(a.fixed_end) : start + (a.duration_minutes || 0);
-        out[a.id] = { start, end: Math.max(end, start), fixed: true };
-      } else if (timing === 'flexible' && a.goal_time) {
-        out[a.id] = { start: parseTime(a.goal_time), fixed: false };
+      if ((timing === 'fixed' || timing === 'flexible') && a.fixed_start) {
+        const shift = (timing === 'flexible') ? offset : 0;   // fixed never moves; flexible shifts
+        const start = parseTime(a.fixed_start) + shift;
+        const end = (a.fixed_end ? parseTime(a.fixed_end) : parseTime(a.fixed_start) + (a.duration_minutes || 0)) + shift;
+        out[a.id] = { start, end: Math.max(end, start), fixed: timing === 'fixed' };
       }
+      // anytime: no slot time — its optional "~ish" shows in "Sometime Today"
     }
     return out;
   }
@@ -1317,7 +1351,7 @@ window.Planner = (() => {
       wakeOffset = 0;
       localStorage.removeItem('inflictor_wake_offset_'+todayStr);
     }
-    scheduleNotifs();
+    scheduleNotifs(); render();   // re-show today's flexible times shifted
   }
 
   // ── Activity memos (device-local for now; server sync is a TODO) ─
@@ -1342,6 +1376,33 @@ window.Planner = (() => {
   function closeMemo() {
     const ov = document.getElementById('memo-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 300);
     memoTarget = null;
+  }
+
+  // ── Conflict reminders — a Flexible activity overlapping a Fixed one ──
+  function detectConflicts(acts) {
+    const out = [];
+    const timed = [];
+    for (const a of acts||[]) {
+      const t = a.timing || 'flexible';
+      if ((t==='fixed'||t==='flexible') && a.fixed_start) {
+        timed.push({ name:a.name, s:parseTime(a.fixed_start), e: a.fixed_end?parseTime(a.fixed_end):parseTime(a.fixed_start)+(a.duration_minutes||0) });
+      } else if (t==='anytime' && a.goal_time) {   // anytime only clashes if it has an ~ish time
+        timed.push({ name:a.name, s:parseTime(a.goal_time), e:parseTime(a.goal_time)+(a.duration_minutes||0) });
+      }
+    }
+    for (let i=0;i<timed.length;i++) for (let j=i+1;j<timed.length;j++) {
+      const A=timed[i], B=timed[j];
+      if (A.s < B.e && B.s < A.e) out.push(`“${A.name}” (${fmtClock(A.s)}–${fmtClock(A.e)}) and “${B.name}” (${fmtClock(B.s)}–${fmtClock(B.e)}) overlap.`);
+    }
+    return out;
+  }
+  function showConflicts(list) {
+    const m = document.getElementById('conflict-msg');
+    m.innerHTML = (list.length>1 ? 'A couple of timing clashes to know about:' : 'A timing clash to know about:') + '<br><br>' + list.map(s=>esc(s)).join('<br><br>');
+    const ov = document.getElementById('conflict-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+  }
+  function closeConflict() {
+    const ov = document.getElementById('conflict-overlay'); ov.classList.remove('visible'); setTimeout(()=>ov.classList.add('gone'),250);
   }
 
   // ── Notifications ──────────────────────────────────────────────
@@ -1427,8 +1488,46 @@ window.Planner = (() => {
     });
   }
 
+  // Today's FLEXIBLE activities pushed past midnight (late wake / long pause) spill to tomorrow.
+  function spilloverItems() {
+    const offset = wakeOffset + pauseOffset;
+    if (offset <= 0) return [];
+    const todayStr = toISO(new Date());
+    const out = [];
+    for (const a of getDaySchedule(todayStr)?.activities || []) {
+      if ((a.timing || 'flexible') !== 'flexible' || !a.fixed_start) continue;
+      const s = parseTime(a.fixed_start) + offset;
+      if (s >= 1440) {
+        const e = (a.fixed_end ? parseTime(a.fixed_end) : parseTime(a.fixed_start) + (a.duration_minutes||0)) + offset;
+        out.push({ act: a, start: s - 1440, end: e - 1440 });
+      }
+    }
+    return out;
+  }
+  function renderSpilloverHtml() {
+    const items = spilloverItems();
+    if (!items.length) return '';
+    const todayStr = toISO(new Date());
+    const rows = items.map(({act, start, end}) => {
+      const key = `${todayStr}:${act.id}`, status = taskStatus[key]||'none';
+      const hasMemo = !!getMemo(todayStr, act.id);
+      return `<div class="slot slot-${status}" style="height:80px" data-key="${esc(key)}">
+        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div><div class="slot-time">↪ ~${fmtClock(start)}–${fmtClock(end)}</div></div>
+        <div class="slot-indicators">
+          <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${todayStr}','${esc(act.id)}')" title="Memo">M</button>
+          <span class="slot-check-group">
+            <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${todayStr}','${esc(act.id)}','${esc(act.name)}','completed',this.checked)" title="Completed">
+            <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${todayStr}','${esc(act.id)}','${esc(act.name)}','failed',this.checked)" title="Not completed">
+          </span>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="spill-section"><div class="anytime-header">↪ FROM YESTERDAY</div>${rows}</div>`;
+  }
+
   function renderCol(day, i) {
     const ds = toISO(day), today = isToday(day);
+    const isTomorrow = (() => { const d = new Date(day); d.setDate(d.getDate()-1); return isToday(d); })();
     const mon = day.toLocaleDateString('en-GB',{month:'short'});
     const dayHasMemo = !!(weekData?.notes?.[ds] || '').trim();
     const hdr = `<div class="col-header${today?' today':''}">
@@ -1441,15 +1540,16 @@ window.Planner = (() => {
       </button></div>`;
     const daySched = getDaySchedule(ds);
     const acts = daySched?.activities || [];
-    const times = computeDayTimes(acts);
+    const times = computeDayTimes(acts, today ? (wakeOffset + pauseOffset) : 0);   // only today shifts
     const isAnytime = a => (a.timing || 'flexible') === 'anytime';
     const timedHtml = acts.map((act, ai) => {
       if (isAnytime(act)) return '';   // anytime activities render in "Sometime Today" below
+      if (today && times[act.id] && times[act.id].start >= 1440) return '';   // spilled to tomorrow
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none', px = slotPx(act.duration_minutes);
       const isPausedSlot = pausedSlotKeys.has(key);
       const hasMemo = !!getMemo(ds, act.id);
       const t = times[act.id];
-      const timeBig = t ? (t.fixed ? `${fmtClock(t.start)}–${fmtClock(t.end)}` : `~${fmtClock(t.start)}`) : '';
+      const timeBig = t ? (t.fixed ? `<span class="t-star">★</span> ${fmtClock(t.start)}–${fmtClock(t.end)}` : `~ ${fmtClock(t.start)}–${fmtClock(t.end)}`) : '';
       return `<div class="slot slot-${status}${isPausedSlot?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
         <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
@@ -1466,7 +1566,7 @@ window.Planner = (() => {
     const anytimeHtml = acts.filter(isAnytime).map(act => {
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none';
       const hasMemo = !!getMemo(ds, act.id);
-      const durLabel = act.duration_minutes ? `<span class="anytime-dur">${fmtDur(act.duration_minutes)}</span>` : '';
+      const durLabel = (act.goal_time ? `<span class="anytime-dur">~${fmtClock(parseTime(act.goal_time))}</span>` : '') + (act.duration_minutes ? `<span class="anytime-dur">${fmtDur(act.duration_minutes)}</span>` : '');
       return `<div class="anytime-item slot-${status}" data-key="${esc(key)}">
         <div class="anytime-name-row"><span class="anytime-name">${esc(act.name)}</span>${durLabel}</div>
         <div class="slot-indicators">
@@ -1479,7 +1579,7 @@ window.Planner = (() => {
       </div>`;
     }).join('');
     const anytimeSection = anytimeHtml ? `<div class="anytime-section"><div class="anytime-header">SOMETIME TODAY</div>${anytimeHtml}</div>` : '';
-    return `<div class="planner-col" data-date="${ds}">${hdr}<div class="col-slots">${slots}</div>${anytimeSection}<div class="col-notes"><textarea id="note-${ds}" class="col-note" placeholder="Day memo…"></textarea></div></div>`;
+    return `<div class="planner-col" data-date="${ds}">${hdr}${isTomorrow ? renderSpilloverHtml() : ''}<div class="col-slots">${slots}</div>${anytimeSection}<div class="col-notes"><textarea id="note-${ds}" class="col-note" placeholder="Day memo…"></textarea></div></div>`;
   }
 
   function setStatus(dateStr, actId, actName, newStatus, isChecked) {
@@ -1586,11 +1686,12 @@ window.Planner = (() => {
       const row = document.querySelector(`#setup-acts-list .act-row[data-id="${act.id}"]`);
       if (!row) return;
       act.name  = row.querySelector('.act-name-input')?.value ?? act.name;
-      if ((act.timing || 'flexible') === 'fixed') {
+      const tm = act.timing || 'flexible';
+      if (tm === 'fixed' || tm === 'flexible') {
         const fs = row.querySelector('.fixed-start'), fe = row.querySelector('.fixed-end');
         if (fs) act.fixed_start = fs.value;   // may be '' (cleared) — keep it
         if (fe) act.fixed_end = fe.value;
-      } else {
+      } else {   // anytime
         const ns = row.querySelectorAll('.dur-num');
         const h = parseInt(ns[0]?.value, 10); if (!isNaN(h) && h >= 0) act.hours = h;
         const m = parseInt(ns[1]?.value, 10); if (!isNaN(m) && m >= 0) act.mins  = m;
@@ -1642,17 +1743,17 @@ window.Planner = (() => {
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
           <input class="form-input act-name-input" type="text" placeholder="Activity name…" value="${esc(act.name)}">
-          ${act.timing==='fixed'
+          ${(act.timing==='fixed'||act.timing==='flexible')
             ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Start time"><span class="dur-unit">to</span><input class="fixed-tt fixed-end" type="time" value="${esc(act.fixed_end||'')}" title="End time"></div>`
             : `<div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`}
         </div>
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
         <div class="act-row-foot">
           <div class="act-timing">
-            <button class="timing-opt${act.timing==='fixed'?' on':''}" onclick="Planner.setTiming('${act.id}','fixed')" title="Pinned to a clock time — never moves">Fixed</button>
-            <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="Optional ~goal time; can shift when you wake late or pause">Flexible</button>
-            <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="No set time — just sometime that day">Anytime</button>
-            ${act.timing==='flexible' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
+            <button class="timing-opt${act.timing==='fixed'?' on':''}" onclick="Planner.setTiming('${act.id}','fixed')" title="A set start–end time that never moves (★)">Fixed</button>
+            <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
+            <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
+            ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
             <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
@@ -1700,13 +1801,13 @@ window.Planner = (() => {
     captureDOM();
     const activities = setup.activities.filter(a=>a.name.trim()).map(a=>{
       const timing=a.timing||'flexible';
-      const isFixed=timing==='fixed';
-      const hasRange = isFixed && a.fixed_start && a.fixed_end;
+      const isRange = timing==='fixed' || timing==='flexible';
+      const hasRange = isRange && a.fixed_start && a.fixed_end;
       const duration = hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(15,(a.hours||0)*60+(a.mins||0));
       return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_enabled:a.chime_enabled!==false,timing,
-        fixed_start:isFixed&&a.fixed_start?a.fixed_start:undefined,
-        fixed_end:isFixed&&a.fixed_end?a.fixed_end:undefined,
-        goal_time:(timing==='flexible'&&a.goal_time)?a.goal_time:undefined,
+        fixed_start:isRange&&a.fixed_start?a.fixed_start:undefined,
+        fixed_end:isRange&&a.fixed_end?a.fixed_end:undefined,
+        goal_time:(timing==='anytime'&&a.goal_time)?a.goal_time:undefined,
         days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
     });
     // Either a single day or the whole week may be left empty (a clean/blank slate).
@@ -1732,7 +1833,9 @@ window.Planner = (() => {
       ]);
       weekData.schedule=sched;
     }
+    const conflicts = detectConflicts(activities);
     closeSetup(); render(); scheduleNotifs();
+    if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
   }
 
   async function init() {
@@ -1783,7 +1886,7 @@ window.Planner = (() => {
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
-    openMemo, saveMemo, closeMemo,
+    openMemo, saveMemo, closeMemo, closeConflict,
     updateAnytimeText, removeAnytime, setAnytimeStatus, toggleAnytimePause,
     shift: (unit, dir) => {
       weekStart = new Date(weekStart);
@@ -1886,6 +1989,26 @@ window.Settings = (() => {
     m.className = `msg ${type} show`; m.textContent = text;
     setTimeout(() => m.classList.remove('show'), 3200);
   }
+  // Profile picture — resized small and stored on device (localStorage)
+  function uploadAvatar(input) {
+    const file = input.files && input.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const size = 96, c = document.createElement('canvas'); c.width = size; c.height = size;
+        const ctx = c.getContext('2d');
+        const scale = Math.max(size/img.width, size/img.height), w = img.width*scale, h = img.height*scale;
+        ctx.drawImage(img, (size-w)/2, (size-h)/2, w, h);
+        try { localStorage.setItem('inflictor_avatar', c.toDataURL('image/jpeg', 0.85)); App.applyAvatar(); flashMsg('Picture updated.','success'); }
+        catch { flashMsg('That image is too large to save.','error'); }
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+  function removeAvatar() { localStorage.removeItem('inflictor_avatar'); App.applyAvatar(); flashMsg('Picture removed.','success'); }
 
   // ── Profile ──────────────────────────────────────────────────────
   async function saveName() {
@@ -2037,7 +2160,7 @@ window.Settings = (() => {
 
   return {
     open, close, showView, loadMore, setGuideMode,
-    saveName, setTheme, setPremiumTheme, setFont, setPremiumFont,
+    saveName, setTheme, setPremiumTheme, setFont, setPremiumFont, uploadAvatar, removeAvatar,
     setWeekDay, saveSchedule,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
