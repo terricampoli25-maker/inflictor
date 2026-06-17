@@ -6,6 +6,26 @@ move finished items to **Done**.
 ## WORKFLOW (user, 2026-06-14): one bug at a time, found through testing.
 User will test, report a single bug, we fix + verify that one, then next. No batch runs.
 
+## ✅ CURRENT STATE — 2026-06-17, build 1.0.9 (user is doing a full test pass)
+Everything from the 2026-06-16/17 batches is BUILT, and the backend is DEPLOYED to production.
+Shipped & live in **1.0.9**:
+- Pause→"Pause Activities Now", "Woke up today at", tutorial "two kinds of pause" (1.0.4)
+- Day-persistence fix — customized days survive a whole-week save (1.0.5)
+- Sustenance 🍴 type (splits the host activity into two boxes) + chronological auto-sort (1.0.7)
+- Single-activity ✎ editor + "app as a record" (1.0.3)
+- **Memo sync + pause-memo** — memos & pause notes persist server-side (1.0.8, deploy #1)
+- **Sound prefs + profile picture sync** (1.0.9, deploy #2) → "everything persists" essentially done
+- Reset-today button REMOVED (user rejected); ✕ Cancel clears a stuck pause-shift instead
+- Tutorial kept current both tabs throughout
+
+OPEN / FUTURE (not blocking beta):
+- `scheduleNotifs` still uses OLD uniform-pauseOffset (should use `computeDayTimes`) — low impact, notifs usually off
+- No "reset a customized day back to the week default" path (once custom, stays custom)
+- Dead code to prune someday: `anytimeItems`/`renderAnytime` (free-text Sometime-Today, never rendered)
+- Bundle fonts locally (Google Fonts dependency); auto-updater (electron-updater) so testers don't reinstall
+- GIT: nothing committed/pushed this whole run; the DEPLOYED backend is NOT in git history yet — user may want a checkpoint
+- DEPLOY RECIPE: `NODE_OPTIONS=--use-system-ca` + wrangler (already logged in) + deploy a CLEAN /tmp staging dir (NEVER `.`) to branch **fresh-main**
+
 ## Up next / open  — BATCH from user 2026-06-16 (no longer worked in order — see workflow above)
 
 > **UPDATE 2026-06-16 (post-1.0.3):** User rejected the "↺ Reset today's times" button — said

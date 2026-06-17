@@ -42,6 +42,9 @@ CREATE TABLE IF NOT EXISTS settings (
   week_start_day       INTEGER NOT NULL DEFAULT 0,   -- 0=Sunday 1=Monday
   avatar_color         TEXT             DEFAULT '#d4af37',
   font_style           TEXT             DEFAULT 'classic',
+  cheer_enabled        INTEGER NOT NULL DEFAULT 1,
+  aww_enabled          INTEGER NOT NULL DEFAULT 1,
+  avatar_data          TEXT,
   updated_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -110,8 +113,20 @@ CREATE TABLE IF NOT EXISTS history (
   UNIQUE(user_id, date)
 );
 
+-- Per-activity memos (and pause notes) — synced so they survive reinstalls/devices.
+CREATE TABLE IF NOT EXISTS memos (
+  id         TEXT PRIMARY KEY NOT NULL,
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date       TEXT NOT NULL,
+  item_id    TEXT NOT NULL,                      -- activity id, or a pause-note key
+  content    TEXT NOT NULL DEFAULT '',
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(user_id, date, item_id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_sessions_token        ON sessions(token);
+CREATE INDEX IF NOT EXISTS idx_memos_user_date       ON memos(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user         ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_user            ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_weekly_user           ON weekly_schedules(user_id);

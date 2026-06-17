@@ -166,11 +166,12 @@ async function handleSettings(segments, request, env) {
   if (request.method === 'GET') return json(await db.prepare('SELECT * FROM settings WHERE user_id=?').bind(s.user_id).first() || {});
 
   if (request.method === 'PUT') {
-    const { theme, wake_time, sound_enabled, notification_enabled, notification_repeat, week_start_day, avatar_color, font_style } =
+    const { theme, wake_time, sound_enabled, notification_enabled, notification_repeat, week_start_day, avatar_color, font_style,
+            cheer_enabled, aww_enabled, avatar_data } =
       await request.json().catch(() => ({}));
     await db.prepare(`
-      INSERT INTO settings (user_id,theme,wake_time,sound_enabled,notification_enabled,notification_repeat,week_start_day,avatar_color,font_style)
-      VALUES (?,?,?,?,?,?,?,?,?)
+      INSERT INTO settings (user_id,theme,wake_time,sound_enabled,notification_enabled,notification_repeat,week_start_day,avatar_color,font_style,cheer_enabled,aww_enabled,avatar_data)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
       ON CONFLICT(user_id) DO UPDATE SET
         theme=COALESCE(excluded.theme,theme), wake_time=COALESCE(excluded.wake_time,wake_time),
         sound_enabled=COALESCE(excluded.sound_enabled,sound_enabled),
@@ -179,9 +180,13 @@ async function handleSettings(segments, request, env) {
         week_start_day=COALESCE(excluded.week_start_day,week_start_day),
         avatar_color=COALESCE(excluded.avatar_color,avatar_color),
         font_style=COALESCE(excluded.font_style,font_style),
+        cheer_enabled=COALESCE(excluded.cheer_enabled,cheer_enabled),
+        aww_enabled=COALESCE(excluded.aww_enabled,aww_enabled),
+        avatar_data=COALESCE(excluded.avatar_data,avatar_data),
         updated_at=datetime('now')
     `).bind(s.user_id, theme??null, wake_time??null, sound_enabled??null, notification_enabled??null,
-            notification_repeat??null, week_start_day??null, avatar_color??null, font_style??null).run();
+            notification_repeat??null, week_start_day??null, avatar_color??null, font_style??null,
+            cheer_enabled??null, aww_enabled??null, avatar_data??null).run();
     return json(await db.prepare('SELECT * FROM settings WHERE user_id=?').bind(s.user_id).first());
   }
   return json({ error: 'Method not allowed' }, 405);
@@ -203,18 +208,20 @@ async function handlePlanner(segments, request, env) {
     const sd=new Date(`${start}T12:00:00Z`), dow=sd.getUTCDay(), monDate=new Date(sd);
     monDate.setUTCDate(sd.getUTCDate()+(dow===0?-6:1-dow));
     const monStr=monDate.toISOString().split('T')[0];
-    const [schedRow,ovr,notes,logs] = await Promise.all([
+    const [schedRow,ovr,notes,logs,memosR] = await Promise.all([
       db.prepare('SELECT schedule_data FROM weekly_schedules WHERE user_id=? AND week_start=?').bind(uid,monStr).first(),
       db.prepare('SELECT date,schedule_data FROM daily_schedules WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
       db.prepare('SELECT date,content FROM notes WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
       db.prepare('SELECT date,task_id,task_name,status FROM task_logs WHERE user_id=? AND date>=? AND date<=? ORDER BY logged_at DESC').bind(uid,start,end).all(),
+      db.prepare('SELECT date,item_id,content FROM memos WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
     ]);
     const parse = s => { try{return JSON.parse(s);}catch{return s;} };
-    const dailyOverrides={}, noteMap={}, seen=new Set(), taskLogs=[];
+    const dailyOverrides={}, noteMap={}, memoMap={}, seen=new Set(), taskLogs=[];
     for (const r of ovr.results||[]) dailyOverrides[r.date]=parse(r.schedule_data);
     for (const r of notes.results||[]) noteMap[r.date]=r.content;
+    for (const r of memosR.results||[]) memoMap[`${r.date}:${r.item_id}`]=r.content;
     for (const l of logs.results||[]) { const k=`${l.date}:${l.task_id||l.task_name}`; if(!seen.has(k)){seen.add(k);taskLogs.push(l);} }
-    return json({ schedule: schedRow?parse(schedRow.schedule_data):null, dailyOverrides, notes:noteMap, taskLogs });
+    return json({ schedule: schedRow?parse(schedRow.schedule_data):null, dailyOverrides, notes:noteMap, memos:memoMap, taskLogs });
   }
   if (seg==='schedule'&&request.method==='PUT') {
     const {week_start,schedule_data}=await request.json().catch(()=>({}));
@@ -234,6 +241,16 @@ async function handlePlanner(segments, request, env) {
     const {date,content=''}=await request.json().catch(()=>({}));
     if (!date) return json({error:'date required'},400);
     await db.prepare(`INSERT INTO notes (id,user_id,date,content,updated_at) VALUES (?,?,?,?,datetime('now')) ON CONFLICT(user_id,date) DO UPDATE SET content=excluded.content,updated_at=datetime('now')`).bind(newId(),uid,date,content).run();
+    return json({ok:true});
+  }
+  if (seg==='memo'&&request.method==='PUT') {
+    const {date,item_id,content=''}=await request.json().catch(()=>({}));
+    if (!date||!item_id) return json({error:'date and item_id required'},400);
+    if (!content) {
+      await db.prepare('DELETE FROM memos WHERE user_id=? AND date=? AND item_id=?').bind(uid,date,item_id).run();
+    } else {
+      await db.prepare(`INSERT INTO memos (id,user_id,date,item_id,content,updated_at) VALUES (?,?,?,?,?,datetime('now')) ON CONFLICT(user_id,date,item_id) DO UPDATE SET content=excluded.content,updated_at=datetime('now')`).bind(newId(),uid,date,item_id,content).run();
+    }
     return json({ok:true});
   }
   if (seg==='task-log'&&request.method==='POST') {
@@ -446,7 +463,7 @@ async function handleStripeWebhook(request, env) {
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 
-const PLANNER_SEGS=new Set(['week','schedule','day-override','note','task-log']);
+const PLANNER_SEGS=new Set(['week','schedule','day-override','note','task-log','memo']);
 
 export async function onRequest(context) {
   const {request,env,params}=context;
