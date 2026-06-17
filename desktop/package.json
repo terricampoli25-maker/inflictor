@@ -1,17 +1,19 @@
 {
   "name": "inflictor-desktop",
-  "version": "1.0.9",
+  "version": "1.0.14",
   "description": "The Inflictor — Desktop",
   "main": "main.js",
   "scripts": {
     "build:app": "node build.js",
-    "start":     "npm run build:app && electron .",
+    "start": "npm run build:app && electron .",
     "build:win": "npm run build:app && electron-builder --win"
   },
   "build": {
     "appId": "com.inflictor.app",
     "productName": "The Inflictor",
-    "directories": { "output": "dist" },
+    "directories": {
+      "output": "dist"
+    },
     "files": [
       "main.js",
       "activation.js",
@@ -19,7 +21,14 @@
       "app/**/*"
     ],
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "app/icons/../icons/inflictor.ico"
     },
     "nsis": {

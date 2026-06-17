@@ -230,6 +230,8 @@
     .col-empty{min-height:80px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--border)}
     .col-empty-btn{background:none;border:none;font-family:var(--font-body);font-style:italic;color:var(--text);font-size:.82rem;cursor:pointer;transition:color .2s;padding:.5rem}
     .col-empty-btn:hover{color:var(--accent);opacity:1}
+    .col-add-sus{width:100%;background:none;border:1px dashed var(--border);color:var(--text-muted);font-family:var(--font-body);font-size:.72rem;padding:.3rem;margin:.2rem 0 .35rem;cursor:pointer;transition:all .2s;border-radius:2px;opacity:.7}
+    .col-add-sus:hover{border-color:#7a9a3a;color:#7a9a3a;opacity:1}
 
     /* Slots */
     .slot{position:relative;background:var(--slot-bg);border:1px solid var(--slot-border);border-left:3px solid var(--slot-color,var(--accent));padding:.3rem .38rem;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;backdrop-filter:blur(3px);transition:background .3s,border-left-color .3s}
@@ -250,7 +252,12 @@
     .spill-section .slot{border-left-color:#c77a30}
     .slot-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:var(--text);line-height:1.2;display:flex;align-items:center;gap:.3rem}
     .slot-bell{font-size:.65rem;opacity:.55;flex-shrink:0}
-    .slot-sus{border-left-color:#7a9a3a}                 /* meal/snack accent — looks like the rest, subtly distinct */
+    .slot-sus{border-left-color:#7a9a3a;padding:.1rem .35rem}   /* meal/snack accent; compact so it steals, not adds */
+    .sus-row{display:flex;align-items:center;justify-content:space-between;gap:.3rem;width:100%;height:100%;overflow:hidden}
+    .sus-label{font-family:var(--font-body);font-size:.72rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sus-ctrls{display:flex;align-items:center;gap:.2rem;flex-shrink:0}
+    .sus-ctrls .sus-btn{position:static}                 /* the edit ✎ isn't corner-absolute in the compact row */
+    .sus-ctrls input[type=checkbox]{width:12px;height:12px}
     .slot-cont{border-left-style:dashed}                 /* the "continued after a bite" half */
     .slot-cont .slot-name{opacity:.9}
     .slot-pausenote{border-left-color:#c8a000;background:rgba(200,140,0,.1);padding:.4rem .55rem;display:flex;align-items:center}
@@ -583,7 +590,8 @@
     <div class="setup-msg" id="setup-msg"></div>
     <div class="setup-footer">
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.1rem" onclick="Planner.closeSetup()">Dismiss</button>
-      <button class="btn btn-primary" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()">Set the Stage</button>
+      <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.3rem" onclick="Planner.saveDay()" title="Save these changes to just this one day (today, or the day you're editing)">Edit</button>
+      <button class="btn btn-primary" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()" title="Apply to your whole recurring week">Set the Stage</button>
     </div>
   </div>
 </div>
@@ -607,10 +615,11 @@
     <div class="actedit-sub" id="actedit-sub"></div>
     <div id="actedit-body"></div>
     <div class="memo-footer" style="justify-content:space-between">
-      <button class="btn btn-ghost" style="width:auto;padding:.5rem 1rem;color:#c06060" onclick="Planner.removeActEdit()">Remove</button>
+      <button class="btn btn-ghost" id="actedit-remove" style="width:auto;padding:.5rem 1rem;color:#c06060" onclick="Planner.removeActEdit()">Remove</button>
       <span style="display:flex;gap:.5rem">
         <button class="btn btn-ghost" style="width:auto;padding:.5rem 1.1rem" onclick="Planner.closeActEdit()">Cancel</button>
-        <button class="btn btn-primary" style="width:auto;padding:.5rem 1.3rem" onclick="Planner.saveActEdit()">Save</button>
+        <button class="btn btn-ghost" id="actedit-everyday" style="width:auto;padding:.5rem 1.1rem;display:none" onclick="Planner.saveActEveryDay()" title="Add this at the same time every day">Every Day</button>
+        <button class="btn btn-primary" id="actedit-save" style="width:auto;padding:.5rem 1.3rem" onclick="Planner.saveActEdit()">Save</button>
       </span>
     </div>
   </div>
@@ -794,7 +803,7 @@
         </div>
         <div class="guide-block">
           <h4>1 · Build your week</h4>
-          <p>Click <b>Prepare Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes, and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). Then click <b>Set the Stage</b>. On the planner, a longer activity shows as a <b>taller block</b>, so you can see the shape of your day at a glance.</p>
+          <p>Click <b>Prepare Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes, and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). When you save, you choose the scope with two buttons: <b>Edit</b> applies your changes to just <b>one day</b> (today, or the day you're editing), while <b>Set the Stage</b> applies to your <b>whole recurring week</b>. On the planner, a longer activity shows as a <b>taller block</b>, so you can see the shape of your day at a glance. You can also click the little <b>pencil</b> on any day's header to open that day directly.</p>
         </div>
         <div class="guide-block">
           <h4>Fixed, Flexible, Anytime &amp; Sustenance</h4>
@@ -802,7 +811,7 @@
           <p><b>Fixed</b> — a set <b>start and end time that never moves</b> (an appointment, your meds). Shown with a <b>★</b> on the planner.</p>
           <p><b>Flexible</b> — also a <b>start and end time</b>, but it <b>can shift</b> if you wake late or pause. Shown with a <b>~</b> on the planner.</p>
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Give it a time and a short length. It <b>never triggers a conflict</b>, and if it lands inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Add a memo on it to track what you ate.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Add a memo on it to track what you ate.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -839,7 +848,7 @@
         </div>
         <div class="guide-block">
           <h4>Act I · Lay thy week upon the boards</h4>
-          <p>Press <b>Prepare Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes, and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). That done, cry <b>Set the Stage</b>. Behold: the longer an act, the <b>taller it standeth</b>, that the whole shape of thy day be read at a single glance.</p>
+          <p>Press <b>Prepare Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes, and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). When thou savest, two buttons set the reach: <b>Edit</b> bestoweth thy changes upon <b>one day alone</b> (today, or the day in hand), whilst <b>Set the Stage</b> bindeth thy <b>whole recurring week</b>. Behold: the longer an act, the <b>taller it standeth</b>, that the whole shape of thy day be read at a single glance. Thou mayest also tap the small <b>pencil</b> upon any day's header to open that day forthwith.</p>
         </div>
         <div class="guide-block">
           <h4>Of four humours of Time · Fixed, Flexible, Anytime &amp; Sustenance</h4>
@@ -847,7 +856,7 @@
           <p><b>Fixed</b> — an hour writ in stone, that <b>will not stir</b> though heaven should fall (an appointment, thy physic). It weareth a <b>★</b> upon the stage.</p>
           <p><b>Flexible</b> — it too hath a start and an end, yet it will <b>bend and drift</b> shouldst thou wake late or pause. It weareth a <b>~</b>.</p>
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Grant it an hour and a brief span. It <b>quarrelleth with naught</b>; and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Leave a memo upon it to record what thou didst eat.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Leave a memo upon it to record what thou didst eat.</p>
         </div>
         <div class="guide-block">
           <h4>Act II · Mend what thou wilt, whensoever</h4>
@@ -1466,12 +1475,22 @@ window.Planner = (() => {
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-name')?.focus(), 80);
   }
+  // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
+  function openActAdd(ds) {
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: true };
+    renderActEdit();
+    const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+    setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
+  }
   function renderActEdit() {
     if (!actEdit) return;
     const a = actEdit;
     const dateLabel = new Date(a.ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' });
-    document.getElementById('actedit-title').textContent = `Edit — ${a.name || 'activity'}`;
-    document.getElementById('actedit-sub').textContent = `${dateLabel} · this day only`;
+    document.getElementById('actedit-title').textContent = a.isNew ? '🍴 Add a meal / snack' : `Edit — ${a.name || 'activity'}`;
+    document.getElementById('actedit-sub').textContent = a.isNew ? `${dateLabel} — “Just This Day”, or “Every Day” for a regular meal` : `${dateLabel} · this day only`;
+    const rmBtn = document.getElementById('actedit-remove'); if (rmBtn) rmBtn.style.display = a.isNew ? 'none' : '';
+    const edBtn = document.getElementById('actedit-everyday'); if (edBtn) edBtn.style.display = a.isNew ? '' : 'none';
+    const svBtn = document.getElementById('actedit-save'); if (svBtn) svBtn.textContent = a.isNew ? 'Just This Day' : 'Save';
     const isRange = a.timing === 'fixed' || a.timing === 'flexible';
     document.getElementById('actedit-body').innerHTML = `
       <input class="form-input" id="ae-name" type="text" placeholder="${a.timing==='sustenance'?'Label (optional) — e.g. Lunch':'Activity name…'}" value="${esc(a.name)}">
@@ -1508,22 +1527,49 @@ window.Planner = (() => {
     weekData.dailyOverrides[ds] = data;
     markCustomDay(ds);
   }
-  async function saveActEdit() {
-    actEditCapture();
+  // Build the saved activity object from the editor's current state.
+  function buildActFromEdit() {
     const a = actEdit, timing = a.timing || 'flexible';
     const isRange = timing === 'fixed' || timing === 'flexible';
     const hasStart = isRange || timing === 'sustenance';
     const hasRange = isRange && a.fixed_start && a.fixed_end;
     const duration = hasRange ? Math.max(15, parseTime(a.fixed_end) - parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:15, (a.hours||0)*60 + (a.mins||0));
-    const updated = {
+    return {
       name: (a.name || '').trim() || (timing==='sustenance' ? '' : 'Untitled'), duration_minutes: duration, timing,
       chime_enabled: a.chime_enabled !== false,
       fixed_start: hasStart && a.fixed_start ? a.fixed_start : undefined,
       fixed_end:   isRange && a.fixed_end   ? a.fixed_end   : undefined,
       goal_time:   timing === 'anytime' && a.goal_time ? a.goal_time : undefined
     };
-    const acts = (getDaySchedule(a.ds)?.activities || []).map(x => x.id === a.id ? { ...x, ...updated } : x);
+  }
+  // Save to THIS day only (a per-date custom override).
+  async function saveActEdit() {
+    actEditCapture();
+    const a = actEdit, updated = buildActFromEdit();
+    const existing = getDaySchedule(a.ds)?.activities || [];
+    const acts = a.isNew ? [ ...existing, { id: a.id, ...updated } ] : existing.map(x => x.id === a.id ? { ...x, ...updated } : x);
     await persistDayActivities(a.ds, acts);
+    closeActEdit(); render(); scheduleNotifs();
+  }
+  // Save to EVERY day (recurring): add to the weekly template + each non-custom day in view.
+  async function saveActEveryDay() {
+    actEditCapture();
+    const updated = buildActFromEdit();
+    const newAct = { id: uid(), ...updated, days: Array(7).fill(true) };   // fresh id; runs all days
+    if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
+    const tmpl = weekData?.schedule || { wake_time:'07:00', activities: [] };
+    const sched = { ...tmpl, activities: [ ...(tmpl.activities||[]), newAct ] };
+    const ops = [ api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(sched)}}) ];
+    for (const d of getSetupDays()) {
+      const ds = toISO(d);
+      if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;   // leave customized days untouched
+      const base = weekData.dailyOverrides[ds] || getDaySchedule(ds) || { wake_time:'07:00', activities: [] };
+      const data = { wake_time: base.wake_time || '07:00', activities: [ ...(base.activities||[]), newAct ] };
+      weekData.dailyOverrides[ds] = data;
+      ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+    }
+    weekData.schedule = sched;
+    await Promise.all(ops);
     closeActEdit(); render(); scheduleNotifs();
   }
   async function removeActEdit() {
@@ -1712,21 +1758,25 @@ window.Planner = (() => {
     if (today) for (const a of timedActs) if (pausedSlotKeys.has(`${ds}:${a.id}`) && times[a.id]) pausedFromTime = Math.min(pausedFromTime, times[a.id].start);
     // Build render pieces: a regular activity SPLITS into two boxes around any Sustenance inside it.
     const pieces = [];
+    const susPpm = new Map();   // inside-snack id → host's px-per-minute (so the snack STEALS the host's space)
     for (const act of timedActs) {
       if (isSus(act)) continue;
       const t = times[act.id];
       if (!t) { pieces.push({ act, s:null, e:null, cont:false }); continue; }
       const inside = susActs.filter(su => { const st=times[su.id]; return st.start > t.start && st.start < t.end; });
       if (!inside.length) { pieces.push({ act, s:t.start, e:t.end, cont:false }); continue; }
+      // A snack steals time: the host's segments + the snack share the host's ORIGINAL height (never grows it).
+      const hostDur = Math.max(1, t.end - t.start), ppm = slotPx(hostDur) / hostDur;
+      inside.forEach(su => susPpm.set(su.id, ppm));
       let cursor = t.start, first = true;
       for (const su of inside) {
         const st = times[su.id];
-        if (st.start > cursor) { pieces.push({ act, s:cursor, e:st.start, cont:!first }); first = false; }
+        if (st.start > cursor) { pieces.push({ act, s:cursor, e:st.start, cont:!first, ppm }); first = false; }
         cursor = Math.max(cursor, st.end);
       }
-      if (cursor < t.end) pieces.push({ act, s:cursor, e:t.end, cont:!first });
+      if (cursor < t.end) pieces.push({ act, s:cursor, e:t.end, cont:!first, ppm });
     }
-    for (const su of susActs) pieces.push({ act:su, s:times[su.id].start, e:times[su.id].end, cont:false, sus:true });
+    for (const su of susActs) pieces.push({ act:su, s:times[su.id].start, e:times[su.id].end, cont:false, sus:true, ppm: susPpm.get(su.id) });
     pieces.sort((a,b) => (a.s==null?Infinity:a.s) - (b.s==null?Infinity:b.s));
     // Pause "what happened" note → its own box right after the activity where the day was paused.
     if (today && pauseAnchorId) {
@@ -1742,17 +1792,18 @@ window.Planner = (() => {
       const act = p.act, key = `${ds}:${act.id}`, status = taskStatus[key]||'none';
       if (today && p.s != null && p.s >= 1440) return '';   // spilled to tomorrow
       const segMin = (p.s!=null && p.e!=null) ? Math.max(5, p.e-p.s) : (act.duration_minutes||30);
-      const px = slotPx(segMin);
+      // Split pieces (host halves + the snack) use the host's px/min so they SUM to the host's height — a snack steals, never adds.
+      const px = p.ppm ? Math.max(26, Math.round(segMin * p.ppm)) : slotPx(segMin);
       const dimmed = today && p.s!=null && p.s >= pausedFromTime;
       const hasMemo = !!getMemo(ds, act.id);
-      if (p.sus) {                                            // Sustenance — its own box; 🍴 + optional label + time
+      if (p.sus) {                                            // Sustenance — compact single row so it stays thin (steals, doesn't add)
         const lbl = (act.name||'').trim();
         return `<div class="slot slot-sus slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
-          <div class="slot-info"><div class="slot-name">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}</div></div>
-          <div class="slot-indicators">
-            <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal (this day only)">✎</button>
-            <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Note — what you ate':'Add a note (what you ate)'}">M</button>
-            <span class="slot-check-group">
+          <div class="sus-row">
+            <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}</span>
+            <span class="sus-ctrls">
+              <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal">✎</button>
+              <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Note — what you ate':'Add a note (what you ate)'}">M</button>
               <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','completed',this.checked)" title="Had it">
               <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','failed',this.checked)" title="Skipped">
             </span>
@@ -2047,9 +2098,9 @@ window.Planner = (() => {
   function selectAllDays(v) { setup.days=Array(7).fill(v); renderDays(); }
   function selectWeekdays() { const days=getWeekDays(); setup.days=days.map(d=>{const dow=d.getDay();return dow!==0&&dow!==6;}); renderDays(); }
 
-  async function saveSetup() {
-    captureDOM();
-    const activities = setup.activities.filter(a=>a.name.trim() || (a.timing==='sustenance' && a.fixed_start)).map(a=>{
+  // Map the modal's activity rows → saved activity objects (shared by week-save and day-save).
+  function mapSetupActivities() {
+    return setup.activities.filter(a=>a.name.trim() || (a.timing==='sustenance' && a.fixed_start)).map(a=>{
       const timing=a.timing||'flexible';
       const isRange = timing==='fixed' || timing==='flexible';
       const hasStart = isRange || timing==='sustenance';            // sustenance also has a clock time
@@ -2061,33 +2112,45 @@ window.Planner = (() => {
         goal_time:(timing==='anytime'&&a.goal_time)?a.goal_time:undefined,
         days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
     });
-    // Either a single day or the whole week may be left empty (a clean/blank slate).
+  }
+
+  // "Edit" — save the current acts to ONE day only (the day being edited, or today). Never the week.
+  async function saveDay() {
+    captureDOM();
+    const ds = setup.editingDate || toISO(new Date());
+    const di = dayIdx(new Date(ds + 'T12:00:00'));
+    const activities = mapSetupActivities().filter(a => !a.days || a.days[di]);   // only acts that run that day
+    const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
+    const dayData = {wake_time:wakeTime, activities, custom:true};
+    await api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(dayData)}});
+    if (!weekData.dailyOverrides) weekData.dailyOverrides={};
+    weekData.dailyOverrides[ds]=dayData;
+    markCustomDay(ds);
+    const conflicts = detectConflicts(activities);
+    closeSetup(); render(); scheduleNotifs();
+    if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
+  }
+
+  // "Set the Stage" — save to the whole recurring week (template + every non-custom day).
+  async function saveSetup() {
+    captureDOM();
+    const activities = mapSetupActivities();
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
     const sched = {wake_time:wakeTime,activities};
-    if (setup.editingDate) {
-      // A single-day edit = the user customizing THAT date. Mark it custom:true so a later
-      // whole-week save will NOT overwrite it — it persists until the user edits this day again.
-      const dayData = {wake_time:wakeTime, activities, custom:true};
-      await api('day-override',{method:'PUT',body:{date:setup.editingDate,schedule_data:JSON.stringify(dayData)}});
-      if (!weekData.dailyOverrides) weekData.dailyOverrides={};
-      weekData.dailyOverrides[setup.editingDate]=dayData;
-      markCustomDay(setup.editingDate);
-    } else {
-      const start=toISO(getMonday(weekStart)), days=getSetupDays();
-      if (!weekData.dailyOverrides) weekData.dailyOverrides={};
-      // Save the recurring template, then refresh per-date overrides from it — but NEVER touch a
-      // day the user individually customized (custom:true). Those persist until the user changes them.
-      const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}) ];
-      for (const d of days) {
-        const ds=toISO(d), di=dayIdx(d);
-        if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;   // preserve the user's customized day
-        const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
-        weekData.dailyOverrides[ds]=data;
-        ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
-      }
-      await Promise.all(ops);
-      weekData.schedule=sched;
+    const start=toISO(getMonday(weekStart)), days=getSetupDays();
+    if (!weekData.dailyOverrides) weekData.dailyOverrides={};
+    // Save the recurring template, then refresh per-date overrides — but NEVER touch a day the user
+    // individually customized (custom:true). Those persist until the user edits that day again.
+    const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}) ];
+    for (const d of days) {
+      const ds=toISO(d), di=dayIdx(d);
+      if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;   // preserve the user's customized day
+      const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
+      weekData.dailyOverrides[ds]=data;
+      ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
     }
+    await Promise.all(ops);
+    weekData.schedule=sched;
     const conflicts = detectConflicts(activities);
     closeSetup(); render(); scheduleNotifs();
     if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
@@ -2140,11 +2203,11 @@ window.Planner = (() => {
     openSetup, closeSetup,
     addActivity: addAct, removeAct, setColor, setTiming, setActDay, moveAct,
     toggleDay, selectAllDays, selectWeekdays,
-    saveSetup, setStatus, toggleChime,
+    saveSetup, saveDay, setStatus, toggleChime,
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
-    openActEdit, actEditTiming, saveActEdit, removeActEdit, closeActEdit,
+    openActEdit, openActAdd, actEditTiming, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
     openMemo, saveMemo, closeMemo, closeConflict,
     updateAnytimeText, removeAnytime, setAnytimeStatus, toggleAnytimePause,
     shift: (unit, dir) => {
