@@ -195,6 +195,8 @@
     .wake-adjust-label input{cursor:pointer;accent-color:var(--accent);width:13px;height:13px}
     .btn-begin-again{font-family:var(--font-display);font-size:.72rem;letter-spacing:.1em;background:rgba(40,130,40,.7);color:#d0ffd0;border:none;padding:.38rem .9rem;cursor:pointer;transition:background .2s;white-space:nowrap}
     .btn-begin-again:hover{background:rgba(40,160,40,.85)}
+    .btn-cancel-pause{font-family:var(--font-body);font-size:.8rem;background:none;color:var(--text-muted);border:1px solid var(--border);border-radius:3px;padding:.2rem .45rem;cursor:pointer;transition:all .2s}
+    .btn-cancel-pause:hover{border-color:#b04040;color:#d06060}
     .slot-indicators{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-top:4px;flex-wrap:wrap}
     .slot-check-group{display:inline-flex;align-items:center;gap:5px}
     .slot-pause-chk{display:flex;align-items:center;gap:.25rem;font-family:var(--font-body);font-size:.65rem;font-style:italic;color:var(--text-muted);cursor:pointer;user-select:none}
@@ -234,7 +236,7 @@
     /* "Not completed" no longer turns the whole slot red — the red check alone registers it. We celebrate achievement, not penalize an off day. */
     .slot-info{flex:1;min-height:0;overflow:hidden}
     .slot-name{font-family:var(--font-body);font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25;padding-right:1.1rem}
-    .slot-edit-btn{position:absolute;top:.22rem;right:.28rem;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:.1rem;opacity:.5;transition:opacity .2s,color .2s;line-height:1;z-index:2}
+    .slot-edit-btn{position:absolute;top:.22rem;right:.28rem;font-size:.8rem;background:none;border:none;color:var(--text-muted);cursor:pointer;padding:.1rem;opacity:.5;transition:opacity .2s,color .2s;line-height:1;z-index:2}
     .slot:hover .slot-edit-btn{opacity:.8}
     .slot-edit-btn:hover{opacity:1!important;color:var(--accent)}
     .slot-memo-btn{background:none;border:none;color:var(--text);cursor:pointer;font-family:var(--font-body);font-weight:700;font-size:.82rem;line-height:1;padding:0 .15rem;opacity:.6;transition:opacity .2s,color .2s}
@@ -256,8 +258,8 @@
     .col-note:focus{border-color:var(--accent);border-style:solid}
     .anytime-section{margin-top:4px}
     .anytime-header{font-family:var(--font-display);font-size:.6rem;letter-spacing:.14em;color:var(--text-muted);padding:.3rem .3rem .2rem;border-bottom:1px solid var(--border);margin-bottom:3px;opacity:.7}
-    .anytime-item{background:var(--slot-bg);border:1px solid var(--slot-border);border-left:3px solid var(--accent);padding:.28rem .35rem;display:flex;flex-direction:column;gap:3px;margin-bottom:3px;transition:background .3s,border-left-color .3s}
-    .anytime-name-row{display:flex;align-items:center;justify-content:space-between;gap:.3rem}
+    .anytime-item{position:relative;background:var(--slot-bg);border:1px solid var(--slot-border);border-left:3px solid var(--accent);padding:.28rem .35rem;display:flex;flex-direction:column;gap:3px;margin-bottom:3px;transition:background .3s,border-left-color .3s}
+    .anytime-name-row{display:flex;align-items:center;justify-content:space-between;gap:.3rem;padding-right:1.3rem}
     .anytime-name{font-family:var(--font-body);font-size:.8rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .anytime-dur{font-family:var(--font-body);font-style:italic;font-size:.7rem;color:var(--text-muted);flex-shrink:0}
     .anytime-item.slot-completed{background:rgba(28,92,28,.38)!important;border-color:rgba(45,130,45,.45)!important;border-left-color:#3c9a3c!important}
@@ -341,6 +343,12 @@
     .memo-textarea{width:100%;min-height:130px;background:transparent;border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:.85rem;padding:.6rem;resize:vertical;outline:none;line-height:1.5}
     .memo-textarea:focus{border-color:var(--accent)}
     .memo-footer{display:flex;justify-content:flex-end;gap:.6rem;margin-top:.9rem}
+    #actedit-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s ease}
+    #actedit-overlay.visible{opacity:1;pointer-events:all}
+    #actedit-overlay.gone{display:none}
+    .actedit-sub{font-family:var(--font-body);font-size:.72rem;color:var(--text-muted);margin:-.4rem 0 .8rem;font-style:italic}
+    #actedit-body .form-input{width:100%}
+    #actedit-body .act-fixed-group,#actedit-body .act-dur-group{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
     .settings-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:1.8rem 2rem;width:520px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 30px 100px var(--shadow);scrollbar-width:thin;scrollbar-color:var(--border) transparent}
     .settings-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem}
     .settings-close{background:none;border:none;color:var(--text-muted);font-size:1.3rem;cursor:pointer;padding:0;line-height:1;transition:color .2s;margin-top:.2rem}
@@ -525,11 +533,11 @@
         <button class="pl-nav-btn pl-nav-week" onclick="Planner.shift('week',1)" title="Forward a week">&#187;</button>
         <button class="pl-nav-btn pl-nav-month" onclick="Planner.shift('month',1)" title="Forward a month">&#8811;</button>
       </div>
-      <button class="btn-pause" id="btn-pause" onclick="Planner.togglePause()">⏸ Pause</button>
+      <button class="btn-pause" id="btn-pause" onclick="Planner.togglePause()">⏸ Pause Activities Now</button>
     </div>
     <div id="daily-bar">
       <div class="daily-bar-left">
-        <span class="ba-label">Woke up at:</span>
+        <span class="ba-label">Woke up today at:</span>
         <input type="time" id="actual-wake-time" class="ba-time-input" onchange="Planner.applyWakeTime()">
         <label class="wake-adjust-label">
           <input type="checkbox" id="wake-adjust-chk" onchange="Planner.applyWakeTime()"> Adjust schedule
@@ -539,6 +547,7 @@
         <span class="ba-label">Resuming at:</span>
         <input type="time" id="begin-again-time" class="ba-time-input">
         <button class="btn-begin-again" onclick="Planner.beginAgain()">▶ Resume</button>
+        <button class="btn-cancel-pause" onclick="Planner.cancelPause()" title="Cancel — don't resume">✕</button>
       </div>
     </div>
     <div id="planner-scroll"><div id="planner-grid"></div></div>
@@ -580,6 +589,22 @@
     <div class="memo-footer">
       <button class="btn btn-ghost" style="width:auto;padding:.5rem 1.1rem" onclick="Planner.closeMemo()">Cancel</button>
       <button class="btn btn-primary" style="width:auto;padding:.5rem 1.3rem" onclick="Planner.saveMemo()">Save Memo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Single-activity editor (this day only — a record you can adjust after the fact) -->
+<div id="actedit-overlay" class="gone">
+  <div class="memo-box">
+    <div class="memo-title" id="actedit-title">Edit activity</div>
+    <div class="actedit-sub" id="actedit-sub"></div>
+    <div id="actedit-body"></div>
+    <div class="memo-footer" style="justify-content:space-between">
+      <button class="btn btn-ghost" style="width:auto;padding:.5rem 1rem;color:#c06060" onclick="Planner.removeActEdit()">Remove</button>
+      <span style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost" style="width:auto;padding:.5rem 1.1rem" onclick="Planner.closeActEdit()">Cancel</button>
+        <button class="btn btn-primary" style="width:auto;padding:.5rem 1.3rem" onclick="Planner.saveActEdit()">Save</button>
+      </span>
     </div>
   </div>
 </div>
@@ -773,11 +798,16 @@
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
-          <p>Each day has a small <b>pencil</b> in its header to edit the whole day. Each activity has its own <b>pencil</b> too — click it to jump straight to that activity. To remove an activity, clear it (or use the ×) and click <b>Set the Stage</b>. You can leave a day empty for a rest day.</p>
+          <p>Each day has a small <b>pencil</b> in its header to edit the whole day — add activities, reorder, change the wake time. Each activity also has its own <b>✎</b> in the corner: click it to quickly edit just <b>that one activity</b> (its time or length) <b>for that day only</b>. It works on <b>past days too</b>, so the planner is a <b>record you can correct after the fact</b> — "chores only took an hour," or add a lesson you forgot. <b>Days you change individually stick:</b> if Saturday and Sunday differ from your usual week, set them once and they'll <b>stay that way</b> even when you re-open <b>Prepare Week</b> and save again — only editing that day again will change it. To remove an activity, use <b>Remove</b> in its editor (or clear it in the day editor). You can leave a day empty for a rest day.</p>
         </div>
         <div class="guide-block">
           <h4>3 · Through the day</h4>
-          <p>On each activity, check <b>✓</b> when it's done (you get a cheer and confetti) or <b>✗</b> if it's not. Use <b>Pause</b> on an activity if you need to step away.</p>
+          <p>On each activity, check <b>✓</b> when it's done (you get a cheer and confetti) or <b>✗</b> if it's not.</p>
+        </div>
+        <div class="guide-block">
+          <h4>Two kinds of Pause — and the difference</h4>
+          <p><b>Pause Activities Now</b> (top of the planner) is for <b>right now, live</b> — you are stopping everything this very moment. A <b>Resuming at</b> bar appears; when you're back, set the time and press <b>Resume</b>, and your remaining flexible activities pick up from then (a crowd cheers your return).</p>
+          <p>The small <b>Pause</b> box on a <b>single activity</b> is for <b>after the fact</b> — earlier in the day you got sidetracked or fell asleep on that one thing (you meant to start Music but napped). It marks where your day actually slipped, instead of stopping everything this second.</p>
         </div>
         <div class="guide-block">
           <h4>4 · Memos</h4>
@@ -785,7 +815,7 @@
         </div>
         <div class="guide-block">
           <h4>5 · Woke up late?</h4>
-          <p>Enter your real wake-up time in the <b>Woke up at</b> bar. Choose <b>Adjust schedule</b> to shift the whole day to your new start time, or <b>Static</b> to keep the planned times. If something interrupts you, <b>Pause</b> and later <b>Resume</b> — a crowd cheers you back.</p>
+          <p>Enter your real wake-up time in the <b>Woke up today at</b> bar. Tick <b>Adjust schedule</b> to shift the whole day to your new start time; leave it unticked to keep the planned times.</p>
         </div>
         <div class="guide-block">
           <h4>6 · Make it yours</h4>
@@ -796,39 +826,44 @@
       <!-- Shakespearean -->
       <div id="guide-shake" class="guide-pane" style="display:none">
         <div class="guide-block">
-          <h4>The idea</h4>
-          <p>The Inflictor helps thee plan a daily routine and keep to it. Lay out the acts of thy day, then mark each as done — or not — as the day unfolds. We celebrate what thou achievest and never punish an off day.</p>
+          <h4>The Argument · wherefore this contrivance</h4>
+          <p>Hark — the Inflictor is thy faithful prompter, that thou mayest plot the acts of thy day and play them true. Lay down the day's performance, then, as the hours tread their boards, mark each act <b>done</b> or <b>not</b>, with neither blush nor scolding. We sound a fanfare for thy triumphs and, upon a leaden day, do hold our peace — for here no groundling's jeer shall fall on thee.</p>
         </div>
         <div class="guide-block">
-          <h4>1 · Build thy week</h4>
-          <p>Press <b>Prepare Week</b> (top-left of the planner). Add an <b>Act</b> for each thing thou dost — give it a name and a length in hours and minutes, and choose the days it keeps with its row of <b>weekday buttons</b> (Mon–Sun). Then press <b>Set the Stage</b>. Upon the stage, a longer act stands as a <b>taller block</b>, that thou mayest see the shape of thy day at a glance.</p>
+          <h4>Act I · Lay thy week upon the boards</h4>
+          <p>Press <b>Prepare Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes, and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). That done, cry <b>Set the Stage</b>. Behold: the longer an act, the <b>taller it standeth</b>, that the whole shape of thy day be read at a single glance.</p>
         </div>
         <div class="guide-block">
-          <h4>Fixed, Flexible &amp; Anytime</h4>
-          <p>Each act hath a manner of timing:</p>
-          <p><b>Fixed</b> — a set <b>start and end thou canst not move</b> (an appointment, thy medicine). Marked with a <b>★</b> upon the stage.</p>
-          <p><b>Flexible</b> — likewise a <b>start and end</b>, yet it <b>may shift</b> shouldst thou wake late or pause. Marked with a <b>~</b>.</p>
-          <p><b>Anytime</b> — bound to no hour; it need only be done that day. It rests in <b>"Sometime Today"</b>, and thou mayest set an <b>"-ish" hour</b> as a hopeful mark.</p>
+          <h4>Of three humours of Time · Fixed, Flexible &amp; Anytime</h4>
+          <p>Each act is born to one of three temperaments:</p>
+          <p><b>Fixed</b> — an hour writ in stone, that <b>will not stir</b> though heaven should fall (an appointment, thy physic). It weareth a <b>★</b> upon the stage.</p>
+          <p><b>Flexible</b> — it too hath a start and an end, yet it will <b>bend and drift</b> shouldst thou wake late or pause. It weareth a <b>~</b>.</p>
+          <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
         </div>
         <div class="guide-block">
-          <h4>2 · Edit anytime</h4>
-          <p>Each day has a small <b>pencil</b> in its header to edit the whole day. Each activity has its own <b>pencil</b> too — tap it to jump straight to that act. To remove an act, clear it (or use the ×) and press <b>Set the Stage</b>. A day may be left empty for a day of rest.</p>
+          <h4>Act II · Mend what thou wilt, whensoever</h4>
+          <p>Each day beareth a small <b>pencil</b> in its crown to amend the whole day — add acts, shuffle their order, alter the waking hour. And every act keepeth its own <b>✎</b> in the corner: tap it to mend that <b>single act alone</b> (its hour or its length), <b>for that one day only</b>. It obligeth even <b>days long past</b> — so thy stage is no mere prophecy but a <b>chronicle thou mayest set aright after the fact</b>: "the chores took but an hour," or enter a lesson thou forgot. <b>A day thou changest of itself shall hold fast:</b> shouldst Saturday and Sunday differ from thy common week, set them but once and they shall <b>so remain</b>, even when thou openest <b>Prepare Week</b> anew and savest again — only thy own hand upon that day shall alter it. To strike an act hence, press <b>Remove</b> within its editor. And a day may rest wholly bare, for even players must keep a Sabbath.</p>
         </div>
         <div class="guide-block">
-          <h4>3 · Through the day</h4>
-          <p>On each activity, tick <b>✓</b> when it is completed (a cheer and a flourish of confetti) or <b>✗</b> if it is not. Use <b>Pause</b> on an act if thou must step away from it.</p>
+          <h4>Act III · As the hours tread the boards</h4>
+          <p>Upon each act, tick <b>✓</b> when 'tis accomplished (a cheer, and a tempest of confetti!), or <b>✗</b> when 'tis not. No matter — the morrow is another performance.</p>
         </div>
         <div class="guide-block">
-          <h4>4 · Memos</h4>
-          <p>Tap the <b>M</b> on any activity to leave a memo for it. Each day also has a <b>memo box</b> at the foot of its column. When a memo exists, the <b>M turns blue</b> so thou canst spot it at a glance.</p>
+          <h4>Two manners of Pause — and wherein they differ</h4>
+          <p><b>Pause Activities Now</b> (atop the planner) is for <b>this very breath</b> — thou stayest thy whole day even as it unfoldeth. A <b>Resuming at</b> bar shall rise; when thou returnest, name the hour and press <b>Resume</b>, whereupon thy remaining flexible acts take up the thread from thence (and a crowd shall huzzah thy homecoming).</p>
+          <p>The little <b>Pause</b> box upon a <b>single act</b> is a different beast — it speaketh of <b>deeds already past</b>, when earlier thou wert led astray or sankest to slumber upon that one act (thou meant to strike up Music, yet didst nod off). It marketh where thy day did truly slip, and not this present instant.</p>
         </div>
         <div class="guide-block">
-          <h4>5 · Woke up late?</h4>
-          <p>Enter thy true wake time in the <b>Woke up at</b> bar. Choose <b>Adjust schedule</b> to slide the whole day to thy new start, or <b>Static</b> to hold the planned times. If life interrupts, <b>Pause</b> and later <b>Resume</b> — a crowd shall cheer thy return.</p>
+          <h4>Act IV · Marginalia</h4>
+          <p>Tap the <b>M</b> upon any act to pen it a private note. Each day likewise keepeth a <b>memo box</b> at the foot of its column. Where a note doth dwell, the <b>M glows blue</b>, that thou spy it at a glance.</p>
         </div>
         <div class="guide-block">
-          <h4>6 · Make it thine</h4>
-          <p>In <b>Settings</b> choose thy theme and font, set thy wake time and the day thy week begins, and toggle the <b>Cheers</b> and <b>Awws</b> sounds independently. The <b>sound button</b> in the header mutes everything — a red ✕ marks when sound is off. Review thy <b>Ledger</b> for a record of days past.</p>
+          <h4>Act V · A tardy waking?</h4>
+          <p>Confess thy true waking in the <b>Woke up today at</b> bar. Tick <b>Adjust schedule</b> to slide the whole day to thy new beginning; leave it unticked to hold the planned hours fast.</p>
+        </div>
+        <div class="guide-block">
+          <h4>Act VI · Make the playhouse thine own</h4>
+          <p>In <b>Settings</b> choose thy theme and thy font, set thy waking hour and the day thy week beginneth, and ring the <b>Cheers</b> and <b>Awws</b> each by its own bell. The <b>sound button</b> in the header silenceth all — a red ✕ marketh the hush. And consult thy <b>Ledger</b> for a chronicle of days gone by.</p>
         </div>
       </div>
 
@@ -1032,10 +1067,8 @@
   }
 
   async function checkAuth() {
-    console.log('[DIAG] checkAuth: token present =', !!S.token);
     if (!S.token) { showAuthOverlay(); return; }
     const { ok, status, data } = await api('auth/me');
-    console.log('[DIAG] checkAuth: auth/me ok =', ok, '| status =', status, '| hasUser =', !!(data && data.user), '| data =', JSON.stringify(data));
     if (ok && data.user) { S.user = data.user; await syncTheme(); enterApp(); }
     else if (status === 401) { localStorage.removeItem('inflictor_token'); S.token = null; showAuthOverlay(); }
     else { showAuthOverlay(); }
@@ -1076,7 +1109,6 @@
     busy('btn-login', true, 'Enter the Stage');
     const { ok, data } = await api('auth/login', { method: 'POST', body: { username, password } });
     busy('btn-login', false, 'Enter the Stage');
-    console.log('[DIAG] login response: ok =', ok, '| hasToken =', !!(data&&data.token), '| hasUser =', !!(data&&data.user), '| data =', JSON.stringify(data));
     if (ok) { S.token = data.token; S.user = data.user; localStorage.setItem('inflictor_token', S.token); await syncTheme(); hideAuthOverlay(); enterApp(); }
     else msg('error', data.error || 'Something hath gone awry.');
   };
@@ -1185,7 +1217,12 @@ window.Planner = (() => {
   // (completion chime + restart crowd), aww = the not-completed sound.
   let cheerEnabled = localStorage.getItem('inflictor_cheer') !== '0';
   let awwEnabled   = localStorage.getItem('inflictor_aww')   !== '0';
-  let isPaused = false, pausedSlotKeys = new Set(), pauseOffset = 0, wakeOffset = 0;
+  let isPaused = false, pausedSlotKeys = new Set(), pauseOffset = 0, wakeOffset = 0, pauseAnchorId = null;
+  // Dates the user has individually customized — a whole-week save must never overwrite these.
+  // Backed up on-device so it holds even across app restarts / re-syncs.
+  let customDays = new Set();
+  try { customDays = new Set(JSON.parse(localStorage.getItem('inflictor_custom_days') || '[]')); } catch {}
+  function markCustomDay(ds) { customDays.add(ds); try { localStorage.setItem('inflictor_custom_days', JSON.stringify([...customDays])); } catch {} }
 
   // ── Sometime Today ────────────────────────────────────────────
   let anytimeItems = {};   // { [dateStr]: [{id,text,status,paused},...] }
@@ -1304,18 +1341,26 @@ window.Planner = (() => {
   // Flexible items cascade from wake time; Fixed items sit at their own clock time.
   // Times come ONLY from what the user set: Fixed = its start/end; Flexible = its
   // optional ~goal time. No auto-sequencing. Anytime has none.
-  function computeDayTimes(acts, offset = 0) {
+  // wakeOff shifts ALL flexibles (whole-day late wake); pauseOff shifts only the
+  // anchor activity and everything AFTER it (you stopped/napped from there onward).
+  function computeDayTimes(acts, wakeOff = 0, pauseOff = 0, anchorId = null) {
     const out = {};
-    for (const a of acts || []) {
+    const list = acts || [];
+    const anchorIdx = anchorId ? list.findIndex(a => a.id === anchorId) : -1;
+    list.forEach((a, i) => {
       const timing = a.timing || 'flexible';
       if ((timing === 'fixed' || timing === 'flexible') && a.fixed_start) {
-        const shift = (timing === 'flexible') ? offset : 0;   // fixed never moves; flexible shifts
+        let shift = 0;
+        if (timing === 'flexible') {                          // fixed never moves
+          shift = wakeOff;
+          if (anchorIdx >= 0 && i >= anchorIdx) shift += pauseOff;
+        }
         const start = parseTime(a.fixed_start) + shift;
         const end = (a.fixed_end ? parseTime(a.fixed_end) : parseTime(a.fixed_start) + (a.duration_minutes || 0)) + shift;
         out[a.id] = { start, end: Math.max(end, start), fixed: timing === 'fixed' };
       }
       // anytime: no slot time — its optional "~ish" shows in "Sometime Today"
-    }
+    });
     return out;
   }
   function playSound(type) {
@@ -1376,6 +1421,93 @@ window.Planner = (() => {
   function closeMemo() {
     const ov = document.getElementById('memo-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 300);
     memoTarget = null;
+  }
+
+  // ── Single-activity editor (this day only — edit a duration/time after the fact) ──
+  let actEdit = null;
+  function openActEdit(ds, id) {
+    const a = (getDaySchedule(ds)?.activities || []).find(x => x.id === id);
+    if (!a) return;
+    actEdit = {
+      ds, id,
+      name: a.name || '',
+      timing: a.timing || 'flexible',
+      fixed_start: a.fixed_start || a.fixed_time || '',
+      fixed_end: a.fixed_end || '',
+      goal_time: a.goal_time || '',
+      hours: Math.floor((a.duration_minutes || 0) / 60),
+      mins: (a.duration_minutes || 0) % 60,
+      chime_enabled: a.chime_enabled !== false
+    };
+    renderActEdit();
+    const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+    setTimeout(() => document.getElementById('ae-name')?.focus(), 80);
+  }
+  function renderActEdit() {
+    if (!actEdit) return;
+    const a = actEdit;
+    const dateLabel = new Date(a.ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' });
+    document.getElementById('actedit-title').textContent = `Edit — ${a.name || 'activity'}`;
+    document.getElementById('actedit-sub').textContent = `${dateLabel} · this day only`;
+    const isRange = a.timing === 'fixed' || a.timing === 'flexible';
+    document.getElementById('actedit-body').innerHTML = `
+      <input class="form-input" id="ae-name" type="text" placeholder="Activity name…" value="${esc(a.name)}">
+      <div class="act-timing" style="margin-top:.7rem">
+        <button class="timing-opt${a.timing==='fixed'?' on':''}" onclick="Planner.actEditTiming('fixed')" title="A set start–end that never moves (★)">Fixed</button>
+        <button class="timing-opt${a.timing==='flexible'?' on':''}" onclick="Planner.actEditTiming('flexible')" title="A start–end that can shift (~)">Flexible</button>
+        <button class="timing-opt${a.timing==='anytime'?' on':''}" onclick="Planner.actEditTiming('anytime')" title="Sometime that day; optional ~ish time">Anytime</button>
+      </div>
+      <div style="margin-top:.8rem">${isRange
+        ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Start"><span class="dur-unit">to</span><input class="fixed-tt" id="ae-end" type="time" value="${esc(a.fixed_end)}" title="End"></div>`
+        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>`;
+  }
+  function actEditCapture() {
+    if (!actEdit) return;
+    const g = id => document.getElementById(id);
+    if (g('ae-name'))  actEdit.name = g('ae-name').value;
+    if (g('ae-start')) actEdit.fixed_start = g('ae-start').value;
+    if (g('ae-end'))   actEdit.fixed_end = g('ae-end').value;
+    if (g('ae-hours')) actEdit.hours = parseInt(g('ae-hours').value) || 0;
+    if (g('ae-mins'))  actEdit.mins = parseInt(g('ae-mins').value) || 0;
+    if (g('ae-goal'))  actEdit.goal_time = g('ae-goal').value;
+  }
+  function actEditTiming(mode) { actEditCapture(); actEdit.timing = mode; renderActEdit(); }
+  // Write this one activity back into the day as a per-date override (that day only).
+  async function persistDayActivities(ds, acts) {
+    const base = getDaySchedule(ds) || { wake_time: '07:00' };
+    // custom:true → this day is now user-customized and survives whole-week re-saves.
+    const data = { wake_time: base.wake_time || '07:00', activities: acts, custom: true };
+    await api('day-override', { method:'PUT', body:{ date: ds, schedule_data: JSON.stringify(data) } });
+    if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
+    weekData.dailyOverrides[ds] = data;
+    markCustomDay(ds);
+  }
+  async function saveActEdit() {
+    actEditCapture();
+    const a = actEdit, timing = a.timing || 'flexible';
+    const isRange = timing === 'fixed' || timing === 'flexible';
+    const hasRange = isRange && a.fixed_start && a.fixed_end;
+    const duration = hasRange ? Math.max(15, parseTime(a.fixed_end) - parseTime(a.fixed_start)) : Math.max(15, (a.hours||0)*60 + (a.mins||0));
+    const updated = {
+      name: (a.name || '').trim() || 'Untitled', duration_minutes: duration, timing,
+      chime_enabled: a.chime_enabled !== false,
+      fixed_start: isRange && a.fixed_start ? a.fixed_start : undefined,
+      fixed_end:   isRange && a.fixed_end   ? a.fixed_end   : undefined,
+      goal_time:   timing === 'anytime' && a.goal_time ? a.goal_time : undefined
+    };
+    const acts = (getDaySchedule(a.ds)?.activities || []).map(x => x.id === a.id ? { ...x, ...updated } : x);
+    await persistDayActivities(a.ds, acts);
+    closeActEdit(); render(); scheduleNotifs();
+  }
+  async function removeActEdit() {
+    const a = actEdit;
+    const acts = (getDaySchedule(a.ds)?.activities || []).filter(x => x.id !== a.id);
+    await persistDayActivities(a.ds, acts);
+    closeActEdit(); render(); scheduleNotifs();
+  }
+  function closeActEdit() {
+    const ov = document.getElementById('actedit-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 300);
+    actEdit = null;
   }
 
   // ── Conflict reminders — a Flexible activity overlapping a Fixed one ──
@@ -1490,17 +1622,15 @@ window.Planner = (() => {
 
   // Today's FLEXIBLE activities pushed past midnight (late wake / long pause) spill to tomorrow.
   function spilloverItems() {
-    const offset = wakeOffset + pauseOffset;
-    if (offset <= 0) return [];
+    if (wakeOffset <= 0 && pauseOffset <= 0) return [];
     const todayStr = toISO(new Date());
+    const acts = getDaySchedule(todayStr)?.activities || [];
+    const times = computeDayTimes(acts, wakeOffset, pauseOffset, pauseAnchorId);
     const out = [];
-    for (const a of getDaySchedule(todayStr)?.activities || []) {
-      if ((a.timing || 'flexible') !== 'flexible' || !a.fixed_start) continue;
-      const s = parseTime(a.fixed_start) + offset;
-      if (s >= 1440) {
-        const e = (a.fixed_end ? parseTime(a.fixed_end) : parseTime(a.fixed_start) + (a.duration_minutes||0)) + offset;
-        out.push({ act: a, start: s - 1440, end: e - 1440 });
-      }
+    for (const a of acts) {
+      if ((a.timing || 'flexible') !== 'flexible') continue;
+      const t = times[a.id];
+      if (t && t.start >= 1440) out.push({ act: a, start: t.start - 1440, end: t.end - 1440 });
     }
     return out;
   }
@@ -1540,25 +1670,29 @@ window.Planner = (() => {
       </button></div>`;
     const daySched = getDaySchedule(ds);
     const acts = daySched?.activities || [];
-    const times = computeDayTimes(acts, today ? (wakeOffset + pauseOffset) : 0);   // only today shifts
+    const times = computeDayTimes(acts, today ? wakeOffset : 0, today ? pauseOffset : 0, today ? pauseAnchorId : null);   // only today shifts
+    // Earliest per-activity-paused index → that activity and everything after it is "paused" (dimmed)
+    const pausedFromIdx = today ? acts.findIndex(a => pausedSlotKeys.has(`${ds}:${a.id}`)) : -1;
     const isAnytime = a => (a.timing || 'flexible') === 'anytime';
     const timedHtml = acts.map((act, ai) => {
       if (isAnytime(act)) return '';   // anytime activities render in "Sometime Today" below
       if (today && times[act.id] && times[act.id].start >= 1440) return '';   // spilled to tomorrow
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none', px = slotPx(act.duration_minutes);
-      const isPausedSlot = pausedSlotKeys.has(key);
+      const isChecked = pausedSlotKeys.has(key);                              // this box ticked
+      const isPausedSlot = pausedFromIdx >= 0 && ai >= pausedFromIdx;         // dimmed from anchor onward
       const hasMemo = !!getMemo(ds, act.id);
       const t = times[act.id];
       const timeBig = t ? (t.fixed ? `<span class="t-star">★</span> ${fmtClock(t.start)}–${fmtClock(t.end)}` : `~ ${fmtClock(t.start)}–${fmtClock(t.end)}`) : '';
       return `<div class="slot slot-${status}${isPausedSlot?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
         <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${fmtDur(act.duration_minutes)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
+          <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
           <span class="slot-check-group">
             <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','completed',this.checked)" title="Completed">
             <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','failed',this.checked)" title="Not completed">
           </span>
-          <label class="slot-pause-chk"><input type="checkbox" ${isPausedSlot?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Pause</label>
+          <label class="slot-pause-chk"><input type="checkbox" ${isChecked?'checked':''} onchange="Planner.togglePauseSlot('${esc(key)}',this.checked)"> Pause</label>
         </div></div>`;
     }).join('');
     const slots = acts.length ? timedHtml : `<div class="col-empty"><button class="col-empty-btn" onclick="Planner.openSetup('${ds}')">+ Prepare Day</button></div>`;
@@ -1570,6 +1704,7 @@ window.Planner = (() => {
       return `<div class="anytime-item slot-${status}" data-key="${esc(key)}">
         <div class="anytime-name-row"><span class="anytime-name">${esc(act.name)}</span>${durLabel}</div>
         <div class="slot-indicators">
+          <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
           <span class="slot-check-group">
             <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(act.name)}','completed',this.checked)" title="Completed">
@@ -1610,7 +1745,7 @@ window.Planner = (() => {
 
   // ── Pause / Begin Again ────────────────────────────────────────
   function togglePause() {
-    if (isPaused) return;
+    if (isPaused) { cancelPause(); return; }                 // clicking the active button cancels
     isPaused = true;
     document.getElementById('btn-pause')?.classList.add('active');
     document.getElementById('begin-again-section')?.classList.remove('gone');
@@ -1620,49 +1755,67 @@ window.Planner = (() => {
     render();
   }
 
+  // Cancel a pause AND clear any applied pause-shift, so a mistaken pause/resume reverts cleanly.
   function cancelPause() {
     isPaused = false;
     pausedSlotKeys.clear();
+    pauseOffset = 0; pauseAnchorId = null;
+    localStorage.removeItem('inflictor_pause_offset_' + toISO(new Date()));
+    localStorage.removeItem('inflictor_pause_anchor_' + toISO(new Date()));
     document.getElementById('btn-pause')?.classList.remove('active');
     document.getElementById('begin-again-section')?.classList.add('gone');
-    render();
+    scheduleNotifs(); render();
   }
 
   function togglePauseSlot(key, checked) {
     if (checked) pausedSlotKeys.add(key);
     else pausedSlotKeys.delete(key);
-    const slot = document.querySelector(`.slot[data-key="${CSS.escape(key)}"]`);
-    if (slot) slot.classList.toggle('slot-paused', checked);
+    // Reveal the "Resuming at" bar so the user can say WHEN they picked back up (anchored
+    // to the paused activity). Leaving it untouched = "packed it in" (stays dimmed).
+    const bar = document.getElementById('begin-again-section');
+    if (pausedSlotKeys.size > 0) {
+      bar?.classList.remove('gone');
+      const ti = document.getElementById('begin-again-time');
+      if (ti && !ti.value) {
+        const now = new Date();
+        ti.value = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+      }
+    } else if (!isPaused) {
+      bar?.classList.add('gone');
+    }
+    render();                                                // re-dim from the anchor onward
   }
 
   function beginAgain() {
     const timeInput = document.getElementById('begin-again-time');
     if (!timeInput.value) return;
     const [hours, mins] = timeInput.value.split(':').map(Number);
-    const today = new Date(), todayStr = toISO(today);
-    const resumeMs = new Date(today.getFullYear(), today.getMonth(), today.getDate(), hours, mins, 0, 0).getTime();
-    const sched = getDaySchedule(todayStr);
-    let firstActiveMs = null;
-    if (sched?.activities?.length) {
-      const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
-      let cursor = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime() + wakeOffset * 60000;
-      for (const act of sched.activities) {
-        const key = `${todayStr}:${act.id}`, status = taskStatus[key];
-        if (status === 'completed' || status === 'failed' || pausedSlotKeys.has(key)) {
-          cursor += act.duration_minutes * 60000;
-          continue;
-        }
-        firstActiveMs = cursor;
-        break;
-      }
+    const resumeMin = hours * 60 + mins;                     // minutes from midnight
+    const todayStr = toISO(new Date());
+    const acts = getDaySchedule(todayStr)?.activities || [];
+    // Anchor = the activity the day resumes FROM. Earliest per-activity-paused act if any,
+    // otherwise the first not-yet-done flexible activity ("Pause Activities Now" case).
+    let anchor = null;
+    const pausedIdx = acts.findIndex(a => pausedSlotKeys.has(`${todayStr}:${a.id}`));
+    if (pausedIdx >= 0) {
+      anchor = acts[pausedIdx];
+    } else {
+      anchor = acts.find(a => {
+        const st = taskStatus[`${todayStr}:${a.id}`];
+        return st !== 'completed' && st !== 'failed' && (a.timing||'flexible') === 'flexible' && a.fixed_start;
+      });
     }
-    if (firstActiveMs !== null) {
-      pauseOffset = Math.round((resumeMs - firstActiveMs) / 60000);
+    // Shift so the anchor's displayed start lands exactly on the resume time; later acts follow.
+    if (anchor && (anchor.timing||'flexible') === 'flexible' && anchor.fixed_start) {
+      const displayedStart = parseTime(anchor.fixed_start) + wakeOffset;
+      pauseOffset = resumeMin - displayedStart;
+      pauseAnchorId = anchor.id;
       localStorage.setItem('inflictor_pause_offset_' + todayStr, String(pauseOffset));
+      localStorage.setItem('inflictor_pause_anchor_' + todayStr, pauseAnchorId);
     }
     playSound('crowd');
     isPaused = false;
-    pausedSlotKeys.clear();
+    pausedSlotKeys.clear();                                   // resumed → un-dim
     document.getElementById('begin-again-section')?.classList.add('gone');
     document.getElementById('btn-pause')?.classList.remove('active');
     scheduleNotifs();
@@ -1812,25 +1965,29 @@ window.Planner = (() => {
     });
     // Either a single day or the whole week may be left empty (a clean/blank slate).
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
-    const sched = {wake_time:wakeTime,activities}, empty = {wake_time:wakeTime,activities:[]};
+    const sched = {wake_time:wakeTime,activities};
     if (setup.editingDate) {
-      await api('day-override',{method:'PUT',body:{date:setup.editingDate,schedule_data:JSON.stringify(sched)}});
+      // A single-day edit = the user customizing THAT date. Mark it custom:true so a later
+      // whole-week save will NOT overwrite it — it persists until the user edits this day again.
+      const dayData = {wake_time:wakeTime, activities, custom:true};
+      await api('day-override',{method:'PUT',body:{date:setup.editingDate,schedule_data:JSON.stringify(dayData)}});
       if (!weekData.dailyOverrides) weekData.dailyOverrides={};
-      weekData.dailyOverrides[setup.editingDate]=sched;
+      weekData.dailyOverrides[setup.editingDate]=dayData;
+      markCustomDay(setup.editingDate);
     } else {
       const start=toISO(getMonday(weekStart)), days=getSetupDays();
       if (!weekData.dailyOverrides) weekData.dailyOverrides={};
-      // Save the recurring template (each act carries its own weekday pattern), then
-      // refresh near-term per-date overrides filtered by weekday (overwrites any stale ones).
-      await Promise.all([
-        api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}),
-        ...days.map(d => {
-          const ds=toISO(d), di=dayIdx(d);
-          const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
-          weekData.dailyOverrides[ds]=data;
-          return api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}});
-        }),
-      ]);
+      // Save the recurring template, then refresh per-date overrides from it — but NEVER touch a
+      // day the user individually customized (custom:true). Those persist until the user changes them.
+      const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}) ];
+      for (const d of days) {
+        const ds=toISO(d), di=dayIdx(d);
+        if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;   // preserve the user's customized day
+        const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
+        weekData.dailyOverrides[ds]=data;
+        ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+      }
+      await Promise.all(ops);
       weekData.schedule=sched;
     }
     const conflicts = detectConflicts(activities);
@@ -1841,8 +1998,9 @@ window.Planner = (() => {
   async function init() {
     weekStart = new Date(); weekStart.setHours(0,0,0,0);
     const todayKey = toISO(new Date());
-    pauseOffset = parseInt(localStorage.getItem('inflictor_pause_offset_' + todayKey) || '0');
-    wakeOffset  = parseInt(localStorage.getItem('inflictor_wake_offset_'  + todayKey) || '0');
+    pauseOffset   = parseInt(localStorage.getItem('inflictor_pause_offset_' + todayKey) || '0');
+    wakeOffset    = parseInt(localStorage.getItem('inflictor_wake_offset_'  + todayKey) || '0');
+    pauseAnchorId = localStorage.getItem('inflictor_pause_anchor_' + todayKey) || null;
     // Restore wake time input if offset was saved
     if (wakeOffset !== 0) {
       const sched = getDaySchedule(todayKey);
@@ -1886,6 +2044,7 @@ window.Planner = (() => {
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
+    openActEdit, actEditTiming, saveActEdit, removeActEdit, closeActEdit,
     openMemo, saveMemo, closeMemo, closeConflict,
     updateAnytimeText, removeAnytime, setAnytimeStatus, toggleAnytimePause,
     shift: (unit, dir) => {
@@ -1928,7 +2087,6 @@ window.Settings = (() => {
 
   async function open() {
     const user = App.getUser();
-    console.log('[DIAG] Settings.open called; user =', JSON.stringify(user));
     if (!user) return;
     const isGuest = user.is_guest;
     el('ss-profile').style.display = isGuest ? 'none' : '';
