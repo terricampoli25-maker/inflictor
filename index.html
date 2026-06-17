@@ -815,7 +815,7 @@
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
-          <p>Each day has a small <b>pencil</b> in its header to edit the whole day — add activities, reorder, change the wake time. Each activity also has its own <b>✎</b> in the corner: click it to quickly edit just <b>that one activity</b> (its time or length) <b>for that day only</b>. It works on <b>past days too</b>, so the planner is a <b>record you can correct after the fact</b> — "chores only took an hour," or add a lesson you forgot. <b>Days you change individually stick:</b> if Saturday and Sunday differ from your usual week, set them once and they'll <b>stay that way</b> even when you re-open <b>Prepare Week</b> and save again — only editing that day again will change it. To remove an activity, use <b>Remove</b> in its editor (or clear it in the day editor). You can leave a day empty for a rest day.</p>
+          <p>Each day has a small <b>pencil</b> in its header to edit the whole day — add activities, reorder, change the wake time. Each activity also has its own <b>✎</b> in the corner: click it to quickly edit just <b>that one activity</b> (its time or length) <b>for that day only</b>. It works on <b>past days too</b>, so the planner is a <b>record you can correct after the fact</b> — "chores only took an hour," or add a lesson you forgot. <b>Days you change individually stick:</b> if Saturday and Sunday differ from your usual week, set them once and they'll <b>stay that way</b> even when you re-open <b>Prepare Week</b> and save again — only editing that day again will change it. To remove an activity, use <b>Remove</b> in its editor — or, in the setup box, just <b>clear its name</b> and the rest of its fields (duration, times) clear with it. You can leave a day empty for a rest day. <b>To wipe everything and start fresh:</b> open <b>Prepare Week</b>, delete every activity, and click <b>Set the Stage</b> — it'll confirm, then clear the whole week, customized days and all.</p>
         </div>
         <div class="guide-block">
           <h4>3 · Through the day</h4>
@@ -860,7 +860,7 @@
         </div>
         <div class="guide-block">
           <h4>Act II · Mend what thou wilt, whensoever</h4>
-          <p>Each day beareth a small <b>pencil</b> in its crown to amend the whole day — add acts, shuffle their order, alter the waking hour. And every act keepeth its own <b>✎</b> in the corner: tap it to mend that <b>single act alone</b> (its hour or its length), <b>for that one day only</b>. It obligeth even <b>days long past</b> — so thy stage is no mere prophecy but a <b>chronicle thou mayest set aright after the fact</b>: "the chores took but an hour," or enter a lesson thou forgot. <b>A day thou changest of itself shall hold fast:</b> shouldst Saturday and Sunday differ from thy common week, set them but once and they shall <b>so remain</b>, even when thou openest <b>Prepare Week</b> anew and savest again — only thy own hand upon that day shall alter it. To strike an act hence, press <b>Remove</b> within its editor. And a day may rest wholly bare, for even players must keep a Sabbath.</p>
+          <p>Each day beareth a small <b>pencil</b> in its crown to amend the whole day — add acts, shuffle their order, alter the waking hour. And every act keepeth its own <b>✎</b> in the corner: tap it to mend that <b>single act alone</b> (its hour or its length), <b>for that one day only</b>. It obligeth even <b>days long past</b> — so thy stage is no mere prophecy but a <b>chronicle thou mayest set aright after the fact</b>: "the chores took but an hour," or enter a lesson thou forgot. <b>A day thou changest of itself shall hold fast:</b> shouldst Saturday and Sunday differ from thy common week, set them but once and they shall <b>so remain</b>, even when thou openest <b>Prepare Week</b> anew and savest again — only thy own hand upon that day shall alter it. To strike an act hence, press <b>Remove</b> within its editor — or, in the setup box, simply <b>clear its name</b> and its other fields (its span and hours) shall empty with it. And a day may rest wholly bare, for even players must keep a Sabbath. <b>To sweep all clean and begin anew:</b> open <b>Prepare Week</b>, strike every act, and press <b>Set the Stage</b> — it shall ask thy leave, then wipe the whole week, customized days and all.</p>
         </div>
         <div class="guide-block">
           <h4>Act III · As the hours tread the boards</h4>
@@ -2040,7 +2040,7 @@ window.Planner = (() => {
     list.innerHTML = setup.activities.map((act, i) => `
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
-          <input class="form-input act-name-input" type="text" placeholder="Activity name…" value="${esc(act.name)}">
+          <input class="form-input act-name-input" type="text" placeholder="Activity name…" value="${esc(act.name)}" onchange="Planner.onActName('${act.id}', this.value)">
           ${(act.timing==='fixed'||act.timing==='flexible')
             ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Start time"><span class="dur-unit">to</span><input class="fixed-tt fixed-end" type="time" value="${esc(act.fixed_end||'')}" title="End time"></div>`
             : act.timing==='sustenance'
@@ -2079,6 +2079,15 @@ window.Planner = (() => {
 
   function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   function setActDay(id,di) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ if(!Array.isArray(a.days)) a.days=Array(7).fill(true); a.days[di]=!a.days[di]; } renderActs(); }
+  // Clearing an activity's NAME clears its other fields too — no need to empty every box to blank it out.
+  function onActName(id, val) {
+    captureDOM();
+    const a = setup.activities.find(x => x.id === id);
+    if (!a) return;
+    a.name = val;
+    // Clearing the name blanks the WHOLE row — duration, times, and the type resets to default (deselects Sustenance/Anytime).
+    if (!val.trim()) { a.hours=''; a.mins=''; a.fixed_start=''; a.fixed_end=''; a.goal_time=''; a.timing='flexible'; renderActs(); }
+  }
 
   function toggleChime(id) {
     captureDOM();
@@ -2141,13 +2150,28 @@ window.Planner = (() => {
     if (!weekData.dailyOverrides) weekData.dailyOverrides={};
     // Save the recurring template, then refresh per-date overrides — but NEVER touch a day the user
     // individually customized (custom:true). Those persist until the user edits that day again.
+    // Emptying the whole box and saving = a deliberate "clear everything" — this DOES wipe customized days.
+    const wipeAll = activities.length === 0;
+    if (wipeAll && !confirm('Clear the entire week — including any days you customized individually? This cannot be undone.')) return;
+    const windowDs = new Set(days.map(d=>toISO(d)));
     const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}) ];
     for (const d of days) {
       const ds=toISO(d), di=dayIdx(d);
-      if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;   // preserve the user's customized day
+      if (!wipeAll && (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom)) continue;   // a normal save preserves customized days
       const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
       weekData.dailyOverrides[ds]=data;
       ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+    }
+    if (wipeAll) {
+      // clear any customized days beyond the visible window too, and forget the custom-day marks
+      for (const ds of [...customDays]) {
+        if (windowDs.has(ds)) continue;
+        const data={wake_time:wakeTime, activities:[]};
+        weekData.dailyOverrides[ds]=data;
+        ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+      }
+      customDays.clear();
+      try { localStorage.removeItem('inflictor_custom_days'); } catch {}
     }
     await Promise.all(ops);
     weekData.schedule=sched;
@@ -2201,7 +2225,7 @@ window.Planner = (() => {
   return {
     init, render,
     openSetup, closeSetup,
-    addActivity: addAct, removeAct, setColor, setTiming, setActDay, moveAct,
+    addActivity: addAct, removeAct, setColor, setTiming, setActDay, moveAct, onActName,
     toggleDay, selectAllDays, selectWeekdays,
     saveSetup, saveDay, setStatus, toggleChime,
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
