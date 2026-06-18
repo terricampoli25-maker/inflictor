@@ -303,6 +303,9 @@
     .dur-num{width:42px;background:var(--input-bg);border:1px solid var(--border);color:var(--text);font-family:var(--font-body);font-size:.9rem;padding:.38rem .35rem;text-align:center;outline:none;border-radius:1px}
     .dur-num:focus{border-color:var(--accent)}
     .dur-unit{font-family:var(--font-body);font-style:italic;color:var(--text-muted);font-size:.82rem}
+    .act-undet-chk{display:inline-flex;align-items:center;gap:.25rem;font-family:var(--font-body);font-size:.72rem;color:var(--text-muted);cursor:pointer;user-select:none;margin-left:.4rem;white-space:nowrap}
+    .act-undet-chk input{cursor:pointer;accent-color:var(--accent)}
+    .undet-tag{font-style:italic;opacity:.8;font-size:.85em}
     .act-days{display:flex;gap:.25rem;margin-bottom:.5rem}
     .actday-pill{flex:1;font-family:var(--font-body);font-size:.66rem;letter-spacing:.02em;background:none;border:1px solid var(--border);color:var(--text-muted);padding:.3rem .1rem;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
     .actday-pill:hover{border-color:var(--accent)}
@@ -590,8 +593,9 @@
     <div class="setup-msg" id="setup-msg"></div>
     <div class="setup-footer">
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.1rem" onclick="Planner.closeSetup()">Dismiss</button>
+      <button class="btn btn-ghost" id="setup-clear-all" style="width:auto;padding:.55rem 1.05rem;color:#c06060;border-color:#a85050;display:none" onclick="Planner.clearEverything()" title="Erase the ENTIRE schedule — every day, every activity">Clear Everything</button>
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.3rem" onclick="Planner.saveDay()" title="Save these changes to just this one day (today, or the day you're editing)">Edit</button>
-      <button class="btn btn-primary" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()" title="Apply to your whole recurring week">Set the Stage</button>
+      <button class="btn btn-primary" id="setup-save-week" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()" title="Apply to your whole recurring week">Set the Stage</button>
     </div>
   </div>
 </div>
@@ -803,7 +807,7 @@
         </div>
         <div class="guide-block">
           <h4>1 · Build your week</h4>
-          <p>Click <b>Prepare Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes, and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). When you save, you choose the scope with two buttons: <b>Edit</b> applies your changes to just <b>one day</b> (today, or the day you're editing), while <b>Set the Stage</b> applies to your <b>whole recurring week</b>. On the planner, a longer activity shows as a <b>taller block</b>, so you can see the shape of your day at a glance. You can also click the little <b>pencil</b> on any day's header to open that day directly.</p>
+          <p>Click <b>Prepare Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes, and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). When you save, two buttons set the scope: <b>Edit</b> saves to just <b>one day</b>, while <b>Set the Stage</b> applies to your <b>whole recurring week</b>. To change a single day, click the little <b>pencil</b> on that day's header — that view <b>only</b> saves to that day (no "Set the Stage"), so it can't overwrite the rest of your week. To wipe the slate and start fresh, use <b>Clear Everything</b> in the Prepare Week box. <b>Tip:</b> clearing an activity's <b>name</b> also clears its time/length, so you can blank one out without emptying every box.</p>
         </div>
         <div class="guide-block">
           <h4>Fixed, Flexible, Anytime &amp; Sustenance</h4>
@@ -812,6 +816,7 @@
           <p><b>Flexible</b> — also a <b>start and end time</b>, but it <b>can shift</b> if you wake late or pause. Shown with a <b>~</b> on the planner.</p>
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
           <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Add a memo on it to track what you ate.</p>
+          <p><b>Not sure how long?</b> ⏳ On any activity (except a snack) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it shows its start time and <b>"ongoing"</b> instead of a set length. Perfect for "organizing the room" when you've no idea how long it'll take.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -848,7 +853,7 @@
         </div>
         <div class="guide-block">
           <h4>Act I · Lay thy week upon the boards</h4>
-          <p>Press <b>Prepare Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes, and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). When thou savest, two buttons set the reach: <b>Edit</b> bestoweth thy changes upon <b>one day alone</b> (today, or the day in hand), whilst <b>Set the Stage</b> bindeth thy <b>whole recurring week</b>. Behold: the longer an act, the <b>taller it standeth</b>, that the whole shape of thy day be read at a single glance. Thou mayest also tap the small <b>pencil</b> upon any day's header to open that day forthwith.</p>
+          <p>Press <b>Prepare Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes, and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). When thou savest, two buttons set the reach: <b>Edit</b> bestoweth thy changes upon <b>one day alone</b>, whilst <b>Set the Stage</b> bindeth thy <b>whole recurring week</b>. To mend a single day, tap the small <b>pencil</b> upon that day's header — that view saveth to that day <b>only</b> (no "Set the Stage"), and so cannot trouble the rest of thy week. To sweep all away and begin anew, use <b>Clear Everything</b> within the Prepare Week box. <b>Mark:</b> to clear an act's <b>name</b> cleareth its hour and span as well, that thou needest not empty every box.</p>
         </div>
         <div class="guide-block">
           <h4>Of four humours of Time · Fixed, Flexible, Anytime &amp; Sustenance</h4>
@@ -857,6 +862,7 @@
           <p><b>Flexible</b> — it too hath a start and an end, yet it will <b>bend and drift</b> shouldst thou wake late or pause. It weareth a <b>~</b>.</p>
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
           <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Leave a memo upon it to record what thou didst eat.</p>
+          <p><b>Uncertain of the hours?</b> ⏳ Upon any act (save a morsel) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it showeth its start and <b>"ongoing"</b> in place of a fixed span. Apt for "setting the chamber to rights," when thou knowest not how long 'twill take.</p>
         </div>
         <div class="guide-block">
           <h4>Act II · Mend what thou wilt, whensoever</h4>
@@ -1380,7 +1386,7 @@ window.Planner = (() => {
         }
         const start = parseTime(a.fixed_start) + shift;
         const end = (a.fixed_end ? parseTime(a.fixed_end) : parseTime(a.fixed_start) + (a.duration_minutes || 0)) + shift;
-        out[a.id] = { start, end: Math.max(end, start), fixed: timing === 'fixed', sustenance: timing === 'sustenance' };
+        out[a.id] = { start, end: Math.max(end, start), fixed: timing === 'fixed', sustenance: timing === 'sustenance', undet: !!a.undetermined };
       }
       // anytime: no slot time — its optional "~ish" shows in "Sometime Today"
     });
@@ -1463,6 +1469,7 @@ window.Planner = (() => {
     actEdit = {
       ds, id,
       name: a.name || '',
+      undetermined: !!a.undetermined,
       timing: a.timing || 'flexible',
       fixed_start: a.fixed_start || a.fixed_time || '',
       fixed_end: a.fixed_end || '',
@@ -1536,6 +1543,7 @@ window.Planner = (() => {
     const duration = hasRange ? Math.max(15, parseTime(a.fixed_end) - parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:15, (a.hours||0)*60 + (a.mins||0));
     return {
       name: (a.name || '').trim() || (timing==='sustenance' ? '' : 'Untitled'), duration_minutes: duration, timing,
+      undetermined: a.undetermined || undefined,
       chime_enabled: a.chime_enabled !== false,
       fixed_start: hasStart && a.fixed_start ? a.fixed_start : undefined,
       fixed_end:   isRange && a.fixed_end   ? a.fixed_end   : undefined,
@@ -1811,14 +1819,18 @@ window.Planner = (() => {
       }
       const t = times[act.id];
       const rs = p.s!=null ? p.s : (t?t.start:null), re = p.e!=null ? p.e : (t?t.end:null);
-      const timeBig = (rs!=null) ? (t&&t.fixed ? `<span class="t-star">★</span> ${fmtClock(rs)}–${fmtClock(re)}` : `~ ${fmtClock(rs)}–${fmtClock(re)}`) : '';
+      const timeBig = (rs!=null)
+        ? (t&&t.undet
+            ? `${t.fixed?'<span class="t-star">★</span>':'~'} ${fmtClock(rs)} <span class="undet-tag">→ ongoing</span>`
+            : (t&&t.fixed ? `<span class="t-star">★</span> ${fmtClock(rs)}–${fmtClock(re)}` : `~ ${fmtClock(rs)}–${fmtClock(re)}`))
+        : '';
       if (p.cont) {                                           // 2nd+ part of a split activity — visual continuation, no controls
         return `<div class="slot slot-cont slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px">
           <div class="slot-info"><div class="slot-name">↳ ${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}</div></div>`;
       }
       const isChecked = pausedSlotKeys.has(key);
       return `<div class="slot slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
-        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${fmtDur(segMin)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
+        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
           <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
@@ -1834,7 +1846,9 @@ window.Planner = (() => {
     const anytimeHtml = acts.filter(isAnytime).map(act => {
       const key = `${ds}:${act.id}`, status = taskStatus[key]||'none';
       const hasMemo = !!getMemo(ds, act.id);
-      const durLabel = (act.goal_time ? `<span class="anytime-dur">~${fmtClock(parseTime(act.goal_time))}</span>` : '') + (act.duration_minutes ? `<span class="anytime-dur">${fmtDur(act.duration_minutes)}</span>` : '');
+      const durLabel = act.undetermined
+        ? `<span class="anytime-dur" style="font-style:italic">length unknown</span>`
+        : (act.goal_time ? `<span class="anytime-dur">~${fmtClock(parseTime(act.goal_time))}</span>` : '') + (act.duration_minutes ? `<span class="anytime-dur">${fmtDur(act.duration_minutes)}</span>` : '');
       return `<div class="anytime-item slot-${status}" data-key="${esc(key)}">
         <div class="anytime-name-row"><span class="anytime-name">${esc(act.name)}</span>${durLabel}</div>
         <div class="slot-indicators">
@@ -2003,7 +2017,8 @@ window.Planner = (() => {
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
     setup.wakeTime  = existing?.wake_time || '07:00';
     setup.activities = (existing?.activities||[]).map(a => ({
-      id: uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: a.chime_enabled !== false, timing: a.timing || 'flexible',
+      id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: a.chime_enabled !== false, timing: a.timing || 'flexible',
+      undetermined: !!a.undetermined,
       fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
       days: Array.isArray(a.days) ? a.days.slice() : Array(7).fill(true)
     }));
@@ -2012,6 +2027,10 @@ window.Planner = (() => {
       const name = new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase();
       document.getElementById('setup-title').textContent = `EDIT ${name}`;
     } else { document.getElementById('setup-title').textContent = "SET THY WEEK'S PROGRAM"; }
+    // Editing a single day = ONLY the "Edit" save (no "Set the Stage" — that's the recurring-week tool, reached via Prepare Week).
+    const isWeek = !date;
+    const setWeekBtn = document.getElementById('setup-save-week'); if (setWeekBtn) setWeekBtn.style.display = isWeek ? '' : 'none';
+    const clearBtn   = document.getElementById('setup-clear-all'); if (clearBtn)   clearBtn.style.display   = isWeek ? '' : 'none';
     document.getElementById('setup-msg').classList.remove('show');
     renderSetup();
     const ov = document.getElementById('week-setup-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
@@ -2041,7 +2060,11 @@ window.Planner = (() => {
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
           <input class="form-input act-name-input" type="text" placeholder="Activity name…" value="${esc(act.name)}" onchange="Planner.onActName('${act.id}', this.value)">
-          ${(act.timing==='fixed'||act.timing==='flexible')
+          ${act.undetermined
+            ? ((act.timing==='fixed'||act.timing==='flexible')
+               ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Start time"><span class="dur-unit" style="font-style:italic">→ length unknown</span></div>`
+               : `<span class="dur-unit" style="font-style:italic;opacity:.75">length unknown</span>`)
+            : (act.timing==='fixed'||act.timing==='flexible')
             ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Start time"><span class="dur-unit">to</span><input class="fixed-tt fixed-end" type="time" value="${esc(act.fixed_end||'')}" title="End time"></div>`
             : act.timing==='sustenance'
             ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="When you ate"><span class="dur-unit">for</span><input class="dur-num" type="number" min="0" max="5" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`
@@ -2055,6 +2078,7 @@ window.Planner = (() => {
             <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
             <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
             ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
+            ${act.timing!=='sustenance' ? `<label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label>` : ''}
           </div>
           <div class="act-controls">
             <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
@@ -2078,6 +2102,14 @@ window.Planner = (() => {
   }
 
   function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
+  // Clearing the name clears the rest too — so you can blank an activity without emptying every box.
+  function onActName(id, val) {
+    captureDOM();
+    const a = setup.activities.find(x => x.id === id);
+    if (!a) return;
+    a.name = val;
+    if (!val.trim()) { a.hours = ''; a.mins = ''; a.fixed_start = ''; a.fixed_end = ''; a.goal_time = ''; renderActs(); }
+  }
   function setActDay(id,di) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ if(!Array.isArray(a.days)) a.days=Array(7).fill(true); a.days[di]=!a.days[di]; } renderActs(); }
   // Clearing an activity's NAME clears its other fields too — no need to empty every box to blank it out.
   function onActName(id, val) {
@@ -2097,7 +2129,8 @@ window.Planner = (() => {
   }
   function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
   function setColor(id,c) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.color=c; renderActs(); }
-  function setTiming(id,mode) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.hours=0; if(!a.mins) a.mins=20; } } renderActs(); }
+  function setTiming(id,mode) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; if(!a.mins) a.mins=20; } } renderActs(); }
+  function toggleUndet(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.undetermined=checked; renderActs(); }
   function moveAct(id,dir) {
     captureDOM(); const idx=setup.activities.findIndex(a=>a.id===id), swap=idx+dir;
     if(idx<0||swap<0||swap>=setup.activities.length) return;
@@ -2113,12 +2146,14 @@ window.Planner = (() => {
       const timing=a.timing||'flexible';
       const isRange = timing==='fixed' || timing==='flexible';
       const hasStart = isRange || timing==='sustenance';            // sustenance also has a clock time
-      const hasRange = isRange && a.fixed_start && a.fixed_end;
-      const duration = hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:15,(a.hours||0)*60+(a.mins||0));
+      const undet = !!a.undetermined && timing!=='sustenance';      // open-ended: no known length
+      const hasRange = isRange && !undet && a.fixed_start && a.fixed_end;
+      const duration = undet ? 60 : (hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:15,(a.hours||0)*60+(a.mins||0)));
       return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_enabled:a.chime_enabled!==false,timing,
+        undetermined: undet || undefined,
         fixed_start:hasStart&&a.fixed_start?a.fixed_start:undefined,
-        fixed_end:isRange&&a.fixed_end?a.fixed_end:undefined,
-        goal_time:(timing==='anytime'&&a.goal_time)?a.goal_time:undefined,
+        fixed_end:(isRange&&!undet&&a.fixed_end)?a.fixed_end:undefined,
+        goal_time:(timing==='anytime'&&!undet&&a.goal_time)?a.goal_time:undefined,
         days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
     });
   }
@@ -2180,6 +2215,28 @@ window.Planner = (() => {
     if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
   }
 
+  // "Clear Everything" — a hard reset that reaches days the box can't show (customized days, anytime, etc.).
+  async function clearEverything() {
+    if (!confirm('Erase the ENTIRE schedule — every day, every activity, customized days and all? This cannot be undone.')) return;
+    const wakeTime = '07:00', empty = { wake_time: wakeTime, activities: [] };
+    if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
+    // Every date we know about: the visible window, customized days, and whatever overrides are loaded.
+    const dates = new Set([ ...getSetupDays().map(d=>toISO(d)), ...customDays, ...Object.keys(weekData.dailyOverrides) ]);
+    const ops = [ api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(empty)}}) ];
+    for (const ds of dates) {
+      weekData.dailyOverrides[ds] = { wake_time: wakeTime, activities: [] };
+      ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(empty)}}));
+    }
+    weekData.schedule = { wake_time: wakeTime, activities: [] };
+    customDays.clear();
+    try {
+      localStorage.removeItem('inflictor_custom_days');
+      Object.keys(localStorage).filter(k=>k.startsWith('inflictor_anytime_')).forEach(k=>localStorage.removeItem(k));
+    } catch {}
+    await Promise.all(ops);
+    closeSetup(); render(); scheduleNotifs();
+  }
+
   async function init() {
     weekStart = new Date(); weekStart.setHours(0,0,0,0);
     const todayKey = toISO(new Date());
@@ -2225,9 +2282,9 @@ window.Planner = (() => {
   return {
     init, render,
     openSetup, closeSetup,
-    addActivity: addAct, removeAct, setColor, setTiming, setActDay, moveAct, onActName,
+    addActivity: addAct, removeAct, setColor, setTiming, toggleUndet, setActDay, moveAct, onActName, onActName,
     toggleDay, selectAllDays, selectWeekdays,
-    saveSetup, saveDay, setStatus, toggleChime,
+    saveSetup, saveDay, clearEverything, setStatus, toggleChime,
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
