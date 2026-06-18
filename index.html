@@ -345,9 +345,10 @@
     #settings-overlay{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.4);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .4s ease}
     #settings-overlay.visible{opacity:1;pointer-events:all}
     #settings-overlay.gone{display:none}
-    #memo-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s ease}
-    #memo-overlay.visible{opacity:1;pointer-events:all}
-    #memo-overlay.gone{display:none}
+    #memo-overlay,#calorie-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.45);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .3s ease}
+    #memo-overlay.visible,#calorie-overlay.visible{opacity:1;pointer-events:all}
+    #memo-overlay.gone,#calorie-overlay.gone{display:none}
+    .sus-cal{color:#d08a3a;font-weight:600;font-style:normal}
     #conflict-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .25s ease}
     #conflict-overlay.visible{opacity:1;pointer-events:all}
     #conflict-overlay.gone{display:none}
@@ -612,6 +613,19 @@
   </div>
 </div>
 
+<!-- Calorie window — opens when you mark a meal/snack as had -->
+<div id="calorie-overlay" class="gone">
+  <div class="memo-box" style="width:340px">
+    <div class="memo-title" id="calorie-title">🔥 Calories</div>
+    <div class="actedit-sub" id="calorie-sub">Optional — log it for your totals.</div>
+    <input id="calorie-input" class="form-input" type="number" min="0" max="9999" inputmode="numeric" placeholder="e.g. 350" style="width:100%" onkeydown="if(event.key==='Enter')Planner.saveCalories()">
+    <div class="memo-footer">
+      <button class="btn btn-ghost" style="width:auto;padding:.5rem 1.1rem" onclick="Planner.closeCalories()">Skip</button>
+      <button class="btn btn-primary" style="width:auto;padding:.5rem 1.3rem" onclick="Planner.saveCalories()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Single-activity editor (this day only — a record you can adjust after the fact) -->
 <div id="actedit-overlay" class="gone">
   <div class="memo-box">
@@ -815,7 +829,7 @@
           <p><b>Fixed</b> — a set <b>start and end time that never moves</b> (an appointment, your meds). Shown with a <b>★</b> on the planner.</p>
           <p><b>Flexible</b> — also a <b>start and end time</b>, but it <b>can shift</b> if you wake late or pause. Shown with a <b>~</b> on the planner.</p>
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Add a memo on it to track what you ate.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Add a memo on it to track what you ate. And when you mark a meal <b>had</b> (✓), a little <b>calorie window</b> pops up — log the calories (optional) and they count toward your daily totals.</p>
           <p><b>Not sure how long?</b> ⏳ On any activity (except a snack) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it shows its start time and <b>"ongoing"</b> instead of a set length. Perfect for "organizing the room" when you've no idea how long it'll take.</p>
         </div>
         <div class="guide-block">
@@ -861,7 +875,7 @@
           <p><b>Fixed</b> — an hour writ in stone, that <b>will not stir</b> though heaven should fall (an appointment, thy physic). It weareth a <b>★</b> upon the stage.</p>
           <p><b>Flexible</b> — it too hath a start and an end, yet it will <b>bend and drift</b> shouldst thou wake late or pause. It weareth a <b>~</b>.</p>
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Leave a memo upon it to record what thou didst eat.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Leave a memo upon it to record what thou didst eat. And when thou markest a meal <b>had</b> (✓), a small <b>calorie window</b> appeareth — note the calories (if thou wilt) and they tally toward thy daily totals.</p>
           <p><b>Uncertain of the hours?</b> ⏳ Upon any act (save a morsel) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it showeth its start and <b>"ongoing"</b> in place of a fixed span. Apt for "setting the chamber to rights," when thou knowest not how long 'twill take.</p>
         </div>
         <div class="guide-block">
@@ -1461,6 +1475,28 @@ window.Planner = (() => {
     memoTarget = null;
   }
 
+  // ── Calories — stored per (date, sustenance) via the synced memo store, key `cal:<id>` ──
+  let calorieTarget = null;
+  function getCalories(ds, id) { const v = getMemo(ds, `cal:${id}`); return v ? parseInt(v) || 0 : 0; }
+  function openCalories(ds, id, name) {
+    calorieTarget = { ds, id };
+    document.getElementById('calorie-title').textContent = `🔥 Calories${name ? ' — ' + name : ''}`;
+    document.getElementById('calorie-input').value = getMemo(ds, `cal:${id}`) || '';
+    const ov = document.getElementById('calorie-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
+    setTimeout(() => document.getElementById('calorie-input').select(), 80);
+  }
+  function saveCalories() {
+    if (!calorieTarget) return;
+    const v = (document.getElementById('calorie-input').value || '').trim();
+    const clean = v === '' ? '' : String(Math.max(0, Math.min(99999, parseInt(v) || 0)));
+    setMemo(calorieTarget.ds, `cal:${calorieTarget.id}`, clean);
+    closeCalories(); render();
+  }
+  function closeCalories() {
+    const ov = document.getElementById('calorie-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 300);
+    calorieTarget = null;
+  }
+
   // ── Single-activity editor (this day only — edit a duration/time after the fact) ──
   let actEdit = null;
   function openActEdit(ds, id) {
@@ -1592,11 +1628,18 @@ window.Planner = (() => {
   }
 
   // ── Conflict reminders — a Flexible activity overlapping a Fixed one ──
-  function detectConflicts(acts) {
+  // Only warns about clashes that are still in the FUTURE — no point flagging a clash that already passed.
+  // (Sustenance never counts, undetermined never counts.) `date` = the day being saved; omit for the recurring week.
+  function detectConflicts(acts, date) {
+    const todayStr = toISO(new Date());
+    if (date && date < todayStr) return [];                          // the whole day is in the past → nothing to fix
+    const now = new Date();
+    const cutoff = (date === todayStr) ? (now.getHours()*60 + now.getMinutes()) : -1;   // today: ignore the part already gone
     const out = [];
     const timed = [];
     for (const a of acts||[]) {
       const t = a.timing || 'flexible';
+      if (a.undetermined) continue;                                  // open-ended → no firm end → never a "clash"
       if ((t==='fixed'||t==='flexible') && a.fixed_start) {
         timed.push({ name:a.name, s:parseTime(a.fixed_start), e: a.fixed_end?parseTime(a.fixed_end):parseTime(a.fixed_start)+(a.duration_minutes||0) });
       } else if (t==='anytime' && a.goal_time) {   // anytime only clashes if it has an ~ish time
@@ -1605,7 +1648,10 @@ window.Planner = (() => {
     }
     for (let i=0;i<timed.length;i++) for (let j=i+1;j<timed.length;j++) {
       const A=timed[i], B=timed[j];
-      if (A.s < B.e && B.s < A.e) out.push(`“${A.name}” (${fmtClock(A.s)}–${fmtClock(A.e)}) and “${B.name}” (${fmtClock(B.s)}–${fmtClock(B.e)}) overlap.`);
+      if (A.s < B.e && B.s < A.e) {
+        if (Math.min(A.e, B.e) <= cutoff) continue;                  // the overlap already ended (earlier today) → skip
+        out.push(`“${A.name}” (${fmtClock(A.s)}–${fmtClock(A.e)}) and “${B.name}” (${fmtClock(B.s)}–${fmtClock(B.e)}) overlap.`);
+      }
     }
     return out;
   }
@@ -1806,9 +1852,10 @@ window.Planner = (() => {
       const hasMemo = !!getMemo(ds, act.id);
       if (p.sus) {                                            // Sustenance — compact single row so it stays thin (steals, doesn't add)
         const lbl = (act.name||'').trim();
+        const cal = getCalories(ds, act.id);
         return `<div class="slot slot-sus slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
           <div class="sus-row">
-            <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}</span>
+            <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}${cal?` · <span class="sus-cal">🔥${cal}</span>`:''}</span>
             <span class="sus-ctrls">
               <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal">✎</button>
               <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Note — what you ate':'Add a note (what you ate)'}">M</button>
@@ -1879,6 +1926,11 @@ window.Planner = (() => {
         if (slot) { const c=slot.querySelector('.slot-chk-complete'); if(c) c.checked=false; }
       }
       api('task-log',{method:'POST',body:{date:dateStr,task_id:actId,task_name:actName,status:newStatus}});
+      // A meal/snack marked "had" → pop the calorie window (optional logging).
+      if (newStatus === 'completed') {
+        const act = (getDaySchedule(dateStr)?.activities || []).find(a => a.id === actId);
+        if (act && (act.timing||'') === 'sustenance') setTimeout(() => openCalories(dateStr, actId, actName), 350);
+      }
     } else {
       if (newStatus === 'completed') playSound('uncheck');
       delete taskStatus[key];
@@ -2170,7 +2222,7 @@ window.Planner = (() => {
     if (!weekData.dailyOverrides) weekData.dailyOverrides={};
     weekData.dailyOverrides[ds]=dayData;
     markCustomDay(ds);
-    const conflicts = detectConflicts(activities);
+    const conflicts = detectConflicts(activities, ds);   // date-aware: skip clashes already in the past
     closeSetup(); render(); scheduleNotifs();
     if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
   }
@@ -2290,6 +2342,7 @@ window.Planner = (() => {
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
     openActEdit, openActAdd, actEditTiming, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
     openMemo, saveMemo, closeMemo, closeConflict,
+    openCalories, saveCalories, closeCalories,
     updateAnytimeText, removeAnytime, setAnytimeStatus, toggleAnytimePause,
     shift: (unit, dir) => {
       weekStart = new Date(weekStart);

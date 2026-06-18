@@ -169,24 +169,27 @@ async function handleSettings(segments, request, env) {
     const { theme, wake_time, sound_enabled, notification_enabled, notification_repeat, week_start_day, avatar_color, font_style,
             cheer_enabled, aww_enabled, avatar_data } =
       await request.json().catch(() => ({}));
+    // The settings row always exists (created at registration). Ensure it, then UPDATE only the
+    // fields provided — COALESCE keeps the rest. A plain UPDATE avoids the INSERT path's NOT NULL
+    // check tripping on the columns this PUT didn't send (that was returning 500 on every save).
+    await db.prepare('INSERT OR IGNORE INTO settings (user_id) VALUES (?)').bind(s.user_id).run();
     await db.prepare(`
-      INSERT INTO settings (user_id,theme,wake_time,sound_enabled,notification_enabled,notification_repeat,week_start_day,avatar_color,font_style,cheer_enabled,aww_enabled,avatar_data)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
-      ON CONFLICT(user_id) DO UPDATE SET
-        theme=COALESCE(excluded.theme,theme), wake_time=COALESCE(excluded.wake_time,wake_time),
-        sound_enabled=COALESCE(excluded.sound_enabled,sound_enabled),
-        notification_enabled=COALESCE(excluded.notification_enabled,notification_enabled),
-        notification_repeat=COALESCE(excluded.notification_repeat,notification_repeat),
-        week_start_day=COALESCE(excluded.week_start_day,week_start_day),
-        avatar_color=COALESCE(excluded.avatar_color,avatar_color),
-        font_style=COALESCE(excluded.font_style,font_style),
-        cheer_enabled=COALESCE(excluded.cheer_enabled,cheer_enabled),
-        aww_enabled=COALESCE(excluded.aww_enabled,aww_enabled),
-        avatar_data=COALESCE(excluded.avatar_data,avatar_data),
+      UPDATE settings SET
+        theme=COALESCE(?,theme), wake_time=COALESCE(?,wake_time),
+        sound_enabled=COALESCE(?,sound_enabled),
+        notification_enabled=COALESCE(?,notification_enabled),
+        notification_repeat=COALESCE(?,notification_repeat),
+        week_start_day=COALESCE(?,week_start_day),
+        avatar_color=COALESCE(?,avatar_color),
+        font_style=COALESCE(?,font_style),
+        cheer_enabled=COALESCE(?,cheer_enabled),
+        aww_enabled=COALESCE(?,aww_enabled),
+        avatar_data=COALESCE(?,avatar_data),
         updated_at=datetime('now')
-    `).bind(s.user_id, theme??null, wake_time??null, sound_enabled??null, notification_enabled??null,
+      WHERE user_id=?
+    `).bind(theme??null, wake_time??null, sound_enabled??null, notification_enabled??null,
             notification_repeat??null, week_start_day??null, avatar_color??null, font_style??null,
-            cheer_enabled??null, aww_enabled??null, avatar_data??null).run();
+            cheer_enabled??null, aww_enabled??null, avatar_data??null, s.user_id).run();
     return json(await db.prepare('SELECT * FROM settings WHERE user_id=?').bind(s.user_id).first());
   }
   return json({ error: 'Method not allowed' }, 405);
