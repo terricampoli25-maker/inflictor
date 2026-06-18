@@ -333,6 +333,35 @@ async function handleAccount(segments, request, env) {
   return json({error:'Method not allowed'},405);
 }
 
+// ─── /api/report-email — email the user's own report (body built client-side, escaped here) ──────
+async function handleReportEmail(request, env) {
+  const db = env.DB, s = await getSession(request, db);
+  if (!s) return json({ error:'Unauthorized' }, 401);
+  if (!s.email) return json({ error:'No email is on your account — add one in your profile to receive reports.' }, 400);
+  if (!env.RESEND_API_KEY) return json({ error:'Email is not configured on the server yet.' }, 503);
+  const { body='', period='Your report' } = await request.json().catch(() => ({}));
+  const esc = x => String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const bodyHtml = esc(String(body).slice(0, 20000)).replace(/\n/g,'<br>');
+  const html = `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;background:#110800;color:#d4af37;border:1px solid #5a3010">
+    <h1 style="text-align:center;letter-spacing:.1em;margin:0">THE INFLICTOR</h1>
+    <p style="text-align:center;font-style:italic;color:#a07840;margin:.3rem 0 1.4rem">${esc(period)}</p>
+    <div style="background:#1a0f00;padding:1.1rem 1.3rem;border:1px solid #3a2410;color:#e8d0a0;font-size:14px;line-height:1.7;white-space:normal">${bodyHtml}</div>
+    <p style="font-size:.72rem;color:#6a5030;text-align:center;margin-top:1.4rem">Sent from The Inflictor · ${esc(new Date().toDateString())}</p>
+  </div>`;
+  const res = await fetch('https://api.resend.com/emails', {
+    method:'POST',
+    headers:{ 'Authorization':`Bearer ${env.RESEND_API_KEY}`, 'Content-Type':'application/json' },
+    // Default to Resend's shared test sender (works to your own account email with no domain setup);
+    // set FROM_EMAIL once you've verified a domain to send to anyone.
+    body: JSON.stringify({ from: env.FROM_EMAIL||'The Inflictor <onboarding@resend.dev>', to: s.email, subject: `The Inflictor — ${period}`, html }),
+  });
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    return json({ error:'The email service refused the send.', detail: detail.slice(0,300) }, 502);
+  }
+  return json({ ok:true, sent_to: s.email });
+}
+
 // ─── /api/export ──────────────────────────────────────────────────────────────
 
 async function handleExport(segments, request, env) {
@@ -481,6 +510,7 @@ export async function onRequest(context) {
     else if (seg==='history')                        response=await handleHistory(segments,request,env);
     else if (seg==='account')                        response=await handleAccount(segments,request,env);
     else if (seg==='export')                         response=await handleExport(segments,request,env);
+    else if (seg==='report-email')                   response=await handleReportEmail(request,env);
     else if (seg==='stripe')                         response=await handleStripe(segments,request,env);
     else if (seg==='webhooks'&&segments[1]==='stripe') response=await handleStripeWebhook(request,env);
     else                                             response=json({error:'Not found'},404);
