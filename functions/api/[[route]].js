@@ -333,6 +333,72 @@ async function handleAccount(segments, request, env) {
   return json({error:'Method not allowed'},405);
 }
 
+// ─── /api/report — server-side report: completed-activity time (meal carved out) + calories ──────
+const rptParse = t => { const [h,m]=(t||'07:00').split(':').map(Number); return (h||0)*60+(m||0); };
+const rptDayIdx = ds => { const d=new Date(`${ds}T12:00:00Z`); const w=d.getUTCDay(); return w===0?6:w-1; };  // 0=Mon..6=Sun
+const rptMonday = ds => { const d=new Date(`${ds}T12:00:00Z`); const w=d.getUTCDay(); d.setUTCDate(d.getUTCDate()+(w===0?-6:1-w)); return d.toISOString().split('T')[0]; };
+function rptTimes(acts) {
+  const out={};
+  for (const a of acts||[]) {
+    const t=a.timing||'flexible';
+    if ((t==='fixed'||t==='flexible'||t==='sustenance') && a.fixed_start) {
+      const start=rptParse(a.fixed_start), end=a.fixed_end?rptParse(a.fixed_end):start+(a.duration_minutes||0);
+      out[a.id]={ start, end:Math.max(end,start), sus:t==='sustenance' };
+    }
+  }
+  return out;
+}
+// Computes the report for `numDays` days from `start`. Returns totals + per-day breakdown.
+async function computeReport(db, uid, start, numDays) {
+  const dates=[]; { const d0=new Date(`${start}T12:00:00Z`); for (let i=0;i<numDays;i++){ const d=new Date(d0); d.setUTCDate(d0.getUTCDate()+i); dates.push(d.toISOString().split('T')[0]); } }
+  const end=dates[dates.length-1];
+  const [ovrRes, logsRes, memosRes] = await Promise.all([
+    db.prepare('SELECT date,schedule_data FROM daily_schedules WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
+    db.prepare('SELECT date,task_id,task_name,status FROM task_logs WHERE user_id=? AND date>=? AND date<=? ORDER BY logged_at DESC').bind(uid,start,end).all(),
+    db.prepare('SELECT date,item_id,content FROM memos WHERE user_id=? AND date>=? AND date<=?').bind(uid,start,end).all(),
+  ]);
+  const parse=x=>{ try{return JSON.parse(x);}catch{return null;} };
+  const overrides={}; for (const r of ovrRes.results||[]) overrides[r.date]=parse(r.schedule_data);
+  const status={}, seen=new Set();
+  for (const l of logsRes.results||[]) { const k=`${l.date}:${l.task_id||l.task_name}`; if(!seen.has(k)){ seen.add(k); status[k]=l.status; } }
+  const cals={}; for (const r of memosRes.results||[]) if (r.item_id && r.item_id.startsWith('cal:')) cals[`${r.date}:${r.item_id}`]=parseInt(r.content)||0;
+  const mondays=[...new Set(dates.map(rptMonday))];
+  const tmplRows=await Promise.all(mondays.map(mon=>db.prepare('SELECT schedule_data FROM weekly_schedules WHERE user_id=? AND week_start=?').bind(uid,mon).first()));
+  const templates={}; mondays.forEach((mon,i)=>templates[mon]=tmplRows[i]?parse(tmplRows[i].schedule_data):null);
+  let totMin=0, totCal=0, done=0, missed=0; const byDay=[];
+  for (const ds of dates) {
+    let acts;
+    if (overrides[ds]) acts=overrides[ds].activities||[];
+    else { const tmpl=templates[rptMonday(ds)], di=rptDayIdx(ds); acts=tmpl?(tmpl.activities||[]).filter(a=>!a.days||a.days[di]):[]; }
+    const times=rptTimes(acts), susList=acts.filter(a=>(a.timing||'')==='sustenance'&&times[a.id]);
+    let dayMin=0, dayCal=0; const items=[];
+    for (const a of acts) {
+      const st=status[`${ds}:${a.id}`]||status[`${ds}:${a.name}`], timing=a.timing||'flexible';
+      if (timing==='sustenance') { const c=cals[`${ds}:cal:${a.id}`]||0; if(c)dayCal+=c; if(st==='completed'||c) items.push({type:'sus',name:a.name||'snack',calories:c}); continue; }
+      if (st==='completed') done++; else if (st==='failed') { missed++; continue; }
+      if (st!=='completed') continue;
+      if (timing==='anytime') { items.push({type:'anytime',name:a.name}); continue; }
+      if (a.undetermined) { items.push({type:'open',name:a.name}); continue; }
+      const t=times[a.id]; if(!t) continue;
+      let dur=t.end-t.start;
+      for (const su of susList) { const sst=times[su.id]; if (sst.start>t.start && sst.start<t.end) dur-=Math.min(sst.end,t.end)-sst.start; }
+      dur=Math.max(0,dur); dayMin+=dur;
+      items.push({type:'act',name:a.name,minutes:dur});
+    }
+    totMin+=dayMin; totCal+=dayCal;
+    if (items.length) byDay.push({ date:ds, minutes:dayMin, calories:dayCal, items });
+  }
+  return { start, days:numDays, total:{ minutes:totMin, calories:totCal, done, missed }, byDay };
+}
+async function handleReport(request, env) {
+  const db=env.DB, s=await getSession(request,db);
+  if (!s) return json({ error:'Unauthorized' }, 401);
+  const url=new URL(request.url), start=url.searchParams.get('start');
+  if (!start) return json({ error:'start (ISO date) required' }, 400);
+  const numDays=Math.min(31, Math.max(1, parseInt(url.searchParams.get('days')||'7')));
+  return json(await computeReport(db, s.user_id, start, numDays));
+}
+
 // ─── /api/report-email — email the user's own report (body built client-side, escaped here) ──────
 async function handleReportEmail(request, env) {
   const db = env.DB, s = await getSession(request, db);
@@ -510,6 +576,7 @@ export async function onRequest(context) {
     else if (seg==='history')                        response=await handleHistory(segments,request,env);
     else if (seg==='account')                        response=await handleAccount(segments,request,env);
     else if (seg==='export')                         response=await handleExport(segments,request,env);
+    else if (seg==='report')                         response=await handleReport(request,env);
     else if (seg==='report-email')                   response=await handleReportEmail(request,env);
     else if (seg==='stripe')                         response=await handleStripe(segments,request,env);
     else if (seg==='webhooks'&&segments[1]==='stripe') response=await handleStripeWebhook(request,env);
