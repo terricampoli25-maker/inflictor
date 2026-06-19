@@ -783,7 +783,7 @@
 
       <div class="set-section">
         <div class="set-section-title">History</div>
-        <p class="set-row-hint" style="margin-bottom:.7rem;font-size:.88rem">A record of thy completed and failed acts, day by day.</p>
+        <p class="set-row-hint" style="margin-bottom:.7rem;font-size:.88rem">A record of thy completed acts, day by day.</p>
         <button class="btn btn-ghost" style="width:auto" onclick="Settings.showView('history')">View Thy Ledger</button>
         <button class="btn btn-ghost" style="width:auto;margin-left:.5rem" onclick="Settings.close(); Planner.openReport();">📊 This Week's Report</button>
         <div class="set-row" style="margin-top:1rem">
@@ -1236,14 +1236,14 @@
     el('ah-username').textContent = u?.username || '';
     // Avatar
     const av = el('ah-avatar');
-    if (av) { av.textContent = (u?.username||'?')[0].toUpperCase(); av.style.background = avatarColor(u?.username||''); applyAvatar(); }
+    if (av) { av.textContent = (u?.username||'?')[0].toUpperCase(); av.style.backgroundColor = avatarColor(u?.username||''); applyAvatar(); }
     el('guest-banner').style.display = u?.is_guest ? 'flex' : 'none';
     el('app').classList.add('visible');
     // Sync font + avatar colour from settings
     const { ok, data } = await api('settings');
     if (ok && data) {
       if (data.font_style) applyFont(data.font_style);
-      if (data.avatar_color && av) av.style.background = data.avatar_color;
+      if (data.avatar_color && av) { av.style.backgroundColor = data.avatar_color; applyAvatar(); }
     }
     Planner.init();
     // Handle ?premium= redirect from Stripe
@@ -1563,7 +1563,7 @@ window.Planner = (() => {
       const dl = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
       return `<div class="rpt-day"><div class="rpt-day-hdr">${dl} — <b>${fmtDur(dayTime)}</b>${dayCal?` · <span class="sus-cal">🔥${dayCal}</span>`:''}</div>${lines.join('')}</div>`;
     }).join('');
-    const summary = `<div class="rpt-summary"><b>${fmtDur(weekTime)}</b> active · <span class="sus-cal">🔥${weekCal}</span> · ${weekDone} done / ${weekMissed} missed</div>`;
+    const summary = `<div class="rpt-summary"><b>${fmtDur(weekTime)}</b> active${weekCal?` · <span class="sus-cal">🔥${weekCal}</span>`:''} · ${weekDone} completed</div>`;
     document.getElementById('report-body').innerHTML = summary + (blocks || '<div class="rpt-empty">Nothing logged yet this week.</div>');
     const ov = document.getElementById('report-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
   }
@@ -1596,7 +1596,7 @@ window.Planner = (() => {
       weekTime+=dayTime; weekCal+=dayCal;
       if (lines.length) { const dl=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'}); dayTexts.push(`${dl} — ${fmtDur(dayTime)}${dayCal?` · ${dayCal} cal`:''}\n`+lines.join('\n')); }
     }
-    const txt = `Week total: ${fmtDur(weekTime)} active · ${weekCal} calories · ${weekDone} done / ${weekMissed} missed\n\n` + (dayTexts.join('\n\n') || 'Nothing logged yet this week.');
+    const txt = `Week total: ${fmtDur(weekTime)} active${weekCal?` · ${weekCal} calories`:''} · ${weekDone} completed\n\n` + (dayTexts.join('\n\n') || 'Nothing logged yet this week.');
     const btn = document.getElementById('report-email-btn'); if (btn) { btn.disabled=true; btn.textContent='Sending…'; }
     const { ok, data } = await api('report-email', { method:'POST', body:{ body: txt, period: "This Week's Report" } });
     if (btn) { btn.disabled=false; btn.textContent='✉ Email it to me'; }
@@ -2657,10 +2657,10 @@ window.Settings = (() => {
     const html = data.days.map(day => {
       const d = new Date(day.date+'T12:00:00');
       const dateStr = d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-      const logs = (day.logs||[]).map(l => `<div class="hist-task hist-task-${l.status}"><span>${l.status==='completed'?'✓':'✗'}</span><span>${esc(l.task_name)}</span></div>`).join('');
+      const logs = (day.logs||[]).filter(l => l.status==='completed').map(l => `<div class="hist-task hist-task-completed"><span>✓</span><span>${esc(l.task_name)}</span></div>`).join('') || '<div class="hist-task" style="opacity:.6">Nothing logged.</div>';
       const note = day.note ? `<div class="hist-note">${esc(day.note.substring(0,120))}${day.note.length>120?'…':''}</div>` : '';
       return `<div class="hist-day" onclick="this.classList.toggle('open')">
-        <div class="hist-day-hdr"><div><div class="hist-date">${dateStr}</div><div class="hist-stats">${day.tasks_completed} completed · ${day.tasks_failed} failed</div></div><div class="hist-chevron">›</div></div>
+        <div class="hist-day-hdr"><div><div class="hist-date">${dateStr}</div><div class="hist-stats">${day.tasks_completed} completed</div></div><div class="hist-chevron">›</div></div>
         <div class="hist-body">${logs}${note}</div></div>`;
     }).join('');
     if (historyOffset === 0) list.innerHTML = html; else list.insertAdjacentHTML('beforeend', html);

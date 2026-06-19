@@ -87,9 +87,8 @@ function renderReportHtml(rep, period){
     <div style="display:table;width:100%;text-align:center;background:#1a0f00;border:1px solid #3a2410;margin-bottom:1rem">
       <div style="display:table-row">
         <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#d4af37">${fmtMin(t.minutes||0)}</div><div style="font-size:.7rem;color:#a07840">active</div></div>
-        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#d4af37">${t.calories||0}</div><div style="font-size:.7rem;color:#a07840">calories</div></div>
-        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#7ac77a">${t.done||0}</div><div style="font-size:.7rem;color:#a07840">done</div></div>
-        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#c77a7a">${t.missed||0}</div><div style="font-size:.7rem;color:#a07840">missed</div></div>
+        ${(t.calories||0)>0?`<div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#d4af37">${t.calories}</div><div style="font-size:.7rem;color:#a07840">calories</div></div>`:''}
+        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#7ac77a">${t.done||0}</div><div style="font-size:.7rem;color:#a07840">completed</div></div>
       </div>
     </div>
     ${days}
