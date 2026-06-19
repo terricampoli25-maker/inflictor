@@ -9,7 +9,7 @@ database_id = "a38b3cf3-3cf4-4d6e-ad65-c658abfd08dd"
 
 [vars]
 APP_DOMAIN = "inflictor.pages.dev"
-FROM_EMAIL  = "noreply@inflictor.app"
+FROM_EMAIL  = "The Inflictor <noreply@terristech.com>"
 
 # Secrets — set with: wrangler secret put <NAME>
 # RESEND_API_KEY   — Resend email service (password reset)
