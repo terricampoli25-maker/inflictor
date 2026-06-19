@@ -246,6 +246,7 @@
     .slot:hover .slot-memo-btn{opacity:.85}
     .slot-memo-btn:hover{opacity:1!important}
     .slot-memo-btn.has-memo{opacity:1;color:#3b82f6}
+    .sus-cal-btn{font-size:.68rem;letter-spacing:.01em}
     .slot-time{font-family:var(--font-display);font-size:1.05rem;font-weight:700;color:var(--accent);line-height:1.15;margin:1px 0}
     .t-star{color:#000;font-size:.6rem;font-weight:400;vertical-align:middle}
     .spill-section{margin-bottom:4px}
@@ -311,7 +312,7 @@
     .actday-pill:hover{border-color:var(--accent)}
     .actday-pill.on{background:var(--btn-bg);color:var(--btn-text);border-color:transparent;font-weight:700}
     .act-row-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
-    .act-foot-left{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+    .act-foot-spacer{width:1px}   /* keeps the controls centered (3-up space-between) on a meal row with no "unsure" */
     .act-timing{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
     .timing-opt{font-family:var(--font-body);font-size:.72rem;background:none;border:1px solid var(--border);color:var(--text-muted);padding:.22rem .5rem;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
     .timing-opt:hover{border-color:var(--accent)}
@@ -628,9 +629,9 @@
 <!-- Meal window — what you're having + calories. Opens from the 🔥 button or when you mark a meal had. -->
 <div id="calorie-overlay" class="gone">
   <div class="memo-box" style="width:340px">
-    <div class="memo-title" id="calorie-title">🍴 Meal</div>
-    <div class="actedit-sub" id="calorie-sub">What you're having and the calories — both optional.</div>
-    <input id="calorie-food" class="form-input" type="text" maxlength="120" placeholder="What you're having — e.g. Chicken salad" style="width:100%;margin-bottom:.5rem" onkeydown="if(event.key==='Enter')document.getElementById('calorie-input').focus()">
+    <div class="memo-title" id="calorie-title">Meal</div>
+    <div class="actedit-sub" id="calorie-sub">What you ate and how many calories — both optional.</div>
+    <input id="calorie-food" class="form-input" type="text" maxlength="120" placeholder="What you ate — e.g. Chicken salad" style="width:100%;margin-bottom:.5rem" onkeydown="if(event.key==='Enter')document.getElementById('calorie-input').focus()">
     <input id="calorie-input" class="form-input" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" style="width:100%" onkeydown="if(event.key==='Enter')Planner.saveCalories()">
     <div class="memo-footer">
       <button class="btn btn-ghost" style="width:auto;padding:.5rem 1.1rem" onclick="Planner.closeCalories()">Skip</button>
@@ -864,7 +865,7 @@
           <p><b>Fixed</b> — a set <b>start and end time that never moves</b> (an appointment, your meds). Shown with a <b>★</b> on the planner.</p>
           <p><b>Flexible</b> — also a <b>start and end time</b>, but it <b>can shift</b> if you wake late or pause. Shown with a <b>~</b> on the planner.</p>
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Tap the <b>🔥</b> on any meal — any time — to jot <b>what you're having</b> and its <b>calories</b> (both optional), handy for planning a meal before you eat it. That same window also pops up when you mark a meal <b>had</b> (✓). Calories count toward your daily totals.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Tap the <b>cal.</b> button on any meal — any time — to note <b>what you ate</b> and its <b>calories</b> (both optional). That same window also pops up when you mark a meal <b>had</b> (✓). Calories count toward your daily totals.</p>
           <p><b>Not sure how long?</b> ⏳ On any activity (except a snack) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it shows its start time and <b>"ongoing"</b> instead of a set length. Perfect for "organizing the room" when you've no idea how long it'll take.</p>
         </div>
         <div class="guide-block">
@@ -910,7 +911,7 @@
           <p><b>Fixed</b> — an hour writ in stone, that <b>will not stir</b> though heaven should fall (an appointment, thy physic). It weareth a <b>★</b> upon the stage.</p>
           <p><b>Flexible</b> — it too hath a start and an end, yet it will <b>bend and drift</b> shouldst thou wake late or pause. It weareth a <b>~</b>.</p>
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Touch the <b>🔥</b> upon any meal — whensoever thou wilt — to set down <b>what thou shalt eat</b> and its <b>calories</b> (both at thy pleasure), of use in planning a meal ere thou tak'st it. That same window appeareth too when thou markest a meal <b>had</b> (✓). Calories tally toward thy daily totals.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Touch the <b>cal.</b> button upon any meal — whensoever thou wilt — to set down <b>what thou hast eaten</b> and its <b>calories</b> (both at thy pleasure). That same window appeareth too when thou markest a meal <b>had</b> (✓). Calories tally toward thy daily totals.</p>
           <p><b>Uncertain of the hours?</b> ⏳ Upon any act (save a morsel) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it showeth its start and <b>"ongoing"</b> in place of a fixed span. Apt for "setting the chamber to rights," when thou knowest not how long 'twill take.</p>
         </div>
         <div class="guide-block">
@@ -1515,7 +1516,7 @@ window.Planner = (() => {
   function getCalories(ds, id) { const v = getMemo(ds, `cal:${id}`); return v ? parseInt(v) || 0 : 0; }
   function openCalories(ds, id, name) {
     calorieTarget = { ds, id };
-    document.getElementById('calorie-title').textContent = `🍴 ${name ? name : 'Meal'}`;
+    document.getElementById('calorie-title').textContent = name ? name : 'Meal';
     document.getElementById('calorie-food').value = getMemo(ds, id) || '';      // what you're having (shared with the meal's note)
     document.getElementById('calorie-input').value = getMemo(ds, `cal:${id}`) || '';
     const ov = document.getElementById('calorie-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
@@ -1970,10 +1971,10 @@ window.Planner = (() => {
         const cal = getCalories(ds, act.id);
         return `<div class="slot slot-sus slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
           <div class="sus-row">
-            <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}${cal?` · <span class="sus-cal">🔥${cal}</span>`:''}</span>
+            <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}${cal?` · <span class="sus-cal">${cal} cal</span>`:''}</span>
             <span class="sus-ctrls">
               <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal">✎</button>
-              <button class="slot-memo-btn${(cal||hasMemo)?' has-memo':''}" onclick="Planner.openCalories('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Meal')}')" title="Log what you're having + calories">🔥</button>
+              <button class="slot-memo-btn sus-cal-btn${(cal||hasMemo)?' has-memo':''}" onclick="Planner.openCalories('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Meal')}')" title="What you ate + calories">cal.</button>
               <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','completed',this.checked)" title="Had it">
               <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','failed',this.checked)" title="Skipped">
             </span>
@@ -2239,23 +2240,21 @@ window.Planner = (() => {
         </div>
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
         <div class="act-row-foot">
-          <div class="act-foot-left">
-            <div class="act-timing">
-              <button class="timing-opt${act.timing==='fixed'?' on':''}" onclick="Planner.setTiming('${act.id}','fixed')" title="A set start–end time that never moves (★)">Fixed</button>
-              <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
-              <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
-              <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
-              ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
-            </div>
-            <div class="act-controls">
-              <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
-                title="${act.chime_enabled!==false?'Chime at end — click to silence':'No chime — click to enable'}">🔔</button>
-              <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',-1)" ${i===0?'disabled':''}>↑</button>
-              <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
-              <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
-            </div>
+          <div class="act-timing">
+            <button class="timing-opt${act.timing==='fixed'?' on':''}" onclick="Planner.setTiming('${act.id}','fixed')" title="A set start–end time that never moves (★)">Fixed</button>
+            <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
+            <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
+            <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
+            ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
-          ${act.timing!=='sustenance' ? `<label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label>` : ''}
+          <div class="act-controls">
+            <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
+              title="${act.chime_enabled!==false?'Chime at end — click to silence':'No chime — click to enable'}">🔔</button>
+            <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',-1)" ${i===0?'disabled':''}>↑</button>
+            <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
+            <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
+          </div>
+          ${act.timing!=='sustenance' ? `<label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label>` : `<span class="act-foot-spacer"></span>`}
         </div>
       </div>`).join('');
   }
