@@ -259,6 +259,7 @@
     .sus-ctrls{display:flex;align-items:center;gap:.2rem;flex-shrink:0}
     .sus-ctrls .sus-btn{position:static}                 /* the edit ✎ isn't corner-absolute in the compact row */
     .sus-ctrls input[type=checkbox]{width:12px;height:12px}
+    .sus-had{font-size:.66rem;color:#3c9a3c;font-weight:600;white-space:nowrap}
     .slot-cont{border-left-style:dashed}                 /* the "continued after a bite" half */
     .slot-cont .slot-name{opacity:.9}
     .slot-pausenote{border-left-color:#c8a000;background:rgba(200,140,0,.1);padding:.4rem .55rem;display:flex;align-items:center}
@@ -313,6 +314,9 @@
     .actday-pill.on{background:var(--btn-bg);color:var(--btn-text);border-color:transparent;font-weight:700}
     .act-row-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
     .act-foot-spacer{width:1px}   /* keeps the controls centered (3-up space-between) on a meal row with no "unsure" */
+    .act-sus-cal{display:flex;gap:.45rem;margin:.45rem 0}
+    .act-sus-cal input[type=text]{flex:1;min-width:0}
+    .act-sus-cal input[type=number]{width:64px}
     .act-timing{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
     .timing-opt{font-family:var(--font-body);font-size:.72rem;background:none;border:1px solid var(--border);color:var(--text-muted);padding:.22rem .5rem;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
     .timing-opt:hover{border-color:var(--accent)}
@@ -1624,7 +1628,9 @@ window.Planner = (() => {
       goal_time: a.goal_time || '',
       hours: Math.floor((a.duration_minutes || 0) / 60),
       mins: (a.duration_minutes || 0) % 60,
-      chime_enabled: a.chime_enabled !== false
+      chime_enabled: a.chime_enabled !== false,
+      food: getMemo(ds, id) || '',                 // meal: what you ate (per-day, shared with the card's cal. window)
+      cal: getMemo(ds, `cal:${id}`) || ''
     };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
@@ -1632,7 +1638,7 @@ window.Planner = (() => {
   }
   // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
   function openActAdd(ds) {
-    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: true };
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: true, food: '', cal: '' };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
@@ -1659,7 +1665,7 @@ window.Planner = (() => {
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Start"><span class="dur-unit">to</span><input class="fixed-tt" id="ae-end" type="time" value="${esc(a.fixed_end)}" title="End"></div>`
         : a.timing==='sustenance'
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="When you ate"><span class="dur-unit">for</span><input class="dur-num" id="ae-hours" type="number" min="0" max="5" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span></div>`
-        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>`;
+        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}`;
   }
   function actEditCapture() {
     if (!actEdit) return;
@@ -1670,7 +1676,18 @@ window.Planner = (() => {
     if (g('ae-hours')) actEdit.hours = parseInt(g('ae-hours').value) || 0;
     if (g('ae-mins'))  actEdit.mins = parseInt(g('ae-mins').value) || 0;
     if (g('ae-goal'))  actEdit.goal_time = g('ae-goal').value;
+    if (g('ae-food'))  actEdit.food = g('ae-food').value;
+    if (g('ae-cal'))   actEdit.cal  = g('ae-cal').value;
   }
+  // Persist a meal's per-day food note + calories (same memo keys the card's cal. window uses).
+  function setMealData(ds, id, food, cal) {
+    setMemo(ds, id, (food||'').trim());
+    const cv = (cal==null ? '' : String(cal)).trim();
+    setMemo(ds, `cal:${id}`, cv==='' ? '' : String(Math.max(0, Math.min(99999, parseInt(cv)||0))));
+  }
+  // Inline Edit-Day meal inputs write straight to the per-day store (only meaningful for a specific day).
+  function setupMealFood(id, v) { if (setup.editingDate) setMemo(setup.editingDate, id, (v||'').trim()); }
+  function setupMealCal(id, v)  { if (!setup.editingDate) return; const cv=(v||'').trim(); setMemo(setup.editingDate, `cal:${id}`, cv===''?'':String(Math.max(0,Math.min(99999,parseInt(cv)||0)))); }
   function actEditTiming(mode) { actEditCapture(); actEdit.timing = mode; renderActEdit(); }
   // Write this one activity back into the day as a per-date override (that day only).
   async function persistDayActivities(ds, acts) {
@@ -1705,6 +1722,7 @@ window.Planner = (() => {
     const existing = getDaySchedule(a.ds)?.activities || [];
     const acts = a.isNew ? [ ...existing, { id: a.id, ...updated } ] : existing.map(x => x.id === a.id ? { ...x, ...updated } : x);
     await persistDayActivities(a.ds, acts);
+    if (updated.timing === 'sustenance') setMealData(a.ds, a.id, a.food, a.cal);
     closeActEdit(); render(); scheduleNotifs();
   }
   // Save to EVERY day (recurring): add to the weekly template + each non-custom day in view.
@@ -1726,6 +1744,7 @@ window.Planner = (() => {
     }
     weekData.schedule = sched;
     await Promise.all(ops);
+    if (updated.timing === 'sustenance') setMealData(actEdit.ds, newAct.id, actEdit.food, actEdit.cal);
     closeActEdit(); render(); scheduleNotifs();
   }
   async function removeActEdit() {
@@ -1897,6 +1916,8 @@ window.Planner = (() => {
 
   function renderCol(day, i) {
     const ds = toISO(day), today = isToday(day);
+    const dayPast = ds < toISO(new Date());                          // whole day already gone
+    const nowMin = new Date().getHours()*60 + new Date().getMinutes();
     const isTomorrow = (() => { const d = new Date(day); d.setDate(d.getDate()-1); return isToday(d); })();
     const mon = day.toLocaleDateString('en-GB',{month:'short'});
     const dayHasMemo = !!(weekData?.notes?.[ds] || '').trim();
@@ -1969,14 +1990,19 @@ window.Planner = (() => {
       if (p.sus) {                                            // Sustenance — compact single row so it stays thin (steals, doesn't add)
         const lbl = (act.name||'').trim();
         const cal = getCalories(ds, act.id);
-        return `<div class="slot slot-sus slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
+        // A meal whose time has already passed is obviously eaten — show it as had, no complete/skip checkboxes.
+        const mealPast = dayPast || (today && p.e != null && p.e <= nowMin);
+        const susStatus = mealPast ? 'completed' : status;
+        return `<div class="slot slot-sus slot-${susStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
           <div class="sus-row">
             <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}${cal?` · <span class="sus-cal">${cal} cal</span>`:''}</span>
             <span class="sus-ctrls">
               <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal">✎</button>
               <button class="slot-memo-btn sus-cal-btn${(cal||hasMemo)?' has-memo':''}" onclick="Planner.openCalories('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Meal')}')" title="Sustenance + calories">cal.</button>
-              <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','completed',this.checked)" title="Had it">
-              <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','failed',this.checked)" title="Skipped">
+              ${mealPast
+                ? `<span class="sus-had" title="This meal's time has passed">✓ had</span>`
+                : `<input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','completed',this.checked)" title="Had it">
+              <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','failed',this.checked)" title="Skipped">`}
             </span>
           </div></div>`;
       }
@@ -2238,6 +2264,7 @@ window.Planner = (() => {
             ? `<div class="act-fixed-group"><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="When you ate"><span class="dur-unit">for</span><input class="dur-num" type="number" min="0" max="5" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`
             : `<div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`}
         </div>
+        ${act.timing==='sustenance' && setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
         <div class="act-row-foot">
           <div class="act-timing">
@@ -2451,6 +2478,7 @@ window.Planner = (() => {
     init, render,
     openSetup, closeSetup,
     addActivity: addAct, removeAct, setColor, setTiming, toggleUndet, setActDay, moveAct, onActName, onActName,
+    setupMealFood, setupMealCal,
     toggleDay, selectAllDays, selectWeekdays,
     saveSetup, saveDay, clearEverything, setStatus, toggleChime,
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
