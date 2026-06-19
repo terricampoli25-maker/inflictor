@@ -1,0 +1,22 @@
+name = "inflictor-report-cron"
+main = "index.js"
+compatibility_date = "2024-09-23"
+
+# Runs at the top of every hour; the worker decides per-user whether it's their
+# local send time (daily ≥9pm, weekly Sunday ≥7pm) and dedupes via report_last_sent.
+[triggers]
+crons = ["0 * * * *"]
+
+# Same database the app uses.
+[[d1_databases]]
+binding = "DB"
+database_name = "inflictor-db"
+database_id = "a38b3cf3-3cf4-4d6e-ad65-c658abfd08dd"
+
+[vars]
+FROM_EMAIL = "The Inflictor <noreply@terristech.com>"
+APP_DOMAIN = "inflictor.pages.dev"
+
+# Secrets — set via CLI, never commit real values:
+#   wrangler secret put RESEND_API_KEY  --config report-cron/wrangler.toml
+#   wrangler secret put CRON_TEST_KEY   --config report-cron/wrangler.toml   (any random string; enables GET /__run?key=...)

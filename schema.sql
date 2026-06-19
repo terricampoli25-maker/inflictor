@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS settings (
   cheer_enabled        INTEGER NOT NULL DEFAULT 1,
   aww_enabled          INTEGER NOT NULL DEFAULT 1,
   avatar_data          TEXT,
+  report_frequency     TEXT    NOT NULL DEFAULT 'off',  -- off / daily / weekly (scheduled email)
+  tz_offset            INTEGER,                          -- JS getTimezoneOffset() so the cron fires at the user's local evening
+  report_last_sent     TEXT,                             -- YYYY-MM-DD of the last scheduled send (dedupe)
   updated_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

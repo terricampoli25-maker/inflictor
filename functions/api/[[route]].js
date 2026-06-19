@@ -167,7 +167,7 @@ async function handleSettings(segments, request, env) {
 
   if (request.method === 'PUT') {
     const { theme, wake_time, sound_enabled, notification_enabled, notification_repeat, week_start_day, avatar_color, font_style,
-            cheer_enabled, aww_enabled, avatar_data } =
+            cheer_enabled, aww_enabled, avatar_data, report_frequency, tz_offset } =
       await request.json().catch(() => ({}));
     // The settings row always exists (created at registration). Ensure it, then UPDATE only the
     // fields provided — COALESCE keeps the rest. A plain UPDATE avoids the INSERT path's NOT NULL
@@ -185,11 +185,14 @@ async function handleSettings(segments, request, env) {
         cheer_enabled=COALESCE(?,cheer_enabled),
         aww_enabled=COALESCE(?,aww_enabled),
         avatar_data=COALESCE(?,avatar_data),
+        report_frequency=COALESCE(?,report_frequency),
+        tz_offset=COALESCE(?,tz_offset),
         updated_at=datetime('now')
       WHERE user_id=?
     `).bind(theme??null, wake_time??null, sound_enabled??null, notification_enabled??null,
             notification_repeat??null, week_start_day??null, avatar_color??null, font_style??null,
-            cheer_enabled??null, aww_enabled??null, avatar_data??null, s.user_id).run();
+            cheer_enabled??null, aww_enabled??null, avatar_data??null,
+            report_frequency??null, tz_offset??null, s.user_id).run();
     return json(await db.prepare('SELECT * FROM settings WHERE user_id=?').bind(s.user_id).first());
   }
   return json({ error: 'Method not allowed' }, 405);

@@ -786,6 +786,15 @@
         <p class="set-row-hint" style="margin-bottom:.7rem;font-size:.88rem">A record of thy completed and failed acts, day by day.</p>
         <button class="btn btn-ghost" style="width:auto" onclick="Settings.showView('history')">View Thy Ledger</button>
         <button class="btn btn-ghost" style="width:auto;margin-left:.5rem" onclick="Settings.close(); Planner.openReport();">📊 This Week's Report</button>
+        <div class="set-row" style="margin-top:1rem">
+          <span class="set-row-label">Email me my report</span>
+          <div class="set-pills">
+            <label class="set-pill" id="srf-off"    onclick="Settings.setReportFreq('off')"><input type="radio" name="srf" value="off"> Off</label>
+            <label class="set-pill" id="srf-daily"  onclick="Settings.setReportFreq('daily')"><input type="radio" name="srf" value="daily"> Daily</label>
+            <label class="set-pill" id="srf-weekly" onclick="Settings.setReportFreq('weekly')"><input type="radio" name="srf" value="weekly"> Weekly</label>
+          </div>
+        </div>
+        <p class="set-row-hint" style="margin-top:.4rem;font-size:.82rem">Daily arrives around 9 in the evening; weekly on Sunday eve. Sent to thine account email.</p>
       </div>
 
       <div class="set-section" id="ss-account">
@@ -879,7 +888,7 @@
         </div>
         <div class="guide-block">
           <h4>6 · Make it yours</h4>
-          <p>In <b>Settings</b> you can pick your theme and font, set your wake time and which day your week starts, and turn the <b>Cheers</b> and <b>Awws</b> sounds on or off separately. The <b>sound button</b> in the header mutes everything (a red ✕ shows when it's off). Check your <b>Ledger</b> for a record of past days, and <b>📊 This Week's Report</b> for time-per-activity and calorie totals — meal breaks are carved out of their activity, so the times are honest (guitar 3h with a 20-min snack reads as 2h 40m).</p>
+          <p>In <b>Settings</b> you can pick your theme and font, set your wake time and which day your week starts, and turn the <b>Cheers</b> and <b>Awws</b> sounds on or off separately. The <b>sound button</b> in the header mutes everything (a red ✕ shows when it's off). Check your <b>Ledger</b> for a record of past days, and <b>📊 This Week's Report</b> for time-per-activity and calorie totals — meal breaks are carved out of their activity, so the times are honest (guitar 3h with a 20-min snack reads as 2h 40m). You can <b>✉ email yourself</b> that report on the spot, or set <b>Email me my report</b> to <b>Daily</b> or <b>Weekly</b> and it arrives in your inbox automatically (daily ~9pm, weekly Sunday evening).</p>
         </div>
       </div>
 
@@ -925,7 +934,7 @@
         </div>
         <div class="guide-block">
           <h4>Act VI · Make the playhouse thine own</h4>
-          <p>In <b>Settings</b> choose thy theme and thy font, set thy waking hour and the day thy week beginneth, and ring the <b>Cheers</b> and <b>Awws</b> each by its own bell. The <b>sound button</b> in the header silenceth all — a red ✕ marketh the hush. And consult thy <b>Ledger</b> for a chronicle of days gone by, or <b>📊 This Week's Report</b> for thy time-per-act and calorie tallies — a meal's span is carved from the act it interrupts, that the hours read true (guitar of three hours, with a morsel of twenty minutes, telleth 2h 40m).</p>
+          <p>In <b>Settings</b> choose thy theme and thy font, set thy waking hour and the day thy week beginneth, and ring the <b>Cheers</b> and <b>Awws</b> each by its own bell. The <b>sound button</b> in the header silenceth all — a red ✕ marketh the hush. And consult thy <b>Ledger</b> for a chronicle of days gone by, or <b>📊 This Week's Report</b> for thy time-per-act and calorie tallies — a meal's span is carved from the act it interrupts, that the hours read true (guitar of three hours, with a morsel of twenty minutes, telleth 2h 40m). Thou mayst <b>✉ post it to thyself</b> at once, or bid <b>Email me my report</b> come <b>Daily</b> or <b>Weekly</b>, that it arrive of its own accord (by day near nine in the eve, by week upon Sunday's dusk).</p>
         </div>
       </div>
 
@@ -2501,6 +2510,8 @@ window.Settings = (() => {
       });
       if (el('s-wake-time')) el('s-wake-time').value = data.wake_time || '07:00';
       ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', (data.week_start_day||0)===i));
+      const rf = data.report_frequency || 'off';
+      ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===rf));
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
       if (el('s-aww'))   el('s-aww').checked   = localStorage.getItem('inflictor_aww')   !== '0';
       const notifOn = data.notification_enabled === 1;
@@ -2582,6 +2593,12 @@ window.Settings = (() => {
   // ── Programme ────────────────────────────────────────────────────
   function setWeekDay(v) {
     ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', i===v));
+  }
+  function setReportFreq(v) {
+    ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===v));
+    // Send the user's timezone too so the cron fires at their local evening, not a fixed UTC hour.
+    api('settings',{method:'PUT',body:{report_frequency:v, tz_offset:new Date().getTimezoneOffset()}});
+    flashMsg(v==='off' ? 'Report emails turned off.' : `Report emails set to ${v}.`, 'success');
   }
   async function saveSchedule() {
     const wakeTime = el('s-wake-time')?.value || '07:00';
@@ -2713,7 +2730,7 @@ window.Settings = (() => {
   return {
     open, close, showView, loadMore, setGuideMode,
     saveName, setTheme, setPremiumTheme, setFont, setPremiumFont, uploadAvatar, removeAvatar,
-    setWeekDay, saveSchedule,
+    setWeekDay, saveSchedule, setReportFreq,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
   };
