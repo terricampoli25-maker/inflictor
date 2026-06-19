@@ -630,8 +630,8 @@
 <div id="calorie-overlay" class="gone">
   <div class="memo-box" style="width:340px">
     <div class="memo-title" id="calorie-title">Meal</div>
-    <div class="actedit-sub" id="calorie-sub">What you ate and how many calories — both optional.</div>
-    <input id="calorie-food" class="form-input" type="text" maxlength="120" placeholder="What you ate — e.g. Chicken salad" style="width:100%;margin-bottom:.5rem" onkeydown="if(event.key==='Enter')document.getElementById('calorie-input').focus()">
+    <div class="actedit-sub" id="calorie-sub">The sustenance and its calories — both optional.</div>
+    <input id="calorie-food" class="form-input" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" style="width:100%;margin-bottom:.5rem" onkeydown="if(event.key==='Enter')document.getElementById('calorie-input').focus()">
     <input id="calorie-input" class="form-input" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" style="width:100%" onkeydown="if(event.key==='Enter')Planner.saveCalories()">
     <div class="memo-footer">
       <button class="btn btn-ghost" style="width:auto;padding:.5rem 1.1rem" onclick="Planner.closeCalories()">Skip</button>
@@ -865,7 +865,7 @@
           <p><b>Fixed</b> — a set <b>start and end time that never moves</b> (an appointment, your meds). Shown with a <b>★</b> on the planner.</p>
           <p><b>Flexible</b> — also a <b>start and end time</b>, but it <b>can shift</b> if you wake late or pause. Shown with a <b>~</b> on the planner.</p>
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Tap the <b>cal.</b> button on any meal — any time — to note <b>what you ate</b> and its <b>calories</b> (both optional). That same window also pops up when you mark a meal <b>had</b> (✓). Calories count toward your daily totals.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Tap the <b>cal.</b> button on any meal — any time, even before you eat it — to note the <b>sustenance</b> and its <b>calories</b> (both optional). That same window also pops up when you mark a meal <b>had</b> (✓). Calories count toward your daily totals.</p>
           <p><b>Not sure how long?</b> ⏳ On any activity (except a snack) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it shows its start time and <b>"ongoing"</b> instead of a set length. Perfect for "organizing the room" when you've no idea how long it'll take.</p>
         </div>
         <div class="guide-block">
@@ -911,7 +911,7 @@
           <p><b>Fixed</b> — an hour writ in stone, that <b>will not stir</b> though heaven should fall (an appointment, thy physic). It weareth a <b>★</b> upon the stage.</p>
           <p><b>Flexible</b> — it too hath a start and an end, yet it will <b>bend and drift</b> shouldst thou wake late or pause. It weareth a <b>~</b>.</p>
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
-          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Touch the <b>cal.</b> button upon any meal — whensoever thou wilt — to set down <b>what thou hast eaten</b> and its <b>calories</b> (both at thy pleasure). That same window appeareth too when thou markest a meal <b>had</b> (✓). Calories tally toward thy daily totals.</p>
+          <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Touch the <b>cal.</b> button upon any meal — whensoever thou wilt, even ere thou eat'st — to set down the <b>sustenance</b> and its <b>calories</b> (both at thy pleasure). That same window appeareth too when thou markest a meal <b>had</b> (✓). Calories tally toward thy daily totals.</p>
           <p><b>Uncertain of the hours?</b> ⏳ Upon any act (save a morsel) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it showeth its start and <b>"ongoing"</b> in place of a fixed span. Apt for "setting the chamber to rights," when thou knowest not how long 'twill take.</p>
         </div>
         <div class="guide-block">
@@ -1974,7 +1974,7 @@ window.Planner = (() => {
             <span class="sus-label">🍴 ${lbl?esc(lbl)+' · ':''}${fmtClock(p.s)}${cal?` · <span class="sus-cal">${cal} cal</span>`:''}</span>
             <span class="sus-ctrls">
               <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal">✎</button>
-              <button class="slot-memo-btn sus-cal-btn${(cal||hasMemo)?' has-memo':''}" onclick="Planner.openCalories('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Meal')}')" title="What you ate + calories">cal.</button>
+              <button class="slot-memo-btn sus-cal-btn${(cal||hasMemo)?' has-memo':''}" onclick="Planner.openCalories('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Meal')}')" title="Sustenance + calories">cal.</button>
               <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','completed',this.checked)" title="Had it">
               <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','failed',this.checked)" title="Skipped">
             </span>
