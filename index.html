@@ -319,8 +319,8 @@
     .actday-pill{flex:1;font-family:var(--font-body);font-size:.66rem;letter-spacing:.02em;background:none;border:1px solid var(--border);color:var(--text-muted);padding:.3rem .1rem;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
     .actday-pill:hover{border-color:var(--accent)}
     .actday-pill.on{background:var(--btn-bg);color:var(--btn-text);border-color:transparent;font-weight:700}
-    .act-row-foot{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
-    .act-foot-spacer{width:1px}   /* keeps the controls centered (3-up space-between) on a meal row with no "unsure" */
+    .act-row-foot{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+    .act-foot-right{margin-left:auto;display:flex;align-items:center;justify-content:flex-end}   /* "unsure" stays pinned to the right (or lower-right if the row wraps) */
     .act-sus-cal{display:flex;gap:.45rem;margin:.45rem 0}
     .act-sus-cal input[type=text]{flex:1;min-width:0}
     .act-sus-cal input[type=number]{width:64px}
@@ -333,7 +333,7 @@
     .color-dot{width:20px;height:20px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;padding:0;outline:none}
     .color-dot:hover{transform:scale(1.2)}
     .color-dot.sel{border-color:#fff;box-shadow:0 0 0 2px var(--text);transform:scale(1.18)}
-    .act-controls{display:flex;gap:3px}
+    .act-controls{display:flex;gap:3px;flex:0 0 auto}
     .act-ctrl{background:none;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s}
     .act-ctrl:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
     .act-ctrl:disabled{opacity:.28;cursor:not-allowed}
@@ -2374,7 +2374,7 @@ window.Planner = (() => {
             <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
             <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
           </div>
-          ${act.timing!=='sustenance' && act.timing!=='med' ? `<label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label>` : `<span class="act-foot-spacer"></span>`}
+          <div class="act-foot-right">${act.timing!=='sustenance' && act.timing!=='med' ? `<label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label>` : ''}</div>
         </div>
       </div>`).join('');
   }
