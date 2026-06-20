@@ -14,7 +14,7 @@ function rptTimes(acts) {
   const out={};
   for (const a of acts||[]) {
     const t=a.timing||'flexible';
-    if ((t==='fixed'||t==='flexible'||t==='sustenance') && a.fixed_start) {
+    if ((t==='fixed'||t==='flexible'||t==='sustenance'||t==='med') && a.fixed_start) {
       const start=rptParse(a.fixed_start), end=a.fixed_end?rptParse(a.fixed_end):start+(a.duration_minutes||0);
       out[a.id]={ start, end:Math.max(end,start), sus:t==='sustenance' };
     }
@@ -42,18 +42,19 @@ async function computeReport(db, uid, start, numDays) {
     let acts;
     if (overrides[ds]) acts=overrides[ds].activities||[];
     else { const tmpl=templates[rptMonday(ds)], di=rptDayIdx(ds); acts=tmpl?(tmpl.activities||[]).filter(a=>!a.days||a.days[di]):[]; }
-    const times=rptTimes(acts), susList=acts.filter(a=>(a.timing||'')==='sustenance'&&times[a.id]);
+    const times=rptTimes(acts), carveList=acts.filter(a=>((a.timing||'')==='sustenance'||((a.timing||'')==='med'&&a.med_display!=='ribbon'))&&times[a.id]);
     let dayMin=0, dayCal=0; const items=[];
     for (const a of acts) {
       const st=status[`${ds}:${a.id}`]||status[`${ds}:${a.name}`], timing=a.timing||'flexible';
       if (timing==='sustenance') { const c=cals[`${ds}:cal:${a.id}`]||0; if(c)dayCal+=c; if(st==='completed'||c) items.push({type:'sus',name:a.name||'snack',calories:c}); continue; }
+      if (timing==='med') continue;                            // reminders aren't activity time
       if (st==='completed') done++; else if (st==='failed') { missed++; continue; }
       if (st!=='completed') continue;
       if (timing==='anytime') { items.push({type:'anytime',name:a.name}); continue; }
       if (a.undetermined) { items.push({type:'open',name:a.name}); continue; }
       const t=times[a.id]; if(!t) continue;
       let dur=t.end-t.start;
-      for (const su of susList) { const sst=times[su.id]; if (sst.start>t.start && sst.start<t.end) dur-=Math.min(sst.end,t.end)-sst.start; }
+      for (const su of carveList) { const sst=times[su.id]; if (sst.start>t.start && sst.start<t.end) dur-=Math.min(sst.end,t.end)-sst.start; }
       dur=Math.max(0,dur); dayMin+=dur;
       items.push({type:'act',name:a.name,minutes:dur});
     }
