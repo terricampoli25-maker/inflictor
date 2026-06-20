@@ -761,6 +761,13 @@
             <label class="set-pill" id="sp-mon" onclick="Settings.setWeekDay(1)"><input type="radio" name="sw-day" value="1"> Mon</label>
           </div>
         </div>
+        <div class="set-row">
+          <span class="set-row-label">Week view</span>
+          <div class="set-pills">
+            <label class="set-pill" id="wv-rolling"  onclick="Settings.setWeekView('rolling')"><input type="radio" name="wk-view" value="rolling"> Rolling (today first)</label>
+            <label class="set-pill" id="wv-calendar" onclick="Settings.setWeekView('calendar')"><input type="radio" name="wk-view" value="calendar"> Calendar (Sun–Sat)</label>
+          </div>
+        </div>
         <button class="btn btn-primary" style="width:auto;padding:.6rem 1.1rem;margin-top:.3rem" onclick="Settings.saveSchedule()">Save Schedule Settings</button>
       </div>
 
@@ -1158,6 +1165,7 @@
     if (data.theme && data.theme !== S.theme) {
       applyTheme(data.theme); localStorage.setItem('inflictor_theme', data.theme); setBgImages(data.theme);
     }
+    Planner.applyWeekView(data.week_view);                 // 'rolling' | 'calendar' — set before the board first renders
     // Profile picture syncs too. Server wins; if server has none but this device does, migrate it up.
     if (data.avatar_data) { localStorage.setItem('inflictor_avatar', data.avatar_data); }
     else { const local = localStorage.getItem('inflictor_avatar'); if (local) api('settings',{method:'PUT',body:{avatar_data:local}}); }
@@ -1295,6 +1303,7 @@ window.Planner = (() => {
   const NOTE_DELAY = 1500;
 
   let weekStart = null, weekData = null, taskStatus = {}, noteTimers = {};
+  let weekView = 'rolling';   // 'rolling' = today is the first column; 'calendar' = fixed Sun–Sat week
   let soundEnabled = true, notifEnabled = false, notifRepeat = 1, notifTimers = [];
   // Granular, device-local sound prefs (default on). cheers = positive sounds
   // (completion chime + restart crowd), aww = the not-completed sound.
@@ -1415,6 +1424,10 @@ window.Planner = (() => {
     return Array.from({ length: SETUP_DAYS }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d; });
   }
   function isToday(d) { const t = new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
+  // Where the visible 7-day window begins: today (rolling) or the Sunday of today's week (calendar/wall-calendar).
+  function viewStart(d = new Date()) { const x = new Date(d); x.setHours(0,0,0,0); if (weekView === 'calendar') x.setDate(x.getDate() - x.getDay()); return x; }
+  function applyWeekView(mode) { weekView = (mode === 'calendar') ? 'calendar' : 'rolling'; }            // set mode only (used on load, before init)
+  function setWeekView(mode) { applyWeekView(mode); weekStart = viewStart(); loadWeek().then(render); }   // change + refresh the board
   function fmtDur(m) { if (m<60) return `${m}m`; const h=Math.floor(m/60),r=m%60; return r?`${h}h ${r}m`:`${h}h`; }
   function slotPx(m) { return Math.max(80, m * 1.5); }   // floor so short acts still fit name + controls
   function parseTime(t) { const [h,m]=(t||'07:00').split(':').map(Number); return (h||0)*60+(m||0); }
@@ -2433,7 +2446,7 @@ window.Planner = (() => {
   }
 
   async function init() {
-    weekStart = new Date(); weekStart.setHours(0,0,0,0);
+    weekStart = viewStart();
     const todayKey = toISO(new Date());
     pauseOffset   = parseInt(localStorage.getItem('inflictor_pause_offset_' + todayKey) || '0');
     wakeOffset    = parseInt(localStorage.getItem('inflictor_wake_offset_'  + todayKey) || '0');
@@ -2487,6 +2500,7 @@ window.Planner = (() => {
     openActEdit, openActAdd, actEditTiming, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
     openMemo, saveMemo, closeMemo, closeConflict,
     openCalories, saveCalories, closeCalories, openReport, closeReport, emailReport,
+    applyWeekView, setWeekView,
     updateAnytimeText, removeAnytime, setAnytimeStatus, toggleAnytimePause,
     shift: (unit, dir) => {
       weekStart = new Date(weekStart);
@@ -2548,6 +2562,8 @@ window.Settings = (() => {
       });
       if (el('s-wake-time')) el('s-wake-time').value = data.wake_time || '07:00';
       ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', (data.week_start_day||0)===i));
+      const wv = data.week_view === 'calendar' ? 'calendar' : 'rolling';
+      ['rolling','calendar'].forEach(m => el(`wv-${m}`)?.classList.toggle('active', m===wv));
       const rf = data.report_frequency || 'off';
       ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===rf));
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
@@ -2631,6 +2647,12 @@ window.Settings = (() => {
   // ── Programme ────────────────────────────────────────────────────
   function setWeekDay(v) {
     ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', i===v));
+  }
+  function setWeekView(mode) {
+    ['rolling','calendar'].forEach(m => el(`wv-${m}`)?.classList.toggle('active', m===mode));
+    Planner.setWeekView(mode);                                   // re-snaps the board + re-renders
+    api('settings',{method:'PUT',body:{week_view:mode}});
+    flashMsg(mode==='calendar' ? 'Week view: calendar (Sun–Sat).' : 'Week view: rolling (today first).', 'success');
   }
   function setReportFreq(v) {
     ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===v));
@@ -2768,7 +2790,7 @@ window.Settings = (() => {
   return {
     open, close, showView, loadMore, setGuideMode,
     saveName, setTheme, setPremiumTheme, setFont, setPremiumFont, uploadAvatar, removeAvatar,
-    setWeekDay, saveSchedule, setReportFreq,
+    setWeekDay, saveSchedule, setReportFreq, setWeekView,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
   };

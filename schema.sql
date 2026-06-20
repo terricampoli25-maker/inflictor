@@ -45,6 +45,7 @@ CREATE TABLE IF NOT EXISTS settings (
   cheer_enabled        INTEGER NOT NULL DEFAULT 1,
   aww_enabled          INTEGER NOT NULL DEFAULT 1,
   avatar_data          TEXT,
+  week_view            TEXT    NOT NULL DEFAULT 'rolling', -- rolling (today first) | calendar (Sun–Sat)
   report_frequency     TEXT    NOT NULL DEFAULT 'off',  -- off / daily / weekly (scheduled email)
   tz_offset            INTEGER,                          -- JS getTimezoneOffset() so the cron fires at the user's local evening
   report_last_sent     TEXT,                             -- YYYY-MM-DD of the last scheduled send (dedupe)
