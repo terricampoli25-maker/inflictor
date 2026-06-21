@@ -819,6 +819,11 @@
             <span class="set-row-hint">time(s)</span>
           </div>
         </div>
+        <div class="set-row">
+          <span class="set-row-label">Also email me at reminder time</span>
+          <label class="toggle"><input type="checkbox" id="s-email-reminders" onchange="Settings.setEmailReminders(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <p class="set-row-hint" style="margin:-.1rem 0 .6rem;font-size:.82rem">When a med/reminder is due, also send an email to your account — handy when you're away from the computer. Needs the app running (it sends at the exact time).</p>
         <div class="notif-note" id="s-notif-note"></div>
       </div>
 
@@ -909,7 +914,8 @@
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
           <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Tap the <b>cal.</b> button on any meal — any time, even before you eat it — to note the <b>sustenance</b> and its <b>calories</b> (both optional). That same window also pops up when you mark a meal <b>had</b> (✓). Calories count toward your daily totals.</p>
           <p><b>Not sure how long?</b> ⏳ On any activity (except a snack) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it shows its start time and <b>"ongoing"</b> instead of a set length. Perfect for "organizing the room" when you've no idea how long it'll take.</p>
-          <p><b>Reminder</b> 🎗️ — a <b>medication or reminder</b> at a set time. Give it a name and a time, pick the days, and tick <b>Remind me</b> if you want a notification when it's due. Choose how it looks: <b>Split</b> (it parts the activity it lands in, like a meal) or <b>Ribbon</b> (a little 🎗️ tab sitting on the activity without cutting it). Check it off as <b>taken</b> on the day. Like a snack, it never causes a timing clash.</p>
+          <p><b>Reminder</b> 🎗️ — something to be nudged about at a set time. Give it a name and a time, pick the days, and tick <b>Remind me</b> for a chime + desktop alert when it's due. Choose how it looks: <b>Split</b> (it parts the activity it lands in, like a meal) or <b>Ribbon</b> (a little tab sitting on the activity without cutting it). Check it off as <b>taken</b>. Never causes a timing clash. If you take medications, turn on the separate <b>💊 Meds button</b> in Settings → schedule — it adds a dose/notes field. And in Settings → Sounds you can also have reminders <b>email you</b> at the set time.</p>
+          <p style="border-left:3px solid var(--accent);padding-left:.7rem"><b>⚠️ Important — when reminders actually fire:</b> alerts (chime, desktop notification, and the optional email) only go off <b>while The Inflictor is running</b> — open, minimized, or quietly in the system tray. Closing the window keeps it running in the tray, which is fine. But if you fully <b>Quit</b> the app, or your computer is <b>off or asleep</b>, <b>nothing fires</b>. Please don't rely on this as your only medication reminder.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -956,7 +962,8 @@
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
           <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Touch the <b>cal.</b> button upon any meal — whensoever thou wilt, even ere thou eat'st — to set down the <b>sustenance</b> and its <b>calories</b> (both at thy pleasure). That same window appeareth too when thou markest a meal <b>had</b> (✓). Calories tally toward thy daily totals.</p>
           <p><b>Uncertain of the hours?</b> ⏳ Upon any act (save a morsel) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it showeth its start and <b>"ongoing"</b> in place of a fixed span. Apt for "setting the chamber to rights," when thou knowest not how long 'twill take.</p>
-          <p><b>Reminder</b> 🎗️ — a <b>physick or remembrance</b> at a set hour. Grant it a name and a time, choose its days, and tick <b>Remind me</b> wouldst thou have a bell when 'tis due. Choose its form: <b>Split</b> (it parteth the act it falleth within, as a meal doth) or <b>Ribbon</b> (a small 🎗️ token resting upon the act, uncut). Mark it <b>taken</b> upon the day. Like a morsel, it stirreth no clash.</p>
+          <p><b>Reminder</b> 🎗️ — a remembrance at a set hour. Grant it a name and a time, choose its days, and tick <b>Remind me</b> for a bell and a herald's notice when 'tis due. Choose its form: <b>Split</b> (it parteth the act it falleth within, as a meal doth) or <b>Ribbon</b> (a small token resting upon the act, uncut). Mark it <b>taken</b>. It stirreth no clash. Dost thou take physick, summon the separate <b>💊 Meds button</b> in Settings → schedule — it bringeth a dose field. And in Settings → Sounds thou mayest bid reminders <b>send thee a letter</b> at the appointed hour.</p>
+          <p style="border-left:3px solid var(--accent);padding-left:.7rem"><b>⚠️ Mark well — when the bell doth toll:</b> thine alarums (bell, herald's notice, and the letter, shouldst thou bid it) sound <b>only whilst The Inflictor liveth</b> — open, minimized, or at rest in the tray below. To close the window keepeth it living in the tray, and that is well. But shouldst thou wholly <b>Quit</b> the app, or thy machine lie <b>dark or asleep</b>, <b>naught shall sound</b>. Lean not upon this alone for thy physick, I pray thee.</p>
         </div>
         <div class="guide-block">
           <h4>Act II · Mend what thou wilt, whensoever</h4>
@@ -1932,9 +1939,13 @@ window.Planner = (() => {
       const isMeds = act.med_kind === 'medication';
       const name = (act.name || '').trim() || (isMeds ? 'your medication' : 'your reminder');
       const dose = (getMemo(toISO(today), act.id) || '').trim();
+      const bodyText = `${medIcon(act)} Time for "${name}"${dose?` (${dose})`:''} — ${fmtClock(mh*60+mm)}.`;
       notifTimers.push(setTimeout(() => {
-        try { new Notification(isMeds ? 'The Inflictor — Medication' : 'The Inflictor — Reminder', { body: `${medIcon(act)} Time for "${name}"${dose?` (${dose})`:''}.`, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+        try { new Notification(isMeds ? 'The Inflictor — Medication' : 'The Inflictor — Reminder', { body: bodyText, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
         playSound('chime');
+        // Opt-in: also email the reminder at this exact minute (the running app fires it, so it's on time).
+        if (localStorage.getItem('inflictor_email_reminders') === '1')
+          api('report-email', { method:'POST', body:{ body: bodyText, period: isMeds ? 'Medication reminder' : 'Reminder' } });
       }, delay));
     }
   }
@@ -2718,6 +2729,7 @@ window.Settings = (() => {
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
       if (el('s-report-meds')) el('s-report-meds').checked = localStorage.getItem('inflictor_report_meds') === '1';
       if (el('s-show-meds')) el('s-show-meds').checked = localStorage.getItem('inflictor_show_meds') === '1';
+      if (el('s-email-reminders')) el('s-email-reminders').checked = localStorage.getItem('inflictor_email_reminders') === '1';
       if (el('s-aww'))   el('s-aww').checked   = localStorage.getItem('inflictor_aww')   !== '0';
       const notifOn = data.notification_enabled === 1;
       if (el('s-notif')) el('s-notif').checked = notifOn;
@@ -2804,6 +2816,10 @@ window.Settings = (() => {
   function setShowMeds(v) {
     localStorage.setItem('inflictor_show_meds', v ? '1' : '0');
     flashMsg(v ? 'The 💊 Meds button is on.' : 'Meds button hidden.', 'success');
+  }
+  function setEmailReminders(v) {
+    localStorage.setItem('inflictor_email_reminders', v ? '1' : '0');
+    flashMsg(v ? 'Reminders will also email you at the set time.' : 'Reminder emails turned off.', 'success');
   }
   function setPlainVoice(v) {
     window.setPlainVoice(v);
@@ -2964,7 +2980,7 @@ window.Settings = (() => {
   return {
     open, close, showView, loadMore, setGuideMode,
     saveName, setTheme, setPremiumTheme, pickTheme, setMode, setFont, setPremiumFont, uploadAvatar, removeAvatar,
-    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setShowMeds, setPlainVoice,
+    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setShowMeds, setEmailReminders, setPlainVoice,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
   };
