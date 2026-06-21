@@ -328,8 +328,8 @@
     .act-sus-cal{display:flex;gap:.45rem;margin:.45rem 0}
     .act-sus-cal input[type=text]{flex:1;min-width:0}
     .act-sus-cal input[type=number]{width:64px}
-    .act-timing{display:flex;align-items:center;gap:.3rem;flex-wrap:wrap}
-    .timing-opt{font-family:var(--font-body);font-size:.72rem;background:none;border:1px solid var(--border);color:var(--text-muted);padding:.22rem .5rem;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+    .act-timing{display:flex;align-items:center;gap:.25rem;flex-wrap:wrap}
+    .timing-opt{font-family:var(--font-body);font-size:.68rem;background:none;border:1px solid var(--border);color:var(--text-muted);padding:.2rem .38rem;cursor:pointer;transition:background .2s,color .2s,border-color .2s;white-space:nowrap}
     .timing-opt:hover{border-color:var(--accent)}
     .timing-opt.on{background:var(--btn-bg);color:var(--btn-text);border-color:transparent}
     .timing-time{font-family:var(--font-body);font-size:.72rem;background:transparent;border:1px solid var(--border);color:var(--text);padding:.18rem .3rem;margin-left:.15rem}
@@ -790,6 +790,11 @@
             <label class="set-pill" id="wv-calendar" onclick="Settings.setWeekView('calendar')"><input type="radio" name="wk-view" value="calendar"> Calendar (Sun–Sat)</label>
           </div>
         </div>
+        <div class="set-row">
+          <span class="set-row-label">Show a Meds button (💊)</span>
+          <label class="toggle"><input type="checkbox" id="s-show-meds" onchange="Settings.setShowMeds(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <p class="set-row-hint" style="margin:-.1rem 0 .6rem;font-size:.82rem">Adds a 💊 Meds button beside Reminder when setting up activities. Leave off if you don't need it.</p>
         <button class="btn btn-primary" style="width:auto;padding:.6rem 1.1rem;margin-top:.3rem" onclick="Settings.saveSchedule()">Save Schedule Settings</button>
       </div>
 
@@ -1073,6 +1078,9 @@ window.setPlainVoice = (on) => {
   window.applyTone();
   try { window.Planner && Planner.render && Planner.render(); } catch {}
 };
+// A med item is either a medication (💊) or a general reminder (🎗️).
+window.medIcon = a => (a && a.med_kind === 'medication') ? '💊' : '🎗️';
+window.showMedsBtn = () => localStorage.getItem('inflictor_show_meds') === '1';
 
 // ════════════════════════════════════════════════
 //  APP MODULE
@@ -1625,8 +1633,8 @@ window.Planner = (() => {
         if (timing === 'med') {                               // reminders: optional, only if the user opted in
           if (!showMeds) continue;
           weekMedsTotal++;
-          if (status === 'completed') { weekMedsTaken++; lines.push(`<div class="rpt-line">🎗️ ${esc(a.name||'Reminder')} · ✓ taken</div>`); }
-          else lines.push(`<div class="rpt-line" style="opacity:.6">🎗️ ${esc(a.name||'Reminder')} · not taken</div>`);
+          if (status === 'completed') { weekMedsTaken++; lines.push(`<div class="rpt-line">${medIcon(a)} ${esc(a.name||'Reminder')} · ✓ taken</div>`); }
+          else lines.push(`<div class="rpt-line" style="opacity:.6">${medIcon(a)} ${esc(a.name||'Reminder')} · not taken</div>`);
           continue;
         }
         if (status === 'completed') weekDone++; else if (status === 'failed') { weekMissed++; continue; }
@@ -1665,7 +1673,7 @@ window.Planner = (() => {
       for (const a of acts) {
         const status = taskStatus[`${ds}:${a.id}`], timing = a.timing||'flexible';
         if (timing==='sustenance') { const cal=getCalories(ds,a.id); if(cal)dayCal+=cal; if(status==='completed'||cal) lines.push(`  🍴 ${a.name||'snack'}${cal?` · ${cal} cal`:''}`); continue; }
-        if (timing==='med') { if(!showMeds) continue; weekMedsTotal++; if(status==='completed'){weekMedsTaken++; lines.push(`  🎗️ ${a.name||'Reminder'} · taken`);} else lines.push(`  🎗️ ${a.name||'Reminder'} · not taken`); continue; }
+        if (timing==='med') { if(!showMeds) continue; weekMedsTotal++; if(status==='completed'){weekMedsTaken++; lines.push(`  ${medIcon(a)} ${a.name||'Reminder'} · taken`);} else lines.push(`  ${medIcon(a)} ${a.name||'Reminder'} · not taken`); continue; }
         if (status==='completed') weekDone++; else if (status==='failed') { weekMissed++; continue; }
         if (status!=='completed') continue;
         if (timing==='anytime') { lines.push(`  • ${a.name} · done`); continue; }
@@ -1704,8 +1712,10 @@ window.Planner = (() => {
       chime_enabled: a.chime_enabled !== false,
       food: getMemo(ds, id) || '',                 // meal: what you ate (per-day, shared with the card's cal. window)
       cal: getMemo(ds, `cal:${id}`) || '',
+      dose: getMemo(ds, id) || '',                 // med: dose / notes (same per-day memo key)
       med_display: a.med_display === 'ribbon' ? 'ribbon' : 'split',
-      med_notify: !!a.med_notify
+      med_notify: !!a.med_notify,
+      med_kind: a.med_kind === 'medication' ? 'medication' : 'reminder'
     };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
@@ -1713,7 +1723,7 @@ window.Planner = (() => {
   }
   // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
   function openActAdd(ds) {
-    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: true, food: '', cal: '', med_display: 'split', med_notify: false };
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: true, food: '', cal: '', dose: '', med_display: 'split', med_notify: false, med_kind: 'reminder' };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
@@ -1722,7 +1732,7 @@ window.Planner = (() => {
     if (!actEdit) return;
     const a = actEdit;
     const dateLabel = new Date(a.ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' });
-    document.getElementById('actedit-title').textContent = a.isNew ? (a.timing==='med' ? '🎗️ Add a reminder' : '🍴 Add a meal / snack') : `Edit — ${a.name || 'activity'}`;
+    document.getElementById('actedit-title').textContent = a.isNew ? (a.timing==='med' ? (a.med_kind==='medication'?'💊 Add a medication':'🎗️ Add a reminder') : '🍴 Add a meal / snack') : `Edit — ${a.name || 'activity'}`;
     document.getElementById('actedit-sub').textContent = a.isNew ? `${dateLabel} — “Just This Day”, or “Every Day” for a regular meal` : `${dateLabel} · this day only`;
     const rmBtn = document.getElementById('actedit-remove'); if (rmBtn) rmBtn.style.display = a.isNew ? 'none' : '';
     const edBtn = document.getElementById('actedit-everyday'); if (edBtn) edBtn.style.display = a.isNew ? '' : 'none';
@@ -1735,7 +1745,8 @@ window.Planner = (() => {
         <button class="timing-opt${a.timing==='flexible'?' on':''}" onclick="Planner.actEditTiming('flexible')" title="A start–end that can shift (~)">Flexible</button>
         <button class="timing-opt${a.timing==='anytime'?' on':''}" onclick="Planner.actEditTiming('anytime')" title="Sometime that day; optional ~ish time">Anytime</button>
         <button class="timing-opt${a.timing==='sustenance'?' on':''}" onclick="Planner.actEditTiming('sustenance')" title="A meal or snack (🍴) — never conflicts">Sustenance</button>
-        <button class="timing-opt${a.timing==='med'?' on':''}" onclick="Planner.actEditTiming('med')" title="A reminder / medication (🎗️) at a set time — never moves">Reminder</button>
+        ${showMedsBtn() ? `<button class="timing-opt${a.timing==='med'&&a.med_kind==='medication'?' on':''}" onclick="Planner.actEditTiming('med','medication')" title="A medication (💊) at a set time">Meds.</button>` : ''}
+        <button class="timing-opt${a.timing==='med'&&a.med_kind!=='medication'?' on':''}" onclick="Planner.actEditTiming('med','reminder')" title="A reminder (🎗️) at a set time">Reminder</button>
       </div>
       <div style="margin-top:.8rem">${isRange
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Start"><span class="dur-unit">to</span><input class="fixed-tt" id="ae-end" type="time" value="${esc(a.fixed_end)}" title="End"></div>`
@@ -1743,7 +1754,7 @@ window.Planner = (() => {
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="When you ate"><span class="dur-unit">for</span><input class="dur-num" id="ae-hours" type="number" min="0" max="5" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span></div>`
         : a.timing==='med'
         ? `<div class="act-fixed-group"><span class="dur-unit">at</span><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Time to take it"></div>`
-        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}${a.timing==='med' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">How it shows on the day:</div><div class="act-timing"><button class="timing-opt${a.med_display!=='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('split')" title="Splits the activity like a meal does">Split</button><button class="timing-opt${a.med_display==='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('ribbon')" title="A little 🎗️ ribbon on the activity — doesn't split it">Ribbon</button></div><label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-mednotify" ${a.med_notify?'checked':''}> 🔔 Remind me at this time</label></div>` : ''}`;
+        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}${a.timing==='med' ? `<div style="margin-top:.7rem"><input class="form-input" id="ae-meddose" type="text" maxlength="120" placeholder="${a.med_kind==='medication'?'Dose / notes — e.g. 1 tablet, 20mg':'Notes (optional)'}" value="${esc(a.dose||'')}" style="width:100%;margin-bottom:.5rem"><div class="actedit-sub" style="margin-bottom:.35rem">How it shows on the day:</div><div class="act-timing"><button class="timing-opt${a.med_display!=='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('split')" title="Splits the activity like a meal does">Split</button><button class="timing-opt${a.med_display==='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('ribbon')" title="A little 🎗️ ribbon on the activity — doesn't split it">Ribbon</button></div><label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-mednotify" ${a.med_notify?'checked':''}> 🔔 Remind me at this time</label></div>` : ''}`;
   }
   function actEditCapture() {
     if (!actEdit) return;
@@ -1756,6 +1767,7 @@ window.Planner = (() => {
     if (g('ae-goal'))  actEdit.goal_time = g('ae-goal').value;
     if (g('ae-food'))  actEdit.food = g('ae-food').value;
     if (g('ae-cal'))   actEdit.cal  = g('ae-cal').value;
+    if (g('ae-meddose')) actEdit.dose = g('ae-meddose').value;
     if (g('ae-mednotify')) actEdit.med_notify = g('ae-mednotify').checked;
   }
   function actEditMedDisplay(mode) { actEditCapture(); actEdit.med_display = (mode==='ribbon'?'ribbon':'split'); renderActEdit(); }
@@ -1768,7 +1780,7 @@ window.Planner = (() => {
   // Inline Edit-Day meal inputs write straight to the per-day store (only meaningful for a specific day).
   function setupMealFood(id, v) { if (setup.editingDate) setMemo(setup.editingDate, id, (v||'').trim()); }
   function setupMealCal(id, v)  { if (!setup.editingDate) return; const cv=(v||'').trim(); setMemo(setup.editingDate, `cal:${id}`, cv===''?'':String(Math.max(0,Math.min(99999,parseInt(cv)||0)))); }
-  function actEditTiming(mode) { actEditCapture(); actEdit.timing = mode; renderActEdit(); }
+  function actEditTiming(mode, kind) { actEditCapture(); actEdit.timing = mode; if (mode==='med') actEdit.med_kind = kind || actEdit.med_kind || 'reminder'; renderActEdit(); }
   // Write this one activity back into the day as a per-date override (that day only).
   async function persistDayActivities(ds, acts) {
     const base = getDaySchedule(ds) || { wake_time: '07:00' };
@@ -1794,7 +1806,8 @@ window.Planner = (() => {
       fixed_end:   isRange && a.fixed_end   ? a.fixed_end   : undefined,
       goal_time:   timing === 'anytime' && a.goal_time ? a.goal_time : undefined,
       med_display: timing === 'med' ? (a.med_display==='ribbon'?'ribbon':'split') : undefined,
-      med_notify:  timing === 'med' ? !!a.med_notify : undefined
+      med_notify:  timing === 'med' ? !!a.med_notify : undefined,
+      med_kind:    timing === 'med' ? (a.med_kind==='medication'?'medication':'reminder') : undefined
     };
   }
   // Save to THIS day only (a per-date custom override).
@@ -1805,6 +1818,7 @@ window.Planner = (() => {
     const acts = a.isNew ? [ ...existing, { id: a.id, ...updated } ] : existing.map(x => x.id === a.id ? { ...x, ...updated } : x);
     await persistDayActivities(a.ds, acts);
     if (updated.timing === 'sustenance') setMealData(a.ds, a.id, a.food, a.cal);
+    if (updated.timing === 'med') setMemo(a.ds, a.id, (a.dose||'').trim());
     closeActEdit(); render(); scheduleNotifs();
   }
   // Save to EVERY day (recurring): add to the weekly template + each non-custom day in view.
@@ -1827,6 +1841,7 @@ window.Planner = (() => {
     weekData.schedule = sched;
     await Promise.all(ops);
     if (updated.timing === 'sustenance') setMealData(actEdit.ds, newAct.id, actEdit.food, actEdit.cal);
+    if (updated.timing === 'med') setMemo(actEdit.ds, newAct.id, (actEdit.dose||'').trim());
     closeActEdit(); render(); scheduleNotifs();
   }
   async function removeActEdit() {
@@ -1914,9 +1929,11 @@ window.Planner = (() => {
       const when = new Date(today.getFullYear(), today.getMonth(), today.getDate(), mh||0, mm||0, 0, 0).getTime();
       const delay = when - Date.now();
       if (delay <= 0) continue;
-      const name = (act.name || '').trim() || 'your reminder';
+      const isMeds = act.med_kind === 'medication';
+      const name = (act.name || '').trim() || (isMeds ? 'your medication' : 'your reminder');
+      const dose = (getMemo(toISO(today), act.id) || '').trim();
       notifTimers.push(setTimeout(() => {
-        try { new Notification('The Inflictor — Reminder', { body: `🎗️ Time for "${name}".`, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+        try { new Notification(isMeds ? 'The Inflictor — Medication' : 'The Inflictor — Reminder', { body: `${medIcon(act)} Time for "${name}"${dose?` (${dose})`:''}.`, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
         playSound('chime');
       }, delay));
     }
@@ -2113,13 +2130,13 @@ window.Planner = (() => {
             </span>
           </div></div>`;
       }
-      if (p.med) {                                             // Reminder / med — thin one-liner, 🎗️, taken/not checks
-        const lbl = (act.name||'').trim() || 'Reminder';
-        const medPast = dayPast || (today && p.e != null && p.e <= nowMin);
-        const medStatus = (medPast && status!=='failed') ? status : status;   // past meds keep their actual taken/skip mark
+      if (p.med) {                                             // Reminder (🎗️) / medication (💊) — thin one-liner, taken/not checks
+        const lbl = (act.name||'').trim() || (act.med_kind==='medication'?'Medication':'Reminder');
+        const dose = (getMemo(ds, act.id)||'').trim();
+        const medStatus = status;
         return `<div class="slot slot-med slot-${medStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
           <div class="sus-row">
-            <span class="sus-label">🎗️ ${esc(lbl)} · ${fmtClock(p.s)}</span>
+            <span class="sus-label">${medIcon(act)} ${esc(lbl)} · ${fmtClock(p.s)}${dose?` · ${esc(dose)}`:''}</span>
             <span class="sus-ctrls">
               <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this reminder">✎</button>
               <input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl)}','completed',this.checked)" title="Taken">
@@ -2139,7 +2156,8 @@ window.Planner = (() => {
         const mt = times[m.id]?.start ?? p.s;
         const top = Math.max(2, Math.min(px-16, Math.round((mt-p.s)/Math.max(1,(p.e-p.s))*px)));
         const mst = taskStatus[`${ds}:${m.id}`]||'none';
-        return `<button class="med-ribbon${mst==='completed'?' taken':''}${mst==='failed'?' missed':''}" style="top:${top}px" onclick="event.stopPropagation();Planner.toggleMedTaken('${esc(ds)}','${esc(m.id)}')" title="${esc((m.name||'Reminder').trim()||'Reminder')} · ${fmtClock(mt)} — click to mark taken">🎗️</button>`;
+        const mdose = (getMemo(ds, m.id)||'').trim();
+        return `<button class="med-ribbon${mst==='completed'?' taken':''}${mst==='failed'?' missed':''}" style="top:${top}px" onclick="event.stopPropagation();Planner.toggleMedTaken('${esc(ds)}','${esc(m.id)}')" title="${esc((m.name||(m.med_kind==='medication'?'Medication':'Reminder')).trim())} · ${fmtClock(mt)}${mdose?` · ${esc(mdose)}`:''} — click to mark taken">${medIcon(m)}</button>`;
       }).join('');
       if (p.cont) {                                           // 2nd+ part of a split activity — visual continuation, no controls
         return `<div class="slot slot-cont slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px">${ribbonHtml}
@@ -2352,6 +2370,7 @@ window.Planner = (() => {
       undetermined: !!a.undetermined,
       fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
       med_display: a.med_display === 'ribbon' ? 'ribbon' : 'split', med_notify: !!a.med_notify,
+      med_kind: a.med_kind === 'medication' ? 'medication' : 'reminder',
       days: Array.isArray(a.days) ? a.days.slice() : Array(7).fill(true)
     }));
     if (!setup.activities.length) addAct();
@@ -2413,7 +2432,8 @@ window.Planner = (() => {
             <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
             <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
             <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
-            <button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med')" title="A reminder / medication (🎗️) at a set time — never conflicts">Reminder</button>
+            ${showMedsBtn() ? `<button class="timing-opt${act.timing==='med'&&act.med_kind==='medication'?' on':''}" onclick="Planner.setTiming('${act.id}','med','medication')" title="A medication (💊) at a set time — never conflicts">Meds.</button>` : ''}
+            <button class="timing-opt${act.timing==='med'&&act.med_kind!=='medication'?' on':''}" onclick="Planner.setTiming('${act.id}','med','reminder')" title="A reminder (🎗️) at a set time — never conflicts">Reminder</button>
             ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
@@ -2466,7 +2486,7 @@ window.Planner = (() => {
   }
   function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
   function setColor(id,c) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.color=c; renderActs(); }
-  function setTiming(id,mode) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; if(!a.mins) a.mins=20; } if(mode==='med'){ a.undetermined=false; if(!a.med_display) a.med_display='split'; } } renderActs(); }
+  function setTiming(id,mode,kind) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; if(!a.mins) a.mins=20; } if(mode==='med'){ a.undetermined=false; if(!a.med_display) a.med_display='split'; a.med_kind = kind || a.med_kind || 'reminder'; } } renderActs(); }
   function setMedDisplay(id,mode) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.med_display=(mode==='ribbon'?'ribbon':'split'); renderActs(); }
   function setMedNotify(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.med_notify=checked; renderActs(); }
   function toggleUndet(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.undetermined=checked; renderActs(); }
@@ -2495,6 +2515,7 @@ window.Planner = (() => {
         goal_time:(timing==='anytime'&&!undet&&a.goal_time)?a.goal_time:undefined,
         med_display: timing==='med' ? (a.med_display==='ribbon'?'ribbon':'split') : undefined,
         med_notify:  timing==='med' ? !!a.med_notify : undefined,
+        med_kind:    timing==='med' ? (a.med_kind==='medication'?'medication':'reminder') : undefined,
         days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
     });
   }
@@ -2696,6 +2717,7 @@ window.Settings = (() => {
       ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===rf));
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
       if (el('s-report-meds')) el('s-report-meds').checked = localStorage.getItem('inflictor_report_meds') === '1';
+      if (el('s-show-meds')) el('s-show-meds').checked = localStorage.getItem('inflictor_show_meds') === '1';
       if (el('s-aww'))   el('s-aww').checked   = localStorage.getItem('inflictor_aww')   !== '0';
       const notifOn = data.notification_enabled === 1;
       if (el('s-notif')) el('s-notif').checked = notifOn;
@@ -2778,6 +2800,10 @@ window.Settings = (() => {
   function setReportMeds(v) {
     localStorage.setItem('inflictor_report_meds', v ? '1' : '0');
     flashMsg(v ? 'Reminders will show in your report.' : 'Reminders hidden from your report.', 'success');
+  }
+  function setShowMeds(v) {
+    localStorage.setItem('inflictor_show_meds', v ? '1' : '0');
+    flashMsg(v ? 'The 💊 Meds button is on.' : 'Meds button hidden.', 'success');
   }
   function setPlainVoice(v) {
     window.setPlainVoice(v);
@@ -2938,7 +2964,7 @@ window.Settings = (() => {
   return {
     open, close, showView, loadMore, setGuideMode,
     saveName, setTheme, setPremiumTheme, pickTheme, setMode, setFont, setPremiumFont, uploadAvatar, removeAvatar,
-    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setPlainVoice,
+    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setShowMeds, setPlainVoice,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
   };
