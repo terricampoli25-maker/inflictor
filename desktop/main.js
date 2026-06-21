@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, net } = require('electron');
+const { app, BrowserWindow, ipcMain, net, Tray, Menu, nativeImage } = require('electron');
 const path    = require('path');
 const http    = require('http');
 const https   = require('https');
@@ -18,6 +18,9 @@ const MIME = {
 let staticPort = null;
 let mainWin    = null;
 let actWin     = null;
+let tray       = null;
+let trayReady  = false;   // only hide-to-tray on window close once a tray actually exists
+let isQuitting = false;   // set true by the tray's Quit so the window is allowed to close
 
 // ── Local server: serves app files + proxies /api/ to Cloudflare ─
 function startServer(callback) {
@@ -83,10 +86,11 @@ function startServer(callback) {
 }
 
 // ── Windows ───────────────────────────────────────────────────
-function createMainWindow() {
+function createMainWindow(startHidden) {
   mainWin = new BrowserWindow({
     width: 1280, height: 820, minWidth: 900, minHeight: 600,
     title: 'The Inflictor',
+    show: !startHidden,
     icon: path.join(__dirname, '../icons/inflictor.ico'),
     webPreferences: { nodeIntegration: false, contextIsolation: true },
   });
@@ -97,6 +101,42 @@ function createMainWindow() {
     console.log(`[renderer:${level}] ${message}` + (sourceId ? `  (${sourceId}:${line})` : ''));
   });
   mainWin.on('closed', () => { mainWin = null; });
+  // Closing the window keeps the app alive in the tray (so medication reminders still fire).
+  // A real quit comes only from the tray menu (isQuitting) — or if no tray could be created.
+  mainWin.on('close', (e) => {
+    if (!isQuitting && trayReady) { e.preventDefault(); mainWin.hide(); }
+  });
+}
+
+// Bring the (possibly hidden) main window back, or recreate it.
+function showMain() {
+  if (mainWin) { if (mainWin.isMinimized()) mainWin.restore(); mainWin.show(); mainWin.focus(); }
+  else if (staticPort) createMainWindow();
+}
+
+// System-tray presence so the app can run in the background and fire reminders with no window open.
+function createTray() {
+  if (tray) return;
+  let img = null;
+  for (const p of [path.join(__dirname, 'app', 'icons', 'inflictor.ico'),
+                   path.join(__dirname, '..', 'icons', 'inflictor.ico'),
+                   path.join(__dirname, 'app', 'icons', 'inflictor-icon-192x192.png')]) {
+    try { if (fs.existsSync(p)) { const i = nativeImage.createFromPath(p); if (!i.isEmpty()) { img = i; break; } } } catch {}
+  }
+  try {
+    tray = new Tray(img || nativeImage.createEmpty());
+    trayReady = true;
+    tray.setToolTip('The Inflictor');
+    tray.setContextMenu(Menu.buildFromTemplate([
+      { label: 'Open The Inflictor', click: showMain },
+      { type: 'checkbox', label: 'Start with Windows',
+        checked: app.getLoginItemSettings().openAtLogin,
+        click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked, openAsHidden: true }) },
+      { type: 'separator' },
+      { label: 'Quit The Inflictor', click: () => { isQuitting = true; app.quit(); } },
+    ]));
+    tray.on('click', showMain);
+  } catch (e) { console.error('[TRAY] could not create tray:', e.message); trayReady = false; }
 }
 
 function createActivationWindow() {
@@ -122,24 +162,19 @@ const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    const win = mainWin || actWin;
-    if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus(); }
-  });
+  app.on('second-instance', () => { if (actWin) { actWin.show(); actWin.focus(); } else showMain(); });
 
   // ── Boot ──────────────────────────────────────────────────────
   app.whenReady().then(() => {
     // Windows app identity — lets the installed app group & pin correctly on the taskbar
     if (process.platform === 'win32') app.setAppUserModelId('com.inflictor.app');
+    createTray();
+    // If Windows launched us at login (openAsHidden), stay tucked in the tray so reminders fire silently.
+    const startedHidden = process.platform === 'win32' && app.getLoginItemSettings().wasOpenedAtLogin;
     startServer(port => {
       staticPort = port;
-      if (!ACTIVATION_ENABLED) {
-        // Beta mode — go straight to app
-        createMainWindow();
-      } else {
-        // Production mode — show activation gate first
-        createActivationWindow();
-      }
+      if (ACTIVATION_ENABLED) { createActivationWindow(); return; }   // production gate first
+      createMainWindow(startedHidden);                                // beta — straight to app
     });
   });
 }
@@ -155,7 +190,9 @@ ipcMain.on('activation-failed-permanently', () => {
   app.quit();
 });
 
-app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+// Keep running in the tray when windows close; only quit here if there's no tray to live in.
+app.on('window-all-closed', () => { if (!trayReady && process.platform !== 'darwin') app.quit(); });
+app.on('before-quit', () => { isQuitting = true; });   // any real quit path lets the window close
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     if (!ACTIVATION_ENABLED) createMainWindow();
