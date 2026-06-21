@@ -35,8 +35,8 @@
     .theme-sapphire{--surface:rgba(5,10,35,.94);--text:#b8d0f8;--text-muted:#5880b0;--accent:#60a0f0;--accent-hi:#80c0ff;--border:#1a3060;--input-bg:rgba(5,10,45,.98);--btn-bg:#2060c0;--btn-hover:#4080e0;--btn-text:#e8f0ff;--ghost-border:#1a3060;--ghost-text:#5880b0;--error-col:#e05555;--success-col:#50be50;--shadow:rgba(0,0,20,.82);--header-bg:rgba(0,5,25,.72);--header-text:#80c0ff;--slot-bg:rgba(5,10,35,.62);--slot-border:rgba(25,50,100,.45);--col-head-bg:rgba(2,5,22,.93)}
 
     /* ── Plainspeak themes — clean & modern, a deliberate contrast to the ornate ones ── */
-    .theme-plain-light{--surface:rgba(255,255,255,.98);--text:#1a1a1a;--text-muted:#5a5f66;--accent:#2563eb;--accent-hi:#3b82f6;--border:#d4d8dd;--input-bg:#ffffff;--btn-bg:#2563eb;--btn-hover:#3b82f6;--btn-text:#ffffff;--ghost-border:#cbd5e1;--ghost-text:#475569;--error-col:#dc2626;--success-col:#16a34a;--shadow:rgba(0,0,0,.18);--header-bg:rgba(30,41,59,.94);--header-text:#f1f5f9;--slot-bg:rgba(248,250,252,.97);--slot-border:rgba(203,213,225,.9);--col-head-bg:rgba(241,245,249,.99)}
-    .theme-plain-dark{--surface:rgba(24,28,36,.96);--text:#e8eaed;--text-muted:#9aa0a6;--accent:#4f9cf9;--accent-hi:#73b3ff;--border:#3a3f4a;--input-bg:rgba(32,36,44,.98);--btn-bg:#4f9cf9;--btn-hover:#73b3ff;--btn-text:#0a0d12;--ghost-border:#3a3f4a;--ghost-text:#9aa0a6;--error-col:#f06363;--success-col:#4ec94e;--shadow:rgba(0,0,0,.6);--header-bg:rgba(15,18,24,.9);--header-text:#e8eaed;--slot-bg:rgba(30,34,42,.72);--slot-border:rgba(58,63,74,.6);--col-head-bg:rgba(20,23,30,.95)}
+    .theme-plain-light{--surface:rgba(255,255,255,.98);--text:#1a1a1a;--text-muted:#5a5f66;--accent:#2563eb;--accent-hi:#3b82f6;--border:#d4d8dd;--input-bg:#ffffff;--btn-bg:#2563eb;--btn-hover:#3b82f6;--btn-text:#ffffff;--ghost-border:#cbd5e1;--ghost-text:#475569;--error-col:#dc2626;--success-col:#16a34a;--shadow:rgba(0,0,0,.18);--header-bg:rgba(30,41,59,.94);--header-text:#f1f5f9;--slot-bg:rgba(248,250,252,.97);--slot-border:rgba(203,213,225,.9);--col-head-bg:rgba(241,245,249,.99);--stage-fallback:#e9edf2}
+    .theme-plain-dark{--surface:rgba(24,28,36,.96);--text:#e8eaed;--text-muted:#9aa0a6;--accent:#4f9cf9;--accent-hi:#73b3ff;--border:#3a3f4a;--input-bg:rgba(32,36,44,.98);--btn-bg:#4f9cf9;--btn-hover:#73b3ff;--btn-text:#0a0d12;--ghost-border:#3a3f4a;--ghost-text:#9aa0a6;--error-col:#f06363;--success-col:#4ec94e;--shadow:rgba(0,0,0,.6);--header-bg:rgba(15,18,24,.9);--header-text:#e8eaed;--slot-bg:rgba(30,34,42,.72);--slot-border:rgba(58,63,74,.6);--col-head-bg:rgba(20,23,30,.95);--stage-fallback:#11141b}
 
     /* Premium stage background filters */
     .theme-crimson  #stage-bg,.theme-crimson  #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(200deg) saturate(1.4) brightness(.82)}
@@ -83,10 +83,10 @@
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;overflow:hidden}
-    body{font-family:var(--font-body);background:#060204}
+    body{font-family:var(--font-body);background:var(--stage-fallback,#060204)}
 
     /* Stage background */
-    #stage-bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-color:#060204;opacity:0;transition:opacity 1.2s ease}
+    #stage-bg{position:fixed;inset:0;z-index:0;background-size:cover;background-position:center;background-color:var(--stage-fallback,#060204);opacity:0;transition:opacity 1.2s ease}
     #stage-bg.visible{opacity:1}
 
     /* Theme selector */
@@ -609,8 +609,8 @@
   <div class="setup-box">
     <div class="am-header" style="margin-bottom:1.4rem">
       <div class="am-orn">✦ ── ✦</div>
-      <div class="am-title" id="setup-title">SET THY WEEK'S PROGRAM</div>
-      <div class="am-sub">Thy acts, and the days they fall upon</div>
+      <div class="am-title" id="setup-title" data-plain="SET UP YOUR WEEK">SET THY WEEK'S PROGRAM</div>
+      <div class="am-sub" data-plain="Your activities, and which days they happen">Thy acts, and the days they fall upon</div>
     </div>
     <div class="setup-section">
       <div class="setup-label" data-plain="Wake at">Rise at</div>
@@ -618,7 +618,7 @@
     </div>
     <div class="setup-section">
       <div class="setup-label">
-        <span>Acts of the Day</span>
+        <span data-plain="Activities">Acts of the Day</span>
       </div>
       <div id="setup-acts-list"></div>
       <button class="btn-add-act" onclick="Planner.addActivity()">+ Add Activity</button>
@@ -628,7 +628,7 @@
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.1rem" onclick="Planner.closeSetup()">Dismiss</button>
       <button class="btn btn-ghost" id="setup-clear-all" style="width:auto;padding:.55rem 1.05rem;color:#c06060;border-color:#a85050;display:none" onclick="Planner.clearEverything()" title="Erase the ENTIRE schedule — every day, every activity">Clear Everything</button>
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.3rem" onclick="Planner.saveDay()" title="Save these changes to just this one day (today, or the day you're editing)">Edit</button>
-      <button class="btn btn-primary" id="setup-save-week" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()" title="Apply to your whole recurring week">Set the Stage</button>
+      <button class="btn btn-primary" id="setup-save-week" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()" title="Apply to your whole recurring week" data-plain="Save the Week">Set the Stage</button>
     </div>
   </div>
 </div>
@@ -1164,7 +1164,11 @@ window.showMedsBtn = () => localStorage.getItem('inflictor_show_meds') === '1';
 
   function setBgImages(theme) {
     const premiumBase = ['crimson','gilded','sapphire'];
-    if (premiumBase.includes(theme)) {
+    if (theme && theme.startsWith('plain-')) {
+      // Plainspeak themes use a clean solid backdrop (--stage-fallback) — no art needed.
+      el('stage-bg').style.backgroundImage = 'none';
+      el('opening-screen').style.backgroundImage = 'none';
+    } else if (premiumBase.includes(theme)) {
       // Background set by CSS filter rules — just ensure base image is present
       el('stage-bg').style.backgroundImage = "url('dark-stage.png')";
       el('opening-screen').style.backgroundImage = "url('dark-open.png')";
@@ -2388,7 +2392,7 @@ window.Planner = (() => {
     if (date) {
       const name = new Date(date+'T12:00:00').toLocaleDateString('en-GB',{weekday:'long'}).toUpperCase();
       document.getElementById('setup-title').textContent = `EDIT ${name}`;
-    } else { document.getElementById('setup-title').textContent = "SET THY WEEK'S PROGRAM"; }
+    } else { document.getElementById('setup-title').textContent = tone("SET THY WEEK'S PROGRAM", "SET UP YOUR WEEK"); }
     // Editing a single day = ONLY the "Edit" save (no "Set the Stage" — that's the recurring-week tool, reached via Prepare Week).
     const isWeek = !date;
     const setWeekBtn = document.getElementById('setup-save-week'); if (setWeekBtn) setWeekBtn.style.display = isWeek ? '' : 'none';
@@ -2942,7 +2946,7 @@ window.Settings = (() => {
   function pickTheme(t) {
     if (['crimson','gilded','sapphire'].includes(t) && !Premium.isPremium()) { Premium.open(); return; }
     App.applyTheme(t); localStorage.setItem('inflictor_theme', t);
-    document.getElementById('stage-bg').style.backgroundImage = ['crimson','gilded','sapphire'].includes(t) ? "url('dark-stage.png')" : `url('${t}-stage.png')`;
+    document.getElementById('stage-bg').style.backgroundImage = isPlainTheme(t) ? 'none' : (['crimson','gilded','sapphire'].includes(t) ? "url('dark-stage.png')" : `url('${t}-stage.png')`);
     const plain = isPlainTheme(t);
     window.__plain = plain;
     localStorage.setItem('inflictor_tone', plain ? 'plain' : 'theatrical');
