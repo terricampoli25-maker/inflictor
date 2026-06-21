@@ -34,6 +34,10 @@
     .theme-gilded{--surface:rgba(22,14,0,.94);--text:#f5e8b0;--text-muted:#b09040;--accent:#f0c030;--accent-hi:#ffe060;--border:#7a5a10;--input-bg:rgba(28,18,0,.98);--btn-bg:#c09020;--btn-hover:#e0b030;--btn-text:#1a0e00;--ghost-border:#7a5a10;--ghost-text:#b09040;--error-col:#e05555;--success-col:#50be50;--shadow:rgba(0,0,0,.82);--header-bg:rgba(10,6,0,.72);--header-text:#f0c030;--slot-bg:rgba(22,14,0,.62);--slot-border:rgba(100,72,12,.4);--col-head-bg:rgba(14,9,0,.93)}
     .theme-sapphire{--surface:rgba(5,10,35,.94);--text:#b8d0f8;--text-muted:#5880b0;--accent:#60a0f0;--accent-hi:#80c0ff;--border:#1a3060;--input-bg:rgba(5,10,45,.98);--btn-bg:#2060c0;--btn-hover:#4080e0;--btn-text:#e8f0ff;--ghost-border:#1a3060;--ghost-text:#5880b0;--error-col:#e05555;--success-col:#50be50;--shadow:rgba(0,0,20,.82);--header-bg:rgba(0,5,25,.72);--header-text:#80c0ff;--slot-bg:rgba(5,10,35,.62);--slot-border:rgba(25,50,100,.45);--col-head-bg:rgba(2,5,22,.93)}
 
+    /* ── Plainspeak themes — clean & modern, a deliberate contrast to the ornate ones ── */
+    .theme-plain-light{--surface:rgba(255,255,255,.98);--text:#1a1a1a;--text-muted:#5a5f66;--accent:#2563eb;--accent-hi:#3b82f6;--border:#d4d8dd;--input-bg:#ffffff;--btn-bg:#2563eb;--btn-hover:#3b82f6;--btn-text:#ffffff;--ghost-border:#cbd5e1;--ghost-text:#475569;--error-col:#dc2626;--success-col:#16a34a;--shadow:rgba(0,0,0,.18);--header-bg:rgba(30,41,59,.94);--header-text:#f1f5f9;--slot-bg:rgba(248,250,252,.97);--slot-border:rgba(203,213,225,.9);--col-head-bg:rgba(241,245,249,.99)}
+    .theme-plain-dark{--surface:rgba(24,28,36,.96);--text:#e8eaed;--text-muted:#9aa0a6;--accent:#4f9cf9;--accent-hi:#73b3ff;--border:#3a3f4a;--input-bg:rgba(32,36,44,.98);--btn-bg:#4f9cf9;--btn-hover:#73b3ff;--btn-text:#0a0d12;--ghost-border:#3a3f4a;--ghost-text:#9aa0a6;--error-col:#f06363;--success-col:#4ec94e;--shadow:rgba(0,0,0,.6);--header-bg:rgba(15,18,24,.9);--header-text:#e8eaed;--slot-bg:rgba(30,34,42,.72);--slot-border:rgba(58,63,74,.6);--col-head-bg:rgba(20,23,30,.95)}
+
     /* Premium stage background filters */
     .theme-crimson  #stage-bg,.theme-crimson  #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(200deg) saturate(1.4) brightness(.82)}
     .theme-gilded   #stage-bg,.theme-gilded   #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(28deg) saturate(1.9) brightness(.88)}
@@ -404,6 +408,10 @@
     .set-pill{display:flex;align-items:center;gap:.35rem;padding:.3rem .7rem;border:1px solid var(--border);cursor:pointer;font-family:var(--font-body);font-size:.88rem;color:var(--text-muted);transition:all .2s}
     .set-pill input{display:none}
     .set-pill.active{border-color:var(--accent);color:var(--accent);background:rgba(212,175,55,.1)}
+    .set-pills{display:flex;gap:.4rem;flex-wrap:wrap}
+    .mode-card{border:1px solid var(--border);border-radius:2px;padding:.7rem .8rem;margin-bottom:.6rem}
+    .mode-head{display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:var(--font-body);font-size:.9rem;color:var(--text)}
+    .mode-head input{cursor:pointer;accent-color:var(--accent);width:16px;height:16px;flex-shrink:0}
     .toggle{position:relative;display:inline-flex;width:42px;height:22px;cursor:pointer;flex-shrink:0}
     .toggle input{opacity:0;width:0;height:0}
     .toggle-track{position:absolute;inset:0;background:var(--border);border-radius:11px;transition:background .22s}
@@ -734,20 +742,22 @@
       </div>
 
       <div class="set-section">
-        <div class="set-section-title" data-plain="Appearance">The Stage</div>
-        <div class="set-row">
-          <span class="set-row-label">Cut the shhhh… Shakespeare!</span>
-          <label class="toggle"><input type="checkbox" id="s-plain-voice" onchange="Settings.setPlainVoice(this.checked)"><span class="toggle-track"></span></label>
+        <div class="set-section-title" data-plain="Style">The Stage</div>
+        <div class="mode-card">
+          <label class="mode-head"><input type="checkbox" id="mode-shakes" onchange="Settings.setMode('shakes')"><span><b>Shakespeare</b> — the full theatrical voice</span></label>
+          <div class="set-pills" style="margin-top:.5rem">
+            <label class="set-pill" id="sp-light"    onclick="Settings.pickTheme('light')"><input type="radio" name="st-theme" value="light"> Light</label>
+            <label class="set-pill" id="sp-dark"     onclick="Settings.pickTheme('dark')"><input type="radio" name="st-theme" value="dark"> Dark</label>
+            <label class="set-pill locked-pill" id="sp-crimson"  onclick="Settings.pickTheme('crimson')" title="Premium"><input type="radio" name="st-theme" value="crimson"> Crimson</label>
+            <label class="set-pill locked-pill" id="sp-gilded"   onclick="Settings.pickTheme('gilded')"  title="Premium"><input type="radio" name="st-theme" value="gilded"> Gilded</label>
+            <label class="set-pill locked-pill" id="sp-sapphire" onclick="Settings.pickTheme('sapphire')" title="Premium"><input type="radio" name="st-theme" value="sapphire"> Sapphire</label>
+          </div>
         </div>
-        <p class="set-row-hint" style="margin:-.1rem 0 .8rem;font-size:.82rem">Flip this to hush the theatrical voice and read everything in plain English.</p>
-        <div class="set-row" style="align-items:flex-start;flex-wrap:wrap;gap:.5rem">
-          <span class="set-row-label">Theme</span>
-          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-            <label class="set-pill" id="sp-light"    onclick="Settings.setTheme('light')"><input type="radio" name="st-theme" value="light"> Light</label>
-            <label class="set-pill" id="sp-dark"     onclick="Settings.setTheme('dark')"><input type="radio" name="st-theme" value="dark"> Dark</label>
-            <label class="set-pill locked-pill" id="sp-crimson"  onclick="Settings.setPremiumTheme('crimson')" title="Premium"><input type="radio" name="st-theme" value="crimson"> Crimson</label>
-            <label class="set-pill locked-pill" id="sp-gilded"   onclick="Settings.setPremiumTheme('gilded')"  title="Premium"><input type="radio" name="st-theme" value="gilded"> Gilded</label>
-            <label class="set-pill locked-pill" id="sp-sapphire" onclick="Settings.setPremiumTheme('sapphire')" title="Premium"><input type="radio" name="st-theme" value="sapphire"> Sapphire</label>
+        <div class="mode-card">
+          <label class="mode-head"><input type="checkbox" id="mode-plain" onchange="Settings.setMode('plain')"><span><b>Cut the shhhh… Shakespeare!</b> — plain English</span></label>
+          <div class="set-pills" style="margin-top:.5rem">
+            <label class="set-pill" id="sp-plain-light" onclick="Settings.pickTheme('plain-light')"><input type="radio" name="st-theme" value="plain-light"> Light</label>
+            <label class="set-pill" id="sp-plain-dark"  onclick="Settings.pickTheme('plain-dark')"><input type="radio" name="st-theme" value="plain-dark"> Dark</label>
           </div>
         </div>
         <div class="set-row" style="margin-top:.6rem;align-items:flex-start;flex-wrap:wrap;gap:.5rem" id="ss-fonts">
@@ -1127,7 +1137,7 @@ window.setPlainVoice = (on) => {
   }
 
   function applyTheme(theme) {
-    document.body.classList.remove('theme-light','theme-dark','theme-crimson','theme-gilded','theme-sapphire');
+    document.body.classList.remove('theme-light','theme-dark','theme-crimson','theme-gilded','theme-sapphire','theme-plain-light','theme-plain-dark');
     document.body.classList.add(`theme-${theme}`);
     S.theme = theme;
   }
@@ -1893,7 +1903,7 @@ window.Planner = (() => {
       for (let r = 0; r < notifRepeat; r++) {
         const name = act.name;
         notifTimers.push(setTimeout(() => {
-          try { new Notification('The Inflictor', { body: tone(`Thy time for "${name}" hath concluded.`,`Time's up for "${name}".`), icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+          try { new Notification('The Inflictor', { body: tone(`The hour of "${name}" is spent — ring down the curtain!`,`Time's up for "${name}".`), icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
         }, delay + r * 60000));
       }
     }
@@ -2377,7 +2387,7 @@ window.Planner = (() => {
   }
   function renderActs() {
     const list = document.getElementById('setup-acts-list');
-    if (!setup.activities.length) { list.innerHTML = `<div class="setup-empty-acts">${tone('The programme is bare — add an act below.','No activities yet — add one below.')}</div>`; return; }
+    if (!setup.activities.length) { list.innerHTML = `<div class="setup-empty-acts">${tone('The stage stands bare and the house grows restless — summon forth an act below.','No activities yet — add one below.')}</div>`; return; }
     list.innerHTML = setup.activities.map((act, i) => `
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
@@ -2675,14 +2685,9 @@ window.Settings = (() => {
 
     const {ok,data} = await api('settings');
     if (ok && data) {
-      const theme = data.theme || 'light';
       const isPremium = Premium.isPremium();
-      ['light','dark','crimson','gilded','sapphire'].forEach(t => {
-        const pill = el(`sp-${t}`);
-        if (!pill) return;
-        pill.classList.toggle('active', theme === t);
-        pill.classList.toggle('locked-pill', ['crimson','gilded','sapphire'].includes(t) && !isPremium);
-      });
+      ['crimson','gilded','sapphire'].forEach(t => el(`sp-${t}`)?.classList.toggle('locked-pill', !isPremium));
+      refreshStageUI();                                      // active theme pill + which mode box is checked
       if (el('s-wake-time')) el('s-wake-time').value = data.wake_time || '07:00';
       ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', (data.week_start_day||0)===i));
       const wv = data.week_view === 'calendar' ? 'calendar' : 'rolling';
@@ -2691,7 +2696,6 @@ window.Settings = (() => {
       ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===rf));
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
       if (el('s-report-meds')) el('s-report-meds').checked = localStorage.getItem('inflictor_report_meds') === '1';
-      if (el('s-plain-voice')) el('s-plain-voice').checked = window.__plain;
       if (el('s-aww'))   el('s-aww').checked   = localStorage.getItem('inflictor_aww')   !== '0';
       const notifOn = data.notification_enabled === 1;
       if (el('s-notif')) el('s-notif').checked = notifOn;
@@ -2757,16 +2761,8 @@ window.Settings = (() => {
     const name = el('s-username')?.value.trim();
     if (!name || !/^[a-zA-Z0-9_]{3,30}$/.test(name)) return flashMsg('Username must be 3–30 chars: letters, numbers, underscore.','error');
     const {ok,data} = await api('account',{method:'PUT',body:{new_username:name}});
-    if (ok) { App.updateUsername(name); flashMsg(tone('Name hath been updated.','Name updated.'),'success'); }
+    if (ok) { App.updateUsername(name); flashMsg(tone('Thy name is henceforth writ anew — so let it be proclaimed!','Name updated.'),'success'); }
     else flashMsg(data.error||tone('Something went awry.','Something went wrong.'),'error');
-  }
-
-  // ── Stage (theme) ─────────────────────────────────────────────────
-  function setTheme(t) {
-    App.applyTheme(t); localStorage.setItem('inflictor_theme', t);
-    document.getElementById('stage-bg').style.backgroundImage = `url('${t}-stage.png')`;
-    ['light','dark'].forEach(n => el(`sp-${n}`)?.classList.toggle('active', n===t));
-    api('settings',{method:'PUT',body:{theme:t}});
   }
 
   // ── Programme ────────────────────────────────────────────────────
@@ -2869,7 +2865,7 @@ window.Settings = (() => {
     const url  = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = `inflictor-data-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    flashMsg(tone('Thy data hath been exported.','Your data has been exported.'),'success');
+    flashMsg(tone('Thy chronicle is sealed and dispatched by swift courier.','Your data has been exported.'),'success');
   }
 
   // ── Change password ───────────────────────────────────────────────
@@ -2881,7 +2877,7 @@ window.Settings = (() => {
     const btn = el('btn-change-pass'); if(btn){btn.disabled=true;btn.textContent='One moment…';}
     const {ok,data} = await api('account',{method:'PUT',body:{current_password:current,new_password:nw}});
     if(btn){btn.disabled=false;btn.textContent='Change Secret';}
-    if (ok) { if(spMsg){spMsg.className='msg success show';spMsg.textContent=tone('Password hath been changed.','Password changed.');} setTimeout(()=>showView('main'),2000); }
+    if (ok) { if(spMsg){spMsg.className='msg success show';spMsg.textContent=tone('Thy secret word is changed anew — guard it as thy life.','Password changed.');} setTimeout(()=>showView('main'),2000); }
     else if(spMsg){spMsg.className='msg error show';spMsg.textContent=data.error||tone('Something went awry.','Something went wrong.');}
   }
 
@@ -2896,18 +2892,37 @@ window.Settings = (() => {
     else if(sdMsg){sdMsg.className='msg error show';sdMsg.textContent=data.error||tone('Something went awry.','Something went wrong.');}
   }
 
-  // ── Stage / font setters ──────────────────────────────────────────
-  function setTheme(t) {
+  // ── Stage: theme + voice (Shakespeare vs plain are picked together as a "mode") ──
+  const PLAIN_THEMES = ['plain-light','plain-dark'];
+  const isPlainTheme = t => PLAIN_THEMES.includes(t);
+  const ALL_THEMES = ['light','dark','crimson','gilded','sapphire','plain-light','plain-dark'];
+  // Apply a theme — sets the look, the matching voice, the background, and persists it.
+  function pickTheme(t) {
+    if (['crimson','gilded','sapphire'].includes(t) && !Premium.isPremium()) { Premium.open(); return; }
     App.applyTheme(t); localStorage.setItem('inflictor_theme', t);
     document.getElementById('stage-bg').style.backgroundImage = ['crimson','gilded','sapphire'].includes(t) ? "url('dark-stage.png')" : `url('${t}-stage.png')`;
-    ['light','dark','crimson','gilded','sapphire'].forEach(n => el(`sp-${n}`)?.classList.toggle('active', n===t));
+    const plain = isPlainTheme(t);
+    window.__plain = plain;
+    localStorage.setItem('inflictor_tone', plain ? 'plain' : 'theatrical');
+    localStorage.setItem(plain ? 'inflictor_plain_theme' : 'inflictor_shakes_theme', t);
+    window.applyTone();
     api('settings',{method:'PUT',body:{theme:t}});
+    refreshStageUI();
+    try { Planner.render(); } catch {}
   }
-
-  function setPremiumTheme(t) {
-    if (!Premium.isPremium()) { Premium.open(); return; }
-    setTheme(t);
+  // The two "use this" checkboxes — switch mode, restoring that mode's last-used theme.
+  function setMode(mode) {
+    pickTheme(mode==='plain'
+      ? (localStorage.getItem('inflictor_plain_theme') || 'plain-light')
+      : (localStorage.getItem('inflictor_shakes_theme') || 'dark'));
   }
+  function refreshStageUI() {
+    const t = localStorage.getItem('inflictor_theme') || 'dark', plain = isPlainTheme(t);
+    ALL_THEMES.forEach(n => el(`sp-${n}`)?.classList.toggle('active', n===t));
+    if (el('mode-shakes')) el('mode-shakes').checked = !plain;
+    if (el('mode-plain'))  el('mode-plain').checked  = plain;
+  }
+  const setTheme = pickTheme, setPremiumTheme = pickTheme;   // back-compat for any other callers
 
   function setFont(f) {
     App.applyFont(f);
@@ -2922,7 +2937,7 @@ window.Settings = (() => {
 
   return {
     open, close, showView, loadMore, setGuideMode,
-    saveName, setTheme, setPremiumTheme, setFont, setPremiumFont, uploadAvatar, removeAvatar,
+    saveName, setTheme, setPremiumTheme, pickTheme, setMode, setFont, setPremiumFont, uploadAvatar, removeAvatar,
     setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setPlainVoice,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
