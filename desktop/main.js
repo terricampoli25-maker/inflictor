@@ -96,10 +96,6 @@ function createMainWindow(startHidden) {
   });
   mainWin.loadURL(`http://127.0.0.1:${staticPort}/`);
   mainWin.setMenuBarVisibility(false);
-  // TEMP DIAGNOSTIC: forward the renderer's console (logs + errors) to stdout
-  mainWin.webContents.on('console-message', (_e, level, message, line, sourceId) => {
-    console.log(`[renderer:${level}] ${message}` + (sourceId ? `  (${sourceId}:${line})` : ''));
-  });
   mainWin.on('closed', () => { mainWin = null; });
   // MINIMIZE tucks the app into the tray (window vanishes, app keeps running so reminders still
   // fire). CLOSING the window quits normally — important so an installer can actually close the
