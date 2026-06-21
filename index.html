@@ -324,7 +324,7 @@
     .actday-pill:hover{border-color:var(--accent)}
     .actday-pill.on{background:var(--btn-bg);color:var(--btn-text);border-color:transparent;font-weight:700}
     .act-row-foot{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
-    .act-foot-right{margin-left:auto;display:flex;align-items:center;justify-content:flex-end}   /* "unsure" stays pinned to the right (or lower-right if the row wraps) */
+    .act-unsure-row{display:flex;justify-content:flex-end;margin:-.1rem 0 .45rem}   /* "unsure" sits on its own line, right under the time it relates to */
     .act-sus-cal{display:flex;gap:.45rem;margin:.45rem 0}
     .act-sus-cal input[type=text]{flex:1;min-width:0}
     .act-sus-cal input[type=number]{width:64px}
@@ -337,7 +337,7 @@
     .color-dot{width:20px;height:20px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;padding:0;outline:none}
     .color-dot:hover{transform:scale(1.2)}
     .color-dot.sel{border-color:#fff;box-shadow:0 0 0 2px var(--text);transform:scale(1.18)}
-    .act-controls{display:flex;gap:3px;flex:0 0 auto}
+    .act-controls{display:flex;gap:3px;flex:0 0 auto;margin-left:auto}
     .act-ctrl{background:none;border:1px solid var(--border);color:var(--text-muted);width:24px;height:24px;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;transition:border-color .2s,color .2s}
     .act-ctrl:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
     .act-ctrl:disabled{opacity:.28;cursor:not-allowed}
@@ -2438,6 +2438,7 @@ window.Planner = (() => {
             ? `<div class="act-fixed-group"><span class="dur-unit">at</span><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Time to take it"></div>`
             : `<div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`}
         </div>
+        ${act.timing!=='sustenance' && act.timing!=='med' ? `<div class="act-unsure-row"><label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label></div>` : ''}
         ${act.timing==='sustenance' && setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}
         ${act.timing==='med' ? `<div class="act-med-opts"><span class="act-med-label">Shows as:</span><button class="timing-opt${act.med_display!=='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','split')" title="Splits the activity like a meal">Split</button><button class="timing-opt${act.med_display==='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','ribbon')" title="A 🎗️ ribbon on the activity — doesn't split it">Ribbon</button><label class="act-undet-chk" style="margin-left:auto"><input type="checkbox" ${act.med_notify?'checked':''} onchange="Planner.setMedNotify('${act.id}',this.checked)"> 🔔 Remind</label></div>` : ''}
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
@@ -2458,7 +2459,6 @@ window.Planner = (() => {
             <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
             <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
           </div>
-          <div class="act-foot-right">${act.timing!=='sustenance' && act.timing!=='med' ? `<label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label>` : ''}</div>
         </div>
       </div>`).join('');
   }
