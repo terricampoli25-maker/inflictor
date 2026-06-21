@@ -605,7 +605,7 @@
       <div class="am-sub">Thy acts, and the days they fall upon</div>
     </div>
     <div class="setup-section">
-      <div class="setup-label">Rise at</div>
+      <div class="setup-label" data-plain="Wake at">Rise at</div>
       <input type="time" id="setup-wake-time" class="form-input" style="width:auto;min-width:130px">
     </div>
     <div class="setup-section">
@@ -714,7 +714,7 @@
       </div>
 
       <div class="set-section" id="ss-profile">
-        <div class="set-section-title">Thy Profile</div>
+        <div class="set-section-title" data-plain="Profile">Thy Profile</div>
         <div class="form-group">
           <label class="form-label">Display Name</label>
           <div style="display:flex;gap:.5rem">
@@ -734,7 +734,12 @@
       </div>
 
       <div class="set-section">
-        <div class="set-section-title">The Stage</div>
+        <div class="set-section-title" data-plain="Appearance">The Stage</div>
+        <div class="set-row">
+          <span class="set-row-label">Cut the shhhh… Shakespeare!</span>
+          <label class="toggle"><input type="checkbox" id="s-plain-voice" onchange="Settings.setPlainVoice(this.checked)"><span class="toggle-track"></span></label>
+        </div>
+        <p class="set-row-hint" style="margin:-.1rem 0 .8rem;font-size:.82rem">Flip this to hush the theatrical voice and read everything in plain English.</p>
         <div class="set-row" style="align-items:flex-start;flex-wrap:wrap;gap:.5rem">
           <span class="set-row-label">Theme</span>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap">
@@ -756,13 +761,13 @@
       </div>
 
       <div class="set-section">
-        <div class="set-section-title">The Programme</div>
+        <div class="set-section-title" data-plain="Schedule">The Programme</div>
         <div class="set-row">
-          <span class="set-row-label">Rise at</span>
+          <span class="set-row-label" data-plain="Wake at">Rise at</span>
           <input type="time" id="s-wake-time" class="form-input" style="width:auto;min-width:130px">
         </div>
         <div class="set-row">
-          <span class="set-row-label">Prepare week on</span>
+          <span class="set-row-label" data-plain="Week starts on">Prepare week on</span>
           <div class="set-pills">
             <label class="set-pill" id="sp-sun" onclick="Settings.setWeekDay(0)"><input type="radio" name="sw-day" value="0"> Sun</label>
             <label class="set-pill" id="sp-mon" onclick="Settings.setWeekDay(1)"><input type="radio" name="sw-day" value="1"> Mon</label>
@@ -779,7 +784,7 @@
       </div>
 
       <div class="set-section">
-        <div class="set-section-title">Sounds &amp; Calls</div>
+        <div class="set-section-title" data-plain="Sounds">Sounds &amp; Calls</div>
         <div class="set-row">
           <span class="set-row-label">Cheers when completed</span>
           <label class="toggle"><input type="checkbox" id="s-cheer" onchange="Settings.setCheerEnabled(this.checked)"><span class="toggle-track"></span></label>
@@ -805,7 +810,7 @@
       <div class="set-section">
         <div class="set-section-title">History</div>
         <p class="set-row-hint" style="margin-bottom:.7rem;font-size:.88rem">A record of thy completed acts, day by day.</p>
-        <button class="btn btn-ghost" style="width:auto" onclick="Settings.showView('history')">View Thy Ledger</button>
+        <button class="btn btn-ghost" style="width:auto" data-plain="View History" onclick="Settings.showView('history')">View Thy Ledger</button>
         <button class="btn btn-ghost" style="width:auto;margin-left:.5rem" onclick="Settings.close(); Planner.openReport();">📊 This Week's Report</button>
         <div class="set-row" style="margin-top:1rem">
           <span class="set-row-label">Email me my report</span>
@@ -823,7 +828,7 @@
       </div>
 
       <div class="set-section" id="ss-account">
-        <div class="set-section-title">Thy Account</div>
+        <div class="set-section-title" data-plain="Account">Thy Account</div>
         <div style="display:flex;flex-direction:column;gap:.6rem">
           <button class="btn btn-ghost" style="width:auto" onclick="Settings.showView('password')">Change Password</button>
           <button class="btn btn-ghost" style="width:auto" onclick="Settings.exportData()">Export My Data</button>
@@ -832,9 +837,9 @@
       </div>
 
       <div class="set-section" id="ss-guest-note" style="display:none">
-        <div class="set-section-title">Thy Account</div>
+        <div class="set-section-title" data-plain="Account">Thy Account</div>
         <p class="set-row-hint" style="line-height:1.65;margin-bottom:.7rem">Thou art a Groundling. Create an account to save thy schedule, history and settings across devices.</p>
-        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" onclick="Settings.close();App.claimSeat()">Claim Thy Seat</button>
+        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" data-plain="Get Premium" onclick="Settings.close();App.claimSeat()">Claim Thy Seat</button>
       </div>
 
       <div class="set-section" id="ss-premium-free">
@@ -1038,6 +1043,27 @@
 </div>
 
 <script>
+// ════════════════════════════════════════════════
+//  VOICE — theatrical (default) ↔ plain  ("Cut the shhhh… Shakespeare!")
+// ════════════════════════════════════════════════
+window.__plain = localStorage.getItem('inflictor_tone') === 'plain';
+// Pick a string by the current voice — used inline in dynamic (JS-rendered) text.
+window.tone = (shakes, plain) => (window.__plain ? plain : shakes);
+// Swap every static element that carries a data-plain alternative. The original
+// (theatrical) text is captured once into data-shakes so toggling back restores it.
+window.applyTone = () => {
+  document.querySelectorAll('[data-plain]').forEach(eln => {
+    if (eln.dataset.shakes === undefined) eln.dataset.shakes = eln.textContent;
+    eln.textContent = window.__plain ? eln.dataset.plain : eln.dataset.shakes;
+  });
+};
+window.setPlainVoice = (on) => {
+  window.__plain = !!on;
+  localStorage.setItem('inflictor_tone', on ? 'plain' : 'theatrical');
+  window.applyTone();
+  try { window.Planner && Planner.render && Planner.render(); } catch {}
+};
+
 // ════════════════════════════════════════════════
 //  APP MODULE
 // ════════════════════════════════════════════════
@@ -1267,6 +1293,7 @@
     if (av) { av.textContent = (u?.username||'?')[0].toUpperCase(); av.style.backgroundColor = avatarColor(u?.username||''); applyAvatar(); }
     el('guest-banner').style.display = u?.is_guest ? 'flex' : 'none';
     el('app').classList.add('visible');
+    window.applyTone();                                   // set the chosen voice on every static label
     // Sync font + avatar colour from settings
     const { ok, data } = await api('settings');
     if (ok && data) {
@@ -1866,7 +1893,7 @@ window.Planner = (() => {
       for (let r = 0; r < notifRepeat; r++) {
         const name = act.name;
         notifTimers.push(setTimeout(() => {
-          try { new Notification('The Inflictor', { body: `Thy time for "${name}" hath concluded.`, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+          try { new Notification('The Inflictor', { body: tone(`Thy time for "${name}" hath concluded.`,`Time's up for "${name}".`), icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
         }, delay + r * 60000));
       }
     }
@@ -2350,7 +2377,7 @@ window.Planner = (() => {
   }
   function renderActs() {
     const list = document.getElementById('setup-acts-list');
-    if (!setup.activities.length) { list.innerHTML = '<div class="setup-empty-acts">The programme is bare — add an act below.</div>'; return; }
+    if (!setup.activities.length) { list.innerHTML = `<div class="setup-empty-acts">${tone('The programme is bare — add an act below.','No activities yet — add one below.')}</div>`; return; }
     list.innerHTML = setup.activities.map((act, i) => `
       <div class="act-row" data-id="${act.id}">
         <div class="act-row-top">
@@ -2664,6 +2691,7 @@ window.Settings = (() => {
       ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===rf));
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
       if (el('s-report-meds')) el('s-report-meds').checked = localStorage.getItem('inflictor_report_meds') === '1';
+      if (el('s-plain-voice')) el('s-plain-voice').checked = window.__plain;
       if (el('s-aww'))   el('s-aww').checked   = localStorage.getItem('inflictor_aww')   !== '0';
       const notifOn = data.notification_enabled === 1;
       if (el('s-notif')) el('s-notif').checked = notifOn;
@@ -2729,8 +2757,8 @@ window.Settings = (() => {
     const name = el('s-username')?.value.trim();
     if (!name || !/^[a-zA-Z0-9_]{3,30}$/.test(name)) return flashMsg('Username must be 3–30 chars: letters, numbers, underscore.','error');
     const {ok,data} = await api('account',{method:'PUT',body:{new_username:name}});
-    if (ok) { App.updateUsername(name); flashMsg('Name hath been updated.','success'); }
-    else flashMsg(data.error||'Something went awry.','error');
+    if (ok) { App.updateUsername(name); flashMsg(tone('Name hath been updated.','Name updated.'),'success'); }
+    else flashMsg(data.error||tone('Something went awry.','Something went wrong.'),'error');
   }
 
   // ── Stage (theme) ─────────────────────────────────────────────────
@@ -2754,6 +2782,10 @@ window.Settings = (() => {
   function setReportMeds(v) {
     localStorage.setItem('inflictor_report_meds', v ? '1' : '0');
     flashMsg(v ? 'Reminders will show in your report.' : 'Reminders hidden from your report.', 'success');
+  }
+  function setPlainVoice(v) {
+    window.setPlainVoice(v);
+    flashMsg(v ? 'Plain speak it is.' : 'The theatrics return.', 'success');
   }
   function setReportFreq(v) {
     ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===v));
@@ -2781,11 +2813,11 @@ window.Settings = (() => {
     if (v) {
       if (!('Notification' in window)) {
         if (el('s-notif')) el('s-notif').checked = false;
-        if (note) { note.textContent = 'Thy browser doth not support notifications.'; note.classList.add('show'); } return;
+        if (note) { note.textContent = tone('Thy browser doth not support notifications.','Your browser does not support notifications.'); note.classList.add('show'); } return;
       }
       if (Notification.permission === 'denied') {
         if (el('s-notif')) el('s-notif').checked = false;
-        if (note) { note.textContent = 'Notification permission is denied. Enable it in thy browser settings.'; note.classList.add('show'); } return;
+        if (note) { note.textContent = tone('Notification permission is denied. Enable it in thy browser settings.','Notification permission is denied. Enable it in your browser settings.'); note.classList.add('show'); } return;
       }
       if (Notification.permission !== 'granted') {
         const perm = await Notification.requestPermission();
@@ -2803,8 +2835,8 @@ window.Settings = (() => {
 
   function updateNotifNote() {
     const note = el('s-notif-note'); if (!note) return;
-    if (!('Notification' in window)) { note.textContent = 'Thy browser doth not support notifications.'; note.classList.add('show'); }
-    else if (Notification.permission === 'denied') { note.textContent = 'Notification permission is denied — enable it in thy browser settings.'; note.classList.add('show'); }
+    if (!('Notification' in window)) { note.textContent = tone('Thy browser doth not support notifications.','Your browser does not support notifications.'); note.classList.add('show'); }
+    else if (Notification.permission === 'denied') { note.textContent = tone('Notification permission is denied — enable it in thy browser settings.','Notification permission is denied — enable it in your browser settings.'); note.classList.add('show'); }
     else note.classList.remove('show');
   }
 
@@ -2837,7 +2869,7 @@ window.Settings = (() => {
     const url  = URL.createObjectURL(blob), a = document.createElement('a');
     a.href = url; a.download = `inflictor-data-${new Date().toISOString().split('T')[0]}.json`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-    flashMsg('Thy data hath been exported.','success');
+    flashMsg(tone('Thy data hath been exported.','Your data has been exported.'),'success');
   }
 
   // ── Change password ───────────────────────────────────────────────
@@ -2849,8 +2881,8 @@ window.Settings = (() => {
     const btn = el('btn-change-pass'); if(btn){btn.disabled=true;btn.textContent='One moment…';}
     const {ok,data} = await api('account',{method:'PUT',body:{current_password:current,new_password:nw}});
     if(btn){btn.disabled=false;btn.textContent='Change Secret';}
-    if (ok) { if(spMsg){spMsg.className='msg success show';spMsg.textContent='Password hath been changed.';} setTimeout(()=>showView('main'),2000); }
-    else if(spMsg){spMsg.className='msg error show';spMsg.textContent=data.error||'Something went awry.';}
+    if (ok) { if(spMsg){spMsg.className='msg success show';spMsg.textContent=tone('Password hath been changed.','Password changed.');} setTimeout(()=>showView('main'),2000); }
+    else if(spMsg){spMsg.className='msg error show';spMsg.textContent=data.error||tone('Something went awry.','Something went wrong.');}
   }
 
   // ── Delete account ────────────────────────────────────────────────
@@ -2861,7 +2893,7 @@ window.Settings = (() => {
     const {ok,data} = await api('account',{method:'DELETE',body:{password}});
     if(btn){btn.disabled=false;btn.textContent='Delete My Account';}
     if (ok) { localStorage.removeItem('inflictor_token'); window.location.reload(); }
-    else if(sdMsg){sdMsg.className='msg error show';sdMsg.textContent=data.error||'Something went awry.';}
+    else if(sdMsg){sdMsg.className='msg error show';sdMsg.textContent=data.error||tone('Something went awry.','Something went wrong.');}
   }
 
   // ── Stage / font setters ──────────────────────────────────────────
@@ -2891,7 +2923,7 @@ window.Settings = (() => {
   return {
     open, close, showView, loadMore, setGuideMode,
     saveName, setTheme, setPremiumTheme, setFont, setPremiumFont, uploadAvatar, removeAvatar,
-    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds,
+    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setPlainVoice,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
   };
