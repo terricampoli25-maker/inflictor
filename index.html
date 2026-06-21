@@ -1720,7 +1720,7 @@ window.Planner = (() => {
       goal_time: a.goal_time || '',
       hours: Math.floor((a.duration_minutes || 0) / 60),
       mins: (a.duration_minutes || 0) % 60,
-      chime_enabled: a.chime_enabled !== false,
+      chime_enabled: !!a.chime_enabled,
       food: getMemo(ds, id) || '',                 // meal: what you ate (per-day, shared with the card's cal. window)
       cal: getMemo(ds, `cal:${id}`) || '',
       dose: getMemo(ds, id) || '',                 // med: dose / notes (same per-day memo key)
@@ -1734,7 +1734,7 @@ window.Planner = (() => {
   }
   // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
   function openActAdd(ds) {
-    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: true, food: '', cal: '', dose: '', med_display: 'split', med_notify: false, med_kind: 'reminder' };
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: false, food: '', cal: '', dose: '', med_display: 'split', med_notify: false, med_kind: 'reminder' };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
@@ -1756,8 +1756,9 @@ window.Planner = (() => {
         <button class="timing-opt${a.timing==='flexible'?' on':''}" onclick="Planner.actEditTiming('flexible')" title="A start–end that can shift (~)">Flexible</button>
         <button class="timing-opt${a.timing==='anytime'?' on':''}" onclick="Planner.actEditTiming('anytime')" title="Sometime that day; optional ~ish time">Anytime</button>
         <button class="timing-opt${a.timing==='sustenance'?' on':''}" onclick="Planner.actEditTiming('sustenance')" title="A meal or snack (🍴) — never conflicts">Sustenance</button>
-        ${showMedsBtn() ? `<button class="timing-opt${a.timing==='med'&&a.med_kind==='medication'?' on':''}" onclick="Planner.actEditTiming('med','medication')" title="A medication (💊) at a set time">Meds.</button>` : ''}
-        <button class="timing-opt${a.timing==='med'&&a.med_kind!=='medication'?' on':''}" onclick="Planner.actEditTiming('med','reminder')" title="A reminder (🎗️) at a set time">Reminder</button>
+        ${showMedsBtn()
+          ? `<button class="timing-opt${a.timing==='med'?' on':''}" onclick="Planner.actEditTiming('med','medication')" title="A medication (💊) at a set time">Meds.</button>`
+          : `<button class="timing-opt${a.timing==='med'?' on':''}" onclick="Planner.actEditTiming('med','reminder')" title="A reminder (🎗️) at a set time">Reminder</button>`}
       </div>
       <div style="margin-top:.8rem">${isRange
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Start"><span class="dur-unit">to</span><input class="fixed-tt" id="ae-end" type="time" value="${esc(a.fixed_end)}" title="End"></div>`
@@ -1812,7 +1813,7 @@ window.Planner = (() => {
     return {
       name: (a.name || '').trim() || (timing==='sustenance' ? '' : timing==='med' ? 'Reminder' : 'Untitled'), duration_minutes: duration, timing,
       undetermined: a.undetermined || undefined,
-      chime_enabled: a.chime_enabled !== false,
+      chime_enabled: !!a.chime_enabled,
       fixed_start: hasStart && a.fixed_start ? a.fixed_start : undefined,
       fixed_end:   isRange && a.fixed_end   ? a.fixed_end   : undefined,
       goal_time:   timing === 'anytime' && a.goal_time ? a.goal_time : undefined,
@@ -1917,7 +1918,7 @@ window.Planner = (() => {
       if ((act.timing || 'flexible') === 'anytime') continue;   // no scheduled time
       if ((act.timing || '') === 'med') continue;               // meds alert at their own clock time (handled below)
       cursor += act.duration_minutes * 60000;
-      if (act.chime_enabled === false) continue;
+      if (!act.chime_enabled) continue;
       const key = `${todayStr}:${act.id}`;
       const status = taskStatus[key];
       if (!offsetApplied && pauseOffset !== 0 && status !== 'completed' && status !== 'failed') {
@@ -2180,7 +2181,7 @@ window.Planner = (() => {
       }
       const isChecked = pausedSlotKeys.has(key);
       return `<div class="slot slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">${ribbonHtml}
-        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&act.chime_enabled!==false?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
+        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&act.chime_enabled?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
           <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
@@ -2381,7 +2382,7 @@ window.Planner = (() => {
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
     setup.wakeTime  = existing?.wake_time || '07:00';
     setup.activities = (existing?.activities||[]).map(a => ({
-      id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: a.chime_enabled !== false, timing: a.timing || 'flexible',
+      id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: !!a.chime_enabled, timing: a.timing || 'flexible',
       undetermined: !!a.undetermined,
       fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
       med_display: a.med_display === 'ribbon' ? 'ribbon' : 'split', med_notify: !!a.med_notify,
@@ -2448,13 +2449,14 @@ window.Planner = (() => {
             <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
             <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
             <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
-            ${showMedsBtn() ? `<button class="timing-opt${act.timing==='med'&&act.med_kind==='medication'?' on':''}" onclick="Planner.setTiming('${act.id}','med','medication')" title="A medication (💊) at a set time — never conflicts">Meds.</button>` : ''}
-            <button class="timing-opt${act.timing==='med'&&act.med_kind!=='medication'?' on':''}" onclick="Planner.setTiming('${act.id}','med','reminder')" title="A reminder (🎗️) at a set time — never conflicts">Reminder</button>
+            ${showMedsBtn()
+              ? `<button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med','medication')" title="A medication (💊) at a set time — never conflicts">Meds.</button>`
+              : `<button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med','reminder')" title="A reminder (🎗️) at a set time — never conflicts">Reminder</button>`}
             ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
-            <button class="chime-btn${act.chime_enabled!==false?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
-              title="${act.chime_enabled!==false?'Chime at end — click to silence':'No chime — click to enable'}">🔔</button>
+            <button class="chime-btn${act.chime_enabled?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
+              title="${act.chime_enabled?'Chime at end — click to silence':'No chime — click to enable'}">🔔</button>
             <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',-1)" ${i===0?'disabled':''}>↑</button>
             <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
             <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
@@ -2473,7 +2475,7 @@ window.Planner = (() => {
     }).join('');
   }
 
-  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:true,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
+  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   // Clearing the name clears the rest too — so you can blank an activity without emptying every box.
   function onActName(id, val) {
     captureDOM();
@@ -2496,7 +2498,7 @@ window.Planner = (() => {
   function toggleChime(id) {
     captureDOM();
     const a = setup.activities.find(a => a.id === id);
-    if (a) a.chime_enabled = !(a.chime_enabled !== false);
+    if (a) a.chime_enabled = !a.chime_enabled;
     renderActs();
   }
   function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
@@ -2523,7 +2525,7 @@ window.Planner = (() => {
       const undet = !!a.undetermined && timing!=='sustenance' && timing!=='med';   // open-ended: no known length
       const hasRange = isRange && !undet && a.fixed_start && a.fixed_end;
       const duration = undet ? 60 : (hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:(timing==='med'?5:15),(a.hours||0)*60+(a.mins||0)));
-      return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_enabled:a.chime_enabled!==false,timing,
+      return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_enabled:!!a.chime_enabled,timing,
         undetermined: undet || undefined,
         fixed_start:hasStart&&a.fixed_start?a.fixed_start:undefined,
         fixed_end:(isRange&&!undet&&a.fixed_end)?a.fixed_end:undefined,
