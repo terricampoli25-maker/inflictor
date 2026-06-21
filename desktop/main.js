@@ -101,11 +101,10 @@ function createMainWindow(startHidden) {
     console.log(`[renderer:${level}] ${message}` + (sourceId ? `  (${sourceId}:${line})` : ''));
   });
   mainWin.on('closed', () => { mainWin = null; });
-  // Closing the window keeps the app alive in the tray (so medication reminders still fire).
-  // A real quit comes only from the tray menu (isQuitting) — or if no tray could be created.
-  mainWin.on('close', (e) => {
-    if (!isQuitting && trayReady) { e.preventDefault(); mainWin.hide(); }
-  });
+  // MINIMIZE tucks the app into the tray (window vanishes, app keeps running so reminders still
+  // fire). CLOSING the window quits normally — important so an installer can actually close the
+  // app to replace it. Persistent background = minimize, or the tray's "Start with Windows".
+  mainWin.on('minimize', (e) => { if (trayReady) { e.preventDefault(); mainWin.hide(); } });
 }
 
 // Bring the (possibly hidden) main window back, or recreate it.
@@ -190,9 +189,10 @@ ipcMain.on('activation-failed-permanently', () => {
   app.quit();
 });
 
-// Keep running in the tray when windows close; only quit here if there's no tray to live in.
-app.on('window-all-closed', () => { if (!trayReady && process.platform !== 'darwin') app.quit(); });
-app.on('before-quit', () => { isQuitting = true; });   // any real quit path lets the window close
+// Closing the window quits (so installers/updaters can close the app). Background reminders come
+// from MINIMIZING to the tray or "Start with Windows" — the window stays alive there, just hidden.
+app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+app.on('before-quit', () => { isQuitting = true; });
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     if (!ACTIVATION_ENABLED) createMainWindow();
