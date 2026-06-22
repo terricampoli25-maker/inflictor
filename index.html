@@ -633,7 +633,7 @@
     <div class="setup-msg" id="setup-msg"></div>
     <div class="setup-footer">
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.1rem" onclick="Planner.closeSetup()">Dismiss</button>
-      <button class="btn btn-ghost" id="setup-clear-all" style="width:auto;padding:.55rem 1.05rem;color:#c06060;border-color:#a85050;display:none" onclick="Planner.clearEverything()" title="Erase the ENTIRE schedule — every day, every activity">Clear Everything</button>
+      <button class="btn btn-ghost" id="setup-clear-all" style="width:auto;padding:.55rem 1.05rem;color:#c06060;border-color:#a85050;display:none" onclick="Planner.clearEverything()" title="Clear THIS week's schedule so you can rebuild it — your past days and everything you've logged are kept">Clear This Week</button>
       <button class="btn btn-ghost" style="width:auto;padding:.55rem 1.3rem" onclick="Planner.saveDay()" title="Save these changes to just this one day (today, or the day you're editing)">Edit</button>
       <button class="btn btn-primary" id="setup-save-week" style="width:auto;padding:.55rem 1.4rem" onclick="Planner.saveSetup()" title="Apply to your whole recurring week" data-plain="Save the Week">Set the Stage</button>
     </div>
@@ -797,11 +797,6 @@
             <label class="set-pill" id="wv-calendar" onclick="Settings.setWeekView('calendar')"><input type="radio" name="wk-view" value="calendar"> Calendar (Sun–Sat)</label>
           </div>
         </div>
-        <div class="set-row">
-          <span class="set-row-label">Show a Meds button (💊)</span>
-          <label class="toggle"><input type="checkbox" id="s-show-meds" onchange="Settings.setShowMeds(this.checked)"><span class="toggle-track"></span></label>
-        </div>
-        <p class="set-row-hint" style="margin:-.1rem 0 .6rem;font-size:.82rem">Adds a 💊 Meds button beside Reminder when setting up activities. Leave off if you don't need it.</p>
         <button class="btn btn-primary" style="width:auto;padding:.6rem 1.1rem;margin-top:.3rem" onclick="Settings.saveSchedule()">Save Schedule Settings</button>
       </div>
 
@@ -921,8 +916,8 @@
           <p><b>Anytime</b> — no set time; just needs doing that day. It lands in <b>"Sometime Today"</b>, and you can optionally give it an <b>"-ish" time</b> as a rough target.</p>
           <p><b>Sustenance</b> 🍴 — a <b>meal or snack</b>. Add an activity, choose <b>Sustenance</b>, and give it a time and a short length. Then save with <b>Edit</b> (just this one day — a one-off bite) or <b>Set the Stage</b> (a regular meal at that time every day). It <b>never triggers a conflict</b>, and if it falls inside another activity, that activity <b>splits into two boxes</b> around it (art 9–12 with a bite at 10:30 becomes art, then 🍴, then art). Tap the <b>cal.</b> button on any meal — any time, even before you eat it — to note the <b>sustenance</b> and its <b>calories</b> (both optional). That same window also pops up when you mark a meal <b>had</b> (✓). Calories count toward your daily totals.</p>
           <p><b>Not sure how long?</b> ⏳ On any activity (except a snack) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it shows its start time and <b>"ongoing"</b> instead of a set length. Perfect for "organizing the room" when you've no idea how long it'll take.</p>
-          <p><b>Reminder</b> 🎗️ — something to be nudged about at a set time. Give it a name and a time, pick the days, and tick <b>Remind me</b> for a chime + desktop alert when it's due. Choose how it looks: <b>Split</b> (it parts the activity it lands in, like a meal) or <b>Ribbon</b> (a little tab sitting on the activity without cutting it). Check it off as <b>taken</b>. Never causes a timing clash. If you take medications, turn on the separate <b>💊 Meds button</b> in Settings → schedule — it adds a dose/notes field. And in Settings → Sounds you can also have reminders <b>email you</b> at the set time.</p>
-          <p style="border-left:3px solid var(--accent);padding-left:.7rem"><b>⚠️ Important — when reminders actually fire:</b> alerts (chime, desktop notification, and the optional email) only go off <b>while The Inflictor is running</b>. <b>Minimizing</b> tucks it into the system tray and keeps it running, so reminders still fire. But if you <b>close it (the X) or Quit</b>, or your computer is <b>off or asleep</b>, <b>nothing fires</b>. For always-on reminders, turn on <b>"Start with Windows"</b> from the tray icon (right-click it). Please don't rely on this as your only medication reminder.</p>
+          <p><b>Reminder / med</b> — something to be nudged about at a set time (a pill, a glass of water, anything). Give it a name and a time, pick the days, and tick <b>Remind me</b> for a chime + desktop alert when it's due; add a <b>dose or note</b> if you like. Choose how it shows on the day: <b>Split</b> — a <b>💊 pill</b> that parts the activity it lands in, like a meal does; or <b>Pin</b> — a small <b>🎗️ ribbon</b> tucked on the activity <i>without</i> splitting it (more discreet, if you'd rather not have a pill sitting on your screen). Whichever you pick, that's the icon you'll see <b>both on the planner and where you check it off</b>. Mark it <b>taken</b> when done; it never causes a timing clash. In Settings → Sounds you can also have reminders <b>email you</b> at the set time.</p>
+          <p style="border-left:3px solid var(--accent);padding-left:.7rem"><b>⚠️ Important — reminders only fire while the app is running.</b> The chime, desktop notification, and optional email go off <b>only while The Inflictor is open or minimized</b>. <b>Minimizing</b> tucks it into the system tray and keeps it running — reminders still fire. But if you <b>close it (the ✕) or Quit</b>, or your computer is <b>off or asleep</b>, <b>nothing fires.</b> So if you want the bell or notification: <b>don't close the app — leave it open, or minimize it to the tray.</b> For always-on reminders, turn on <b>"Start with Windows"</b> from the tray icon (right-click it). Please don't rely on this as your only medication reminder.</p>
         </div>
         <div class="guide-block">
           <h4>2 · Edit anytime</h4>
@@ -969,8 +964,8 @@
           <p><b>Anytime</b> — beholden to no hour; it asketh only to be done ere the curtain fall. It bideth in <b>"Sometime Today,"</b> and thou mayest whisper it an <b>"-ish" hour</b> for a hopeful mark.</p>
           <p><b>Sustenance</b> 🍴 — a <b>meal or morsel</b>. Add an act, choose <b>Sustenance</b>, and grant it an hour and a brief span. Then save by <b>Edit</b> (this one day alone — a single bite) or <b>Set the Stage</b> (a meal kept at that hour every day). It <b>quarrelleth with naught</b>, and shouldst it fall within another act, that act <b>parteth in twain</b> about it (thy art from 9 to 12, with a bite at half-ten, becometh art, then 🍴, then art anew). Touch the <b>cal.</b> button upon any meal — whensoever thou wilt, even ere thou eat'st — to set down the <b>sustenance</b> and its <b>calories</b> (both at thy pleasure). That same window appeareth too when thou markest a meal <b>had</b> (✓). Calories tally toward thy daily totals.</p>
           <p><b>Uncertain of the hours?</b> ⏳ Upon any act (save a morsel) tick <b>"unsure"</b> to leave it <b>open-ended</b> — it showeth its start and <b>"ongoing"</b> in place of a fixed span. Apt for "setting the chamber to rights," when thou knowest not how long 'twill take.</p>
-          <p><b>Reminder</b> 🎗️ — a remembrance at a set hour. Grant it a name and a time, choose its days, and tick <b>Remind me</b> for a bell and a herald's notice when 'tis due. Choose its form: <b>Split</b> (it parteth the act it falleth within, as a meal doth) or <b>Ribbon</b> (a small token resting upon the act, uncut). Mark it <b>taken</b>. It stirreth no clash. Dost thou take physick, summon the separate <b>💊 Meds button</b> in Settings → schedule — it bringeth a dose field. And in Settings → Sounds thou mayest bid reminders <b>send thee a letter</b> at the appointed hour.</p>
-          <p style="border-left:3px solid var(--accent);padding-left:.7rem"><b>⚠️ Mark well — when the bell doth toll:</b> thine alarums (bell, herald's notice, and the letter, shouldst thou bid it) sound <b>only whilst The Inflictor liveth</b>. To <b>minimize</b> it tucketh the app into the tray below, yet living — its bells ring still. But shouldst thou <b>close it (the ✕) or Quit</b>, or thy machine lie <b>dark or asleep</b>, <b>naught shall sound</b>. For bells that never cease, bid it <b>"Start with Windows"</b> from the tray. Lean not upon this alone for thy physick, I pray thee.</p>
+          <p><b>Reminder / physic</b> — a remembrance at a set hour (a pill, a draught of water, what thou wilt). Grant it a name and a time, choose its days, and tick <b>Remind me</b> for a bell and a herald's notice when 'tis due; set down a <b>dose or note</b> shouldst thou wish. Choose how it showeth upon the day: <b>Split</b> — a <b>💊 pill</b> that parteth the act it falleth within, as a meal doth; or <b>Pin</b> — a small <b>🎗️ ribbon</b> resting upon the act, uncut (more discreet, wouldst thou not have a pill upon thy stage). Whichever thou choosest, that is the token thou shalt see <b>both upon the planner and where thou markest it</b>. Mark it <b>taken</b> when done; it stirreth no clash. And in Settings → Sounds thou mayest bid reminders <b>send thee a letter</b> at the appointed hour.</p>
+          <p style="border-left:3px solid var(--accent);padding-left:.7rem"><b>⚠️ Mark well — the bell tolls only whilst the app doth live.</b> Thine alarums (bell, herald's notice, and the letter, shouldst thou bid it) sound <b>only whilst The Inflictor is open or minimized</b>. To <b>minimize</b> it tucketh the app into the tray below, yet living — its bells ring still. But shouldst thou <b>close it (the ✕) or Quit</b>, or thy machine lie <b>dark or asleep</b>, <b>naught shall sound.</b> So wouldst thou have the bell: <b>close not the app — leave it open, or minimize it to the tray.</b> For bells that never cease, bid it <b>"Start with Windows"</b> from the tray. Lean not upon this alone for thy physick, I pray thee.</p>
         </div>
         <div class="guide-block">
           <h4>Act II · Mend what thou wilt, whensoever</h4>
@@ -1086,9 +1081,9 @@ window.applyTone = () => {
     eln.textContent = window.__plain ? eln.dataset.plain : eln.dataset.shakes;
   });
 };
-// A med item is either a medication (💊) or a general reminder (🎗️).
-window.medIcon = a => (a && a.med_kind === 'medication') ? '💊' : '🎗️';
-window.showMedsBtn = () => localStorage.getItem('inflictor_show_meds') === '1';
+// The icon follows the DISPLAY so it's consistent everywhere: Split shows a pill (💊),
+// Pin shows a ribbon (🎗️, discreet on the card). ('ribbon' is the internal value for Pin.)
+window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
 
 // ════════════════════════════════════════════════
 //  APP MODULE
@@ -1529,6 +1524,23 @@ window.Planner = (() => {
     });
     return out;
   }
+  // Sum the minutes of an activity's COMPLETED split-segments (split by meals + split-meds, exactly like
+  // the planner's carve). Each segment tracks its own done status under a `#seg` key, so a half you did and
+  // a half you skipped are counted separately. A meal's own time isn't in any segment (it's its own line).
+  function completedSegMins(ds, a, acts, times) {
+    const t = times[a.id]; if (!t) return 0;
+    const splitters = (acts||[]).filter(x => ((x.timing||'')==='sustenance' || ((x.timing||'')==='med' && x.med_display!=='ribbon')) && times[x.id] && times[x.id].start > t.start && times[x.id].start < t.end)
+                                .sort((x,y) => times[x.id].start - times[y.id].start);
+    let cursor = t.start, seg = 0, mins = 0;
+    const consider = (s,e) => { const sid = seg ? `${a.id}#${seg}` : a.id; if (taskStatus[`${ds}:${sid}`] === 'completed') mins += Math.max(0, e - s); seg++; };
+    for (const su of splitters) {
+      const st = times[su.id];
+      if (st.start > cursor) consider(cursor, st.start);
+      cursor = Math.max(cursor, ((su.timing||'')==='med' && su.med_display!=='ribbon') ? st.start : st.end);
+    }
+    if (cursor < t.end) consider(cursor, t.end);
+    return mins;
+  }
   function playSound(type) {
     if (!soundEnabled) return;                                   // master mute (header button)
     const positive = (type === 'crowd' || type === 'chime');
@@ -1654,9 +1666,8 @@ window.Planner = (() => {
         if (timing === 'anytime') { lines.push(`<div class="rpt-line">${esc(a.name)} · ✓</div>`); continue; }
         if (a.undetermined) { lines.push(`<div class="rpt-line">${esc(a.name)} · ✓ <span class="undet-tag">(open-ended)</span></div>`); continue; }
         const t = times[a.id]; if (!t) continue;
-        let dur = t.end - t.start;
-        for (const su of carveList) { const st = times[su.id]; if (st.start > t.start && st.start < t.end) dur -= Math.min(st.end, t.end) - st.start; }
-        dur = Math.max(0, dur); dayTime += dur;
+        const dur = completedSegMins(ds, a, acts, times);   // only the COMPLETED split-segments' time — each part on its own
+        dayTime += dur;
         lines.push(`<div class="rpt-line">${esc(a.name)} · <b>${fmtDur(dur)}</b></div>`);
       }
       weekTime += dayTime; weekCal += dayCal;
@@ -1691,9 +1702,8 @@ window.Planner = (() => {
         if (timing==='anytime') { lines.push(`  • ${a.name} · done`); continue; }
         if (a.undetermined) { lines.push(`  • ${a.name} · done (open-ended)`); continue; }
         const t=times[a.id]; if(!t) continue;
-        let dur=t.end-t.start;
-        for (const su of carveList) { const st=times[su.id]; if(st.start>t.start && st.start<t.end) dur -= Math.min(st.end,t.end)-st.start; }
-        dur=Math.max(0,dur); dayTime+=dur;
+        const dur = completedSegMins(ds, a, acts, times);   // only the COMPLETED split-segments' time — each part on its own
+        dayTime+=dur;
         lines.push(`  • ${a.name} · ${fmtDur(dur)}`);
       }
       weekTime+=dayTime; weekCal+=dayCal;
@@ -1744,7 +1754,7 @@ window.Planner = (() => {
     if (!actEdit) return;
     const a = actEdit;
     const dateLabel = new Date(a.ds + 'T12:00:00').toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'short' });
-    document.getElementById('actedit-title').textContent = a.isNew ? (a.timing==='med' ? (a.med_kind==='medication'?'💊 Add a medication':'🎗️ Add a reminder') : '🍴 Add a meal / snack') : `Edit — ${a.name || 'activity'}`;
+    document.getElementById('actedit-title').textContent = a.isNew ? (a.timing==='med' ? 'Add a reminder' : '🍴 Add a meal / snack') : `Edit — ${a.name || 'activity'}`;
     document.getElementById('actedit-sub').textContent = a.isNew ? `${dateLabel} — “Just This Day”, or “Every Day” for a regular meal` : `${dateLabel} · this day only`;
     const rmBtn = document.getElementById('actedit-remove'); if (rmBtn) rmBtn.style.display = a.isNew ? 'none' : '';
     const edBtn = document.getElementById('actedit-everyday'); if (edBtn) edBtn.style.display = a.isNew ? '' : 'none';
@@ -1757,9 +1767,7 @@ window.Planner = (() => {
         <button class="timing-opt${a.timing==='flexible'?' on':''}" onclick="Planner.actEditTiming('flexible')" title="A start–end that can shift (~)">Flexible</button>
         <button class="timing-opt${a.timing==='anytime'?' on':''}" onclick="Planner.actEditTiming('anytime')" title="Sometime that day; optional ~ish time">Anytime</button>
         <button class="timing-opt${a.timing==='sustenance'?' on':''}" onclick="Planner.actEditTiming('sustenance')" title="A meal or snack (🍴) — never conflicts">Sustenance</button>
-        ${showMedsBtn()
-          ? `<button class="timing-opt${a.timing==='med'?' on':''}" onclick="Planner.actEditTiming('med','medication')" title="A medication (💊) at a set time">Meds.</button>`
-          : `<button class="timing-opt${a.timing==='med'?' on':''}" onclick="Planner.actEditTiming('med','reminder')" title="A reminder (🎗️) at a set time">Reminder</button>`}
+        <button class="timing-opt${a.timing==='med'?' on':''}" onclick="Planner.actEditTiming('med')" title="A reminder / med at a set time — choose Split (💊) or Pin (🎗️) below">Reminder</button>
       </div>
       <div style="margin-top:.8rem">${isRange
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Start"><span class="dur-unit">to</span><input class="fixed-tt" id="ae-end" type="time" value="${esc(a.fixed_end)}" title="End"></div>`
@@ -1767,7 +1775,7 @@ window.Planner = (() => {
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="When you ate"><span class="dur-unit">for</span><input class="dur-num" id="ae-hours" type="number" min="0" max="5" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span></div>`
         : a.timing==='med'
         ? `<div class="act-fixed-group"><span class="dur-unit">at</span><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Time to take it"></div>`
-        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}${a.timing==='med' ? `<div style="margin-top:.7rem"><input class="form-input" id="ae-meddose" type="text" maxlength="120" placeholder="${a.med_kind==='medication'?'Dose / notes — e.g. 1 tablet, 20mg':'Notes (optional)'}" value="${esc(a.dose||'')}" style="width:100%;margin-bottom:.5rem"><div class="actedit-sub" style="margin-bottom:.35rem">How it shows on the day:</div><div class="act-timing"><button class="timing-opt${a.med_display!=='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('split')" title="Splits the activity like a meal does">Split</button><button class="timing-opt${a.med_display==='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('ribbon')" title="A little 🎗️ ribbon on the activity — doesn't split it">Ribbon</button></div><label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-mednotify" ${a.med_notify?'checked':''}> 🔔 Remind me at this time</label></div>` : ''}`;
+        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}${a.timing==='med' ? `<div style="margin-top:.7rem"><input class="form-input" id="ae-meddose" type="text" maxlength="120" placeholder="Dose / notes (optional) — e.g. 1 tablet, 20mg" value="${esc(a.dose||'')}" style="width:100%;margin-bottom:.5rem"><div class="actedit-sub" style="margin-bottom:.35rem">How it shows on the day:</div><div class="act-timing"><button class="timing-opt${a.med_display!=='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('split')" title="Splits the activity, with a 💊 pill between the halves">Split</button><button class="timing-opt${a.med_display==='ribbon'?' on':''}" onclick="Planner.actEditMedDisplay('ribbon')" title="A discreet 🎗️ ribbon pinned on the activity — doesn't split it">Pin</button></div><label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-mednotify" ${a.med_notify?'checked':''}> 🔔 Remind me at this time</label></div>` : ''}${(a.timing==='fixed'||a.timing==='flexible'||a.timing==='sustenance') ? `<div class="chime-pop" style="margin-top:.7rem"><span class="chime-pop-lbl">Chime at:</span><label><input type="checkbox" ${a.chime_start?'checked':''} onchange="Planner.actEditSetChime('start',this.checked)"> Start</label><label><input type="checkbox" ${a.chime_end?'checked':''} onchange="Planner.actEditSetChime('end',this.checked)"> End</label></div>` : ''}`;
   }
   function actEditCapture() {
     if (!actEdit) return;
@@ -1784,6 +1792,7 @@ window.Planner = (() => {
     if (g('ae-mednotify')) actEdit.med_notify = g('ae-mednotify').checked;
   }
   function actEditMedDisplay(mode) { actEditCapture(); actEdit.med_display = (mode==='ribbon'?'ribbon':'split'); renderActEdit(); }
+  function actEditSetChime(which, on) { actEditCapture(); if (which==='start') actEdit.chime_start = on; else actEdit.chime_end = on; renderActEdit(); }
   // Persist a meal's per-day food note + calories (same memo keys the card's cal. window uses).
   function setMealData(ds, id, food, cal) {
     setMemo(ds, id, (food||'').trim());
@@ -1944,7 +1953,7 @@ window.Planner = (() => {
       const when = new Date(today.getFullYear(), today.getMonth(), today.getDate(), mh||0, mm||0, 0, 0).getTime();
       const delay = when - Date.now();
       if (delay <= 0) continue;
-      const isMeds = act.med_kind === 'medication';
+      const isMeds = act.med_display !== 'ribbon';   // Split = a med/pill; Pin (ribbon) = a reminder
       const name = (act.name || '').trim() || (isMeds ? 'your medication' : 'your reminder');
       const dose = (getMemo(toISO(today), act.id) || '').trim();
       const bodyText = `${medIcon(act)} Time for "${name}"${dose?` (${dose})`:''} — ${fmtClock(mh*60+mm)}.`;
@@ -2091,17 +2100,19 @@ window.Planner = (() => {
       // A splitter steals time: the host's segments + it share the host's ORIGINAL height (never grows it).
       const hostDur = Math.max(1, t.end - t.start), ppm = slotPx(hostDur) / hostDur;
       inside.forEach(su => splitPpm.set(su.id, ppm));
-      let cursor = t.start, first = true;
+      // seg = which segment of the split (0 = the main/first piece, 1+ = continuation halves). Each
+      // segment tracks its own completion (you may finish the first half but wander off after the meds).
+      let cursor = t.start, first = true, seg = 0;
       for (const su of inside) {
         const st = times[su.id];
-        if (st.start > cursor) { pieces.push({ act, s:cursor, e:st.start, cont:!first, ppm }); first = false; }
+        if (st.start > cursor) { pieces.push({ act, s:cursor, e:st.start, cont:!first, ppm, seg:seg++ }); first = false; }
         // A meal occupies real time, so the activity resumes when the meal ENDS. A med/reminder is a
         // single moment (take a pill) — the activity resumes AT the med's time, consuming no block,
         // so it splits cleanly into before/after around the med (the sort tiebreaker below keeps the
         // med marker ordered between the two halves when the "after" piece starts at the same minute).
         cursor = Math.max(cursor, isSplitMed(su) ? st.start : st.end);
       }
-      if (cursor < t.end) pieces.push({ act, s:cursor, e:t.end, cont:!first, ppm });
+      if (cursor < t.end) pieces.push({ act, s:cursor, e:t.end, cont:!first, ppm, seg:seg++ });
     }
     for (const sp of splitters) pieces.push({ act:sp, s:times[sp.id].start, e:times[sp.id].end, cont:false, sus:isSus(sp), med:isMed(sp), ppm: splitPpm.get(sp.id) });
     // Ribbon meds: pin a 🎗️ badge onto the activity-piece they land in; if nothing contains them, a thin standalone ribbon.
@@ -2126,6 +2137,8 @@ window.Planner = (() => {
     const timedHtml = pieces.map(p => {
       if (p.pauseMemo) return `<div class="slot slot-pausenote"><div class="pausenote-text">⏸ ${esc(p.pauseMemo)}</div></div>`;
       const act = p.act, key = `${ds}:${act.id}`, status = taskStatus[key]||'none';
+      // A continuation half (seg 1+) tracks its OWN done/skip status under a `#seg` key.
+      const segId = p.seg ? `${act.id}#${p.seg}` : act.id, segKey = `${ds}:${segId}`, segStatus = taskStatus[segKey]||'none';
       if (today && p.s != null && p.s >= 1440) return '';   // spilled to tomorrow
       const segMin = (p.s!=null && p.e!=null) ? Math.max(5, p.e-p.s) : (act.duration_minutes||30);
       // The snack stays a thin one-liner (it steals, never adds). The activity HALVES around it get a
@@ -2139,8 +2152,9 @@ window.Planner = (() => {
       if (p.sus) {                                            // Sustenance — compact single row so it stays thin (steals, doesn't add)
         const lbl = (act.name||'').trim();
         const cal = getCalories(ds, act.id);
-        // A meal whose time has already passed is obviously eaten — show it as had, no complete/skip checkboxes.
-        const mealPast = dayPast || (today && p.e != null && p.e <= nowMin);
+        // Once a meal's time has ARRIVED (or it's a past day) it's assumed eaten — show "had", no checkboxes.
+        // The done/skip boxes appear only while the meal is still in the FUTURE.
+        const mealPast = dayPast || (today && p.s != null && p.s <= nowMin);
         const susStatus = mealPast ? 'completed' : status;
         return `<div class="slot slot-sus slot-${susStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
           <div class="sus-row">
@@ -2149,14 +2163,14 @@ window.Planner = (() => {
               <button class="slot-edit-btn sus-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit this snack/meal">✎</button>
               <button class="slot-memo-btn sus-cal-btn${(cal||hasMemo)?' has-memo':''}" onclick="Planner.openCalories('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Meal')}')" title="Sustenance + calories">cal.</button>
               ${mealPast
-                ? `<span class="sus-had" title="This meal's time has passed">✓ had</span>`
+                ? `<span class="sus-had" title="Its time has come — assumed had">✓ had</span>`
                 : `<input type="checkbox" class="slot-chk-complete" ${status==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','completed',this.checked)" title="Had it">
               <input type="checkbox" class="slot-chk-fail" ${status==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(act.id)}','${esc(lbl||'Sustenance')}','failed',this.checked)" title="Skipped">`}
             </span>
           </div></div>`;
       }
       if (p.med) {                                             // Reminder (🎗️) / medication (💊) — thin one-liner, taken/not checks
-        const lbl = (act.name||'').trim() || (act.med_kind==='medication'?'Medication':'Reminder');
+        const lbl = (act.name||'').trim() || 'Reminder';
         const dose = (getMemo(ds, act.id)||'').trim();
         const medStatus = status;
         return `<div class="slot slot-med slot-${medStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
@@ -2182,11 +2196,17 @@ window.Planner = (() => {
         const top = Math.max(2, Math.min(px-16, Math.round((mt-p.s)/Math.max(1,(p.e-p.s))*px)));
         const mst = taskStatus[`${ds}:${m.id}`]||'none';
         const mdose = (getMemo(ds, m.id)||'').trim();
-        return `<button class="med-ribbon${mst==='completed'?' taken':''}${mst==='failed'?' missed':''}" style="top:${top}px" onclick="event.stopPropagation();Planner.toggleMedTaken('${esc(ds)}','${esc(m.id)}')" title="${esc((m.name||(m.med_kind==='medication'?'Medication':'Reminder')).trim())} · ${fmtClock(mt)}${mdose?` · ${esc(mdose)}`:''} — click to mark taken">${medIcon(m)}</button>`;
+        return `<button class="med-ribbon${mst==='completed'?' taken':''}${mst==='failed'?' missed':''}" style="top:${top}px" onclick="event.stopPropagation();Planner.toggleMedTaken('${esc(ds)}','${esc(m.id)}')" title="${esc((m.name||'Reminder').trim())} · ${fmtClock(mt)}${mdose?` · ${esc(mdose)}`:''} — click to mark taken">${medIcon(m)}</button>`;
       }).join('');
-      if (p.cont) {                                           // 2nd+ part of a split activity — visual continuation, no controls
-        return `<div class="slot slot-cont slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px">${ribbonHtml}
-          <div class="slot-info"><div class="slot-name">↳ ${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}</div></div>`;
+      if (p.cont) {                                           // 2nd+ part of a split activity — its OWN done/skip, tracked independently
+        return `<div class="slot slot-cont slot-${segStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(segKey)}">${ribbonHtml}
+          <div class="slot-info"><div class="slot-name">↳ ${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}</div>
+          <div class="slot-indicators">
+            <span class="slot-check-group">
+              <input type="checkbox" class="slot-chk-complete" ${segStatus==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(segId)}','${esc(act.name)}','completed',this.checked)" title="Completed this part">
+              <input type="checkbox" class="slot-chk-fail" ${segStatus==='failed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(segId)}','${esc(act.name)}','failed',this.checked)" title="Didn't do this part">
+            </span>
+          </div></div>`;
       }
       const isChecked = pausedSlotKeys.has(key);
       return `<div class="slot slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">${ribbonHtml}
@@ -2451,7 +2471,7 @@ window.Planner = (() => {
         </div>
         ${act.timing!=='sustenance' && act.timing!=='med' ? `<div class="act-unsure-row"><label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label></div>` : ''}
         ${act.timing==='sustenance' && setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}
-        ${act.timing==='med' ? `<div class="act-med-opts"><span class="act-med-label">Shows as:</span><button class="timing-opt${act.med_display!=='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','split')" title="Splits the activity like a meal">Split</button><button class="timing-opt${act.med_display==='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','ribbon')" title="A 🎗️ ribbon on the activity — doesn't split it">Ribbon</button><label class="act-undet-chk" style="margin-left:auto"><input type="checkbox" ${act.med_notify?'checked':''} onchange="Planner.setMedNotify('${act.id}',this.checked)"> 🔔 Remind</label></div>` : ''}
+        ${act.timing==='med' ? `<div class="act-med-opts"><span class="act-med-label">Shows as:</span><button class="timing-opt${act.med_display!=='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','split')" title="Splits the activity, with a 💊 pill between the halves">Split</button><button class="timing-opt${act.med_display==='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','ribbon')" title="A discreet 🎗️ ribbon pinned on the activity — doesn't split it">Pin</button><label class="act-undet-chk" style="margin-left:auto"><input type="checkbox" ${act.med_notify?'checked':''} onchange="Planner.setMedNotify('${act.id}',this.checked)"> 🔔 Remind</label></div>` : ''}
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
         <div class="act-row-foot">
           <div class="act-timing">
@@ -2459,9 +2479,7 @@ window.Planner = (() => {
             <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
             <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
             <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
-            ${showMedsBtn()
-              ? `<button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med','medication')" title="A medication (💊) at a set time — never conflicts">Meds.</button>`
-              : `<button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med','reminder')" title="A reminder (🎗️) at a set time — never conflicts">Reminder</button>`}
+            <button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med')" title="A reminder / med at a set time — never conflicts; choose Split (💊) or Pin (🎗️) below">Reminder</button>
             ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
@@ -2587,7 +2605,7 @@ window.Planner = (() => {
     // individually customized (custom:true). Those persist until the user edits that day again.
     // Emptying the whole box and saving = a deliberate "clear everything" — this DOES wipe customized days.
     const wipeAll = activities.length === 0;
-    if (wipeAll && !confirm('Clear the entire week — including any days you customized individually? This cannot be undone.')) return;
+    if (wipeAll && !confirm("Clear this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.")) return;
     const windowDs = new Set(days.map(d=>toISO(d)));
     const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
     for (const d of days) {
@@ -2618,7 +2636,7 @@ window.Planner = (() => {
 
   // "Clear Everything" — a hard reset that reaches days the box can't show (customized days, anytime, etc.).
   async function clearEverything() {
-    if (!confirm('Erase the ENTIRE schedule — every day, every activity, customized days and all? This cannot be undone.')) return;
+    if (!confirm("Erase this week's schedule so you can rebuild it? Your PAST days and everything you've logged are kept — only today onward is cleared.")) return;
     const wakeTime = '07:00', empty = { wake_time: wakeTime, activities: [] };
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
     // Every date we know about: the visible window, customized days, and whatever overrides are loaded.
@@ -2692,7 +2710,7 @@ window.Planner = (() => {
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
-    openActEdit, openActAdd, actEditTiming, actEditMedDisplay, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
+    openActEdit, openActAdd, actEditTiming, actEditMedDisplay, actEditSetChime, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
     openMemo, saveMemo, closeMemo, closeConflict,
     openCalories, saveCalories, closeCalories, openReport, closeReport, emailReport,
     applyWeekView, setWeekView,
@@ -2758,7 +2776,6 @@ window.Settings = (() => {
       ['off','daily','weekly'].forEach(f => el(`srf-${f}`)?.classList.toggle('active', f===rf));
       if (el('s-cheer')) el('s-cheer').checked = localStorage.getItem('inflictor_cheer') !== '0';
       if (el('s-report-meds')) el('s-report-meds').checked = localStorage.getItem('inflictor_report_meds') === '1';
-      if (el('s-show-meds')) el('s-show-meds').checked = localStorage.getItem('inflictor_show_meds') === '1';
       if (el('s-email-reminders')) el('s-email-reminders').checked = localStorage.getItem('inflictor_email_reminders') === '1';
       if (el('s-aww'))   el('s-aww').checked   = localStorage.getItem('inflictor_aww')   !== '0';
       const notifOn = data.notification_enabled === 1;
@@ -2842,10 +2859,6 @@ window.Settings = (() => {
   function setReportMeds(v) {
     localStorage.setItem('inflictor_report_meds', v ? '1' : '0');
     flashMsg(v ? 'Reminders will show in your report.' : 'Reminders hidden from your report.', 'success');
-  }
-  function setShowMeds(v) {
-    localStorage.setItem('inflictor_show_meds', v ? '1' : '0');
-    flashMsg(v ? 'The 💊 Meds button is on.' : 'Meds button hidden.', 'success');
   }
   function setEmailReminders(v) {
     localStorage.setItem('inflictor_email_reminders', v ? '1' : '0');
@@ -3006,7 +3019,7 @@ window.Settings = (() => {
   return {
     open, close, showView, loadMore, setGuideMode,
     saveName, setTheme, setPremiumTheme, pickTheme, setMode, setFont, setPremiumFont, uploadAvatar, removeAvatar,
-    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setShowMeds, setEmailReminders,
+    setWeekDay, saveSchedule, setReportFreq, setWeekView, setReportMeds, setEmailReminders,
     setCheerEnabled, setAwwEnabled, setNotifEnabled, setRepeat,
     exportData, savePassword, deleteAccount,
   };

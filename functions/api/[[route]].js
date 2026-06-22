@@ -379,6 +379,22 @@ function rptTimes(acts) {
   }
   return out;
 }
+// Sum an activity's COMPLETED split-segment minutes (split by meals + split-meds, like the planner).
+// Each segment's status is keyed by `${date}:${id}#${seg}` (seg 0 = the activity's own id). Meal time is excluded.
+function rptCompletedSegMins(ds, a, acts, times, status) {
+  const t=times[a.id]; if(!t) return 0;
+  const splitters=(acts||[]).filter(x => ((x.timing||'')==='sustenance' || ((x.timing||'')==='med' && x.med_display!=='ribbon')) && times[x.id] && times[x.id].start>t.start && times[x.id].start<t.end)
+                            .sort((x,y)=>times[x.id].start-times[y.id].start);
+  let cursor=t.start, seg=0, mins=0;
+  const consider=(s,e)=>{ const stt = seg ? status[`${ds}:${a.id}#${seg}`] : (status[`${ds}:${a.id}`]||status[`${ds}:${a.name}`]); if(stt==='completed') mins+=Math.max(0,e-s); seg++; };
+  for (const su of splitters) {
+    const sst=times[su.id];
+    if (sst.start>cursor) consider(cursor, sst.start);
+    cursor=Math.max(cursor, ((su.timing||'')==='med' && su.med_display!=='ribbon') ? sst.start : sst.end);
+  }
+  if (cursor<t.end) consider(cursor, t.end);
+  return mins;
+}
 // Computes the report for `numDays` days from `start`. Returns totals + per-day breakdown.
 async function computeReport(db, uid, start, numDays) {
   const dates=[]; { const d0=new Date(`${start}T12:00:00Z`); for (let i=0;i<numDays;i++){ const d=new Date(d0); d.setUTCDate(d0.getUTCDate()+i); dates.push(d.toISOString().split('T')[0]); } }
@@ -412,9 +428,8 @@ async function computeReport(db, uid, start, numDays) {
       if (timing==='anytime') { items.push({type:'anytime',name:a.name}); continue; }
       if (a.undetermined) { items.push({type:'open',name:a.name}); continue; }
       const t=times[a.id]; if(!t) continue;
-      let dur=t.end-t.start;
-      for (const su of carveList) { const sst=times[su.id]; if (sst.start>t.start && sst.start<t.end) dur-=Math.min(sst.end,t.end)-sst.start; }
-      dur=Math.max(0,dur); dayMin+=dur;
+      const dur=rptCompletedSegMins(ds, a, acts, times, status);   // only COMPLETED split-segments' time — each part on its own
+      dayMin+=dur;
       items.push({type:'act',name:a.name,minutes:dur});
     }
     totMin+=dayMin; totCal+=dayCal;
