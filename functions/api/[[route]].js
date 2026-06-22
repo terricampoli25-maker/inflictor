@@ -538,7 +538,6 @@ async function handleStripe(segments, request, env) {
       'payment_method_types[0]':'card',
       'line_items[0][price]':env.STRIPE_PRICE_ID,
       'line_items[0][quantity]':'1',
-      'subscription_data[trial_period_days]':'7',
       success_url:`https://${domain}/?premium=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:`https://${domain}/?premium=cancelled`,
       client_reference_id:s.user_id,
@@ -568,6 +567,58 @@ async function handleStripe(segments, request, env) {
   return json({error:'Not found'},404);
 }
 
+// Make a unique, valid username (3–30 of [a-zA-Z0-9_]) from an email's local part.
+async function uniqueUsername(db, email) {
+  let base=String(email).split('@')[0].replace(/[^a-zA-Z0-9_]/g,'').slice(0,24) || 'user';
+  if (base.length<3) base=`${base}user`;
+  let name=base, n=0;
+  while (await db.prepare('SELECT 1 FROM users WHERE username=?').bind(name).first()) {
+    n++; name=`${base}${n}`.slice(0,30);
+    if (n>9999) { name=`user_${newId().slice(0,8)}`; break; }
+  }
+  return name;
+}
+// Welcome email after a successful subscription — a friendly setup guide: (new accounts) a "set your
+// password" link, the installer download, and a heads-up about Windows/antivirus warnings so a normal
+// unsigned-app warning doesn't alarm them. Sent via Resend, only to the buyer's own address.
+async function sendWelcomeEmail(db, env, userId, email, isNew) {
+  if (!env.RESEND_API_KEY) return;
+  const domain=env.APP_DOMAIN||'inflictor.pages.dev';
+  const downloadUrl=env.DOWNLOAD_URL||`https://${domain}/`;   // TODO: real installer download link (step 4 — installer hosting)
+  const btn='display:inline-block;background:#d4af37;color:#110800;padding:.7rem 1.7rem;text-decoration:none;font-weight:bold;border-radius:2px';
+  let setStep='';
+  if (isNew) {
+    const rt=newToken(), rid=newId(), exp=new Date(Date.now()+14*86_400_000).toISOString();
+    await db.prepare('INSERT INTO password_resets (id,user_id,token,expires_at) VALUES (?,?,?,?)').bind(rid,userId,rt,exp).run();
+    const setUrl=`https://${domain}/?reset=${rt}`;
+    setStep=`<p style="margin:1.4rem 0 .3rem;color:#d4af37"><b>1. Set your password</b></p>
+      <p style="margin:0 0 .2rem"><a href="${setUrl}" style="${btn}">Set your password</a></p>
+      <p style="margin:0 0 1rem;font-size:.75rem;color:#6a5030">(link valid 14 days · sets the password for the email this was sent to)</p>`;
+  } else {
+    setStep=`<p style="margin:1.4rem 0;color:#e8d0a0">Log in with your existing account.</p>`;
+  }
+  const N=isNew?['2','3','4']:['1','2','3'];
+  const html=`<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;background:#110800;color:#d4af37;border:1px solid #5a3010">
+    <h1 style="text-align:center;letter-spacing:.1em;margin:0">THE INFLICTOR</h1>
+    <p style="text-align:center;font-style:italic;color:#a07840;margin:.3rem 0 1.4rem">Welcome — your subscription is active. Let's get you set up.</p>
+    ${setStep}
+    <p style="margin:1.2rem 0 .3rem;color:#d4af37"><b>${N[0]}. Download the app</b></p>
+    <p style="margin:0 0 1rem"><a href="${downloadUrl}" style="${btn}">Download The Inflictor</a></p>
+    <div style="border:1px solid #5a3010;background:#1a0f00;padding:1rem 1.2rem;margin:1.2rem 0;color:#e8d0a0;font-size:.88rem;line-height:1.6">
+      <p style="margin:0 0 .5rem;color:#d4af37;font-weight:bold">⚠️ ${N[1]}. A heads-up so nothing alarms you</p>
+      <p style="margin:0 0 .6rem">The Inflictor is brand-new and built by one independent developer, so it isn't "code-signed" yet — which means Windows may treat it as an unknown program when you run it. This is completely normal, it is <b>not</b> a virus, and it's expected. What you might see, and what to do:</p>
+      <p style="margin:0 0 .4rem">• <b>Windows SmartScreen</b> — a blue <i>"Windows protected your PC"</i> box. It is <b>not</b> a virus warning. Click <b>More info</b>, then <b>Run anyway</b>.</p>
+      <p style="margin:0">• <b>Your antivirus or firewall</b> — it may scan the file or ask permission before it runs. Choose <b>Allow</b> or <b>Run anyway</b>. (Norton, for example, usually scans it, confirms it's clean, and lets it through.)</p>
+    </div>
+    <p style="margin:1.2rem 0 .3rem;color:#d4af37"><b>${N[2]}. Open it and log in</b></p>
+    <p style="margin:0">Once it's installed, open The Inflictor and log in${isNew?' with your email and the password you set':''}. That's it — you're in. One last note: keep the app open or minimized while you're using it, so its reminders can chime.</p>
+    <p style="margin:1.6rem 0 0;font-size:.85rem;color:#a07840">Any snag at all, just reply to this email and I'll help. — Terri</p>
+  </div>`;
+  try {
+    await fetch('https://api.resend.com/emails',{method:'POST',headers:{'Authorization':`Bearer ${env.RESEND_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({from:env.FROM_EMAIL||'The Inflictor <noreply@terristech.com>',to:email,subject:'Welcome to The Inflictor 🎭 — getting set up',html})});
+  } catch {}
+}
+
 // ─── /api/webhooks/stripe ─────────────────────────────────────────────────────
 
 async function handleStripeWebhook(request, env) {
@@ -588,12 +639,25 @@ async function handleStripeWebhook(request, env) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session=event.data.object;
-      const userId=session.client_reference_id; if (!userId) break;
-      // Save customer + subscription IDs
-      await db.prepare('UPDATE users SET stripe_customer_id=?,stripe_subscription_id=? WHERE id=?').bind(session.customer,session.subscription,userId).run();
-      // Trial starts — will update to 'premium' on invoice.payment_succeeded after trial
-      const trialEnd=new Date(Date.now()+7*86_400_000).toISOString();
-      await db.prepare(`UPDATE users SET premium_status='trial',premium_expires_at=? WHERE id=?`).bind(trialEnd,userId).run();
+      const email=(session.customer_details?.email || session.customer_email || '').toLowerCase().trim();
+      let userId=session.client_reference_id, isNew=false;   // client_reference_id is set only for the in-app (logged-in) checkout
+      if (!userId && email) {
+        // Pay-first (landing-page Payment Link): find the account for this email, or create one.
+        const existing=await db.prepare('SELECT id FROM users WHERE email=?').bind(email).first();
+        if (existing) userId=existing.id;
+        else {
+          userId=newId();
+          const username=await uniqueUsername(db, email);
+          const placeholder=await hashPassword(newToken());   // unusable until they set a password via the welcome link
+          await db.prepare('INSERT INTO users (id,username,email,password_hash) VALUES (?,?,?,?)').bind(userId,username,email,placeholder).run();
+          await db.prepare('INSERT INTO settings (user_id) VALUES (?)').bind(userId).run();
+          isNew=true;
+        }
+      }
+      if (!userId) break;   // no logged-in ref and no email → nothing to link to
+      // Grant access immediately — NO trial. (subscription.updated / invoice events keep the expiry current.)
+      await db.prepare(`UPDATE users SET stripe_customer_id=?,stripe_subscription_id=?,premium_status='premium',premium_expires_at=NULL WHERE id=?`).bind(session.customer,session.subscription,userId).run();
+      if (email) await sendWelcomeEmail(db, env, userId, email, isNew);   // setup guide: download + (new) set-password + firewall heads-up
       break;
     }
 
