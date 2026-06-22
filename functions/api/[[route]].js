@@ -110,8 +110,10 @@ async function handleAuth(segments, request, env) {
   if (action === 'login' && request.method === 'POST') {
     const { username = '', password = '' } = await request.json().catch(() => ({}));
     if (!(await rateLimit(db, 'login-ip', clientIp(request), 15, 300)) || !(await rateLimit(db, 'login-user', String(username).toLowerCase(), 8, 900))) return tooMany(300);
-    const user = await db.prepare('SELECT * FROM users WHERE username = ? AND is_guest = 0').bind(username).first();
-    if (!user || !(await verifyPassword(password, user.password_hash))) return json({ error: 'Invalid name or password' }, 401);
+    // Accept EITHER the username or the email in the login field — paying customers only know their email.
+    const cred = String(username).trim();
+    const user = await db.prepare('SELECT * FROM users WHERE (username = ? OR lower(email) = lower(?)) AND is_guest = 0').bind(cred, cred).first();
+    if (!user || !(await verifyPassword(password, user.password_hash))) return json({ error: 'Invalid login or password' }, 401);
     const token = newToken(), sid = newId(), exp = new Date(Date.now() + 7 * 86_400_000).toISOString();
     await db.prepare('INSERT INTO sessions (id,user_id,token,expires_at) VALUES (?,?,?,?)').bind(sid, user.id, token, exp).run();
     return json({ token, user: { id: user.id, username: user.username, email: user.email, is_guest: false, premium_status: user.premium_status } });
