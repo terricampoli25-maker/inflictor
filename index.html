@@ -282,6 +282,9 @@
     .chime-btn{font-size:.9rem;line-height:1;background:none;border:1px solid var(--border);width:24px;height:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s,border-color .2s}
     .chime-btn.off{opacity:.28}
     .chime-btn:hover{border-color:var(--accent);opacity:1!important}
+    .chime-pop{display:flex;align-items:center;gap:.9rem;margin:.35rem 0 .15rem;padding:.4rem .65rem;border:1px solid var(--border);background:var(--surface);font-size:.78rem;width:fit-content;border-radius:2px}
+    .chime-pop-lbl{color:var(--text-muted)}
+    .chime-pop label{display:flex;align-items:center;gap:.32rem;cursor:pointer;color:var(--text)}
     .col-notes{margin-top:3px}
     .col-note{width:100%;min-height:54px;background:transparent;border:1px dashed var(--border);color:var(--text);font-family:var(--font-body);font-style:italic;font-size:.75rem;padding:.45rem .5rem;resize:vertical;outline:none;transition:border-color .2s;line-height:1.5}
     .col-note::placeholder{color:var(--text-muted);opacity:.7}
@@ -1470,7 +1473,7 @@ window.Planner = (() => {
   }
 
   const SETUP_DAYS = 10;  // days offered in the setup box "Apply to" picker (planner still shows 7)
-  const setup = { activities: [], wakeTime: '07:00', days: Array(SETUP_DAYS).fill(true), editingDate: null };
+  const setup = { activities: [], wakeTime: '07:00', days: Array(SETUP_DAYS).fill(true), editingDate: null, chimeOpenId: null };
   const sndCrowd = new Audio('sounds/crowd.mp3');
   const sndFail  = new Audio('sounds/uncheck.mp3');
   const sndChime = new Audio('sounds/chime.mp3');
@@ -1629,7 +1632,7 @@ window.Planner = (() => {
       const ds = toISO(d);
       const acts = getDaySchedule(ds)?.activities || [];
       const times = computeDayTimes(acts, 0, 0, null);                 // scheduled times, no live offset
-      const carveList = acts.filter(a => ((a.timing||'')==='sustenance' || ((a.timing||'')==='med' && a.med_display!=='ribbon')) && times[a.id]);
+      const carveList = acts.filter(a => (a.timing||'')==='sustenance' && times[a.id]);   // only meals carve activity time — a med is a moment, not a block
       let dayTime = 0, dayCal = 0; const lines = [];
       for (const a of acts) {
         const status = taskStatus[`${ds}:${a.id}`], timing = a.timing || 'flexible';
@@ -1677,7 +1680,7 @@ window.Planner = (() => {
       const ds = toISO(d);
       const acts = getDaySchedule(ds)?.activities || [];
       const times = computeDayTimes(acts, 0, 0, null);
-      const carveList = acts.filter(a => ((a.timing||'')==='sustenance' || ((a.timing||'')==='med' && a.med_display!=='ribbon')) && times[a.id]);
+      const carveList = acts.filter(a => (a.timing||'')==='sustenance' && times[a.id]);   // only meals carve activity time — a med is a moment, not a block
       let dayTime=0, dayCal=0; const lines=[];
       for (const a of acts) {
         const status = taskStatus[`${ds}:${a.id}`], timing = a.timing||'flexible';
@@ -1718,7 +1721,7 @@ window.Planner = (() => {
       goal_time: a.goal_time || '',
       hours: Math.floor((a.duration_minutes || 0) / 60),
       mins: (a.duration_minutes || 0) % 60,
-      chime_enabled: !!a.chime_enabled,
+      chime_start: !!a.chime_start, chime_end: (a.chime_end!==undefined?!!a.chime_end:!!a.chime_enabled),
       food: getMemo(ds, id) || '',                 // meal: what you ate (per-day, shared with the card's cal. window)
       cal: getMemo(ds, `cal:${id}`) || '',
       dose: getMemo(ds, id) || '',                 // med: dose / notes (same per-day memo key)
@@ -1732,7 +1735,7 @@ window.Planner = (() => {
   }
   // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
   function openActAdd(ds) {
-    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_enabled: false, food: '', cal: '', dose: '', med_display: 'split', med_notify: false, med_kind: 'reminder' };
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_start: false, chime_end: false, food: '', cal: '', dose: '', med_display: 'split', med_notify: false, med_kind: 'reminder' };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
@@ -1811,7 +1814,7 @@ window.Planner = (() => {
     return {
       name: (a.name || '').trim() || (timing==='sustenance' ? '' : timing==='med' ? 'Reminder' : 'Untitled'), duration_minutes: duration, timing,
       undetermined: a.undetermined || undefined,
-      chime_enabled: !!a.chime_enabled,
+      chime_start: !!a.chime_start, chime_end: !!a.chime_end,
       fixed_start: hasStart && a.fixed_start ? a.fixed_start : undefined,
       fixed_end:   isRange && a.fixed_end   ? a.fixed_end   : undefined,
       goal_time:   timing === 'anytime' && a.goal_time ? a.goal_time : undefined,
@@ -1909,28 +1912,30 @@ window.Planner = (() => {
     const today = new Date(), todayStr = toISO(today);
     const sched = getDaySchedule(todayStr);
     if (!sched?.activities?.length) return;
-    const [wh, wm] = (sched.wake_time || '07:00').split(':').map(Number);
-    const base = new Date(today.getFullYear(), today.getMonth(), today.getDate(), wh, wm, 0, 0).getTime() + wakeOffset * 60000;
-    let cursor = base, offsetApplied = false;
-    for (const act of sched.activities) {
-      if ((act.timing || 'flexible') === 'anytime') continue;   // no scheduled time
-      if ((act.timing || '') === 'med') continue;               // meds alert at their own clock time (handled below)
-      cursor += act.duration_minutes * 60000;
-      if (!act.chime_enabled) continue;
-      const key = `${todayStr}:${act.id}`;
-      const status = taskStatus[key];
-      if (!offsetApplied && pauseOffset !== 0 && status !== 'completed' && status !== 'failed') {
-        cursor += pauseOffset * 60000;
-        offsetApplied = true;
-      }
-      const delay = cursor - Date.now();
-      if (delay <= 0) continue;
+    const midnight = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0).getTime();
+    // Accurate per-activity start/end clock times — the SAME computation the planner draws from, so chimes
+    // fire at the times you actually see (respecting fixed hours and any late-wake / pause shift), not a guess.
+    const times = computeDayTimes(sched.activities, wakeOffset, pauseOffset, pauseAnchorId);
+    const chimeAt = (label, atMin, atStart) => {
+      const delay = (midnight + atMin * 60000) - Date.now();
+      if (delay <= 0) return;
+      const body = atStart
+        ? tone(`"${label}" begins now — to your places!`, `Time to start "${label}".`)
+        : tone(`The hour of "${label}" is spent — ring down the curtain!`, `Time's up for "${label}".`);
       for (let r = 0; r < notifRepeat; r++) {
-        const name = act.name;
         notifTimers.push(setTimeout(() => {
-          try { new Notification('The Inflictor', { body: tone(`The hour of "${name}" is spent — ring down the curtain!`,`Time's up for "${name}".`), icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+          try { new Notification('The Inflictor', { body, icon: 'icons/inflictor-icon-192x192.png' }); } catch {}
+          playSound('chime');                                        // audible — the user chose this chime
         }, delay + r * 60000));
       }
+    };
+    for (const act of sched.activities) {
+      if ((act.timing || '') === 'med') continue;                    // meds alert at their own clock time (below)
+      const t = times[act.id];
+      if (!t) continue;                                              // anytime / no set time → can't chime accurately
+      const name = (act.name || '').trim() || 'activity';
+      if (act.chime_start) chimeAt(name, t.start, true);
+      if (act.chime_end && !t.undet) chimeAt(name, t.end, false);    // open-ended ("unsure") has no firm end
     }
     // Reminders / meds that opted into a notification fire at their set clock time.
     for (const act of sched.activities) {
@@ -2090,7 +2095,11 @@ window.Planner = (() => {
       for (const su of inside) {
         const st = times[su.id];
         if (st.start > cursor) { pieces.push({ act, s:cursor, e:st.start, cont:!first, ppm }); first = false; }
-        cursor = Math.max(cursor, st.end);
+        // A meal occupies real time, so the activity resumes when the meal ENDS. A med/reminder is a
+        // single moment (take a pill) — the activity resumes AT the med's time, consuming no block,
+        // so it splits cleanly into before/after around the med (the sort tiebreaker below keeps the
+        // med marker ordered between the two halves when the "after" piece starts at the same minute).
+        cursor = Math.max(cursor, isSplitMed(su) ? st.start : st.end);
       }
       if (cursor < t.end) pieces.push({ act, s:cursor, e:t.end, cont:!first, ppm });
     }
@@ -2102,7 +2111,9 @@ window.Planner = (() => {
       if (host) (host.ribbons = host.ribbons || []).push(m);
       else pieces.push({ act:m, s:mt, e:times[m.id].end, cont:false, med:true, ribbon:true });
     }
-    pieces.sort((a,b) => (a.s==null?Infinity:a.s) - (b.s==null?Infinity:b.s));
+    // Sort by start time; when an activity's "after" half starts at the same minute as the splitter
+    // (a med taken at the moment the activity resumes), render the splitter marker first.
+    pieces.sort((a,b) => ((a.s==null?Infinity:a.s) - (b.s==null?Infinity:b.s)) || (((a.sus||a.med)?0:1) - ((b.sus||b.med)?0:1)));
     // Pause "what happened" note → its own box right after the activity where the day was paused.
     if (today && pauseAnchorId) {
       const pm = getMemo(ds, `pause:${pauseAnchorId}`);
@@ -2179,7 +2190,7 @@ window.Planner = (() => {
       }
       const isChecked = pausedSlotKeys.has(key);
       return `<div class="slot slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">${ribbonHtml}
-        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&act.chime_enabled?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
+        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&(act.chime_start||act.chime_end)?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
           <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
@@ -2377,10 +2388,11 @@ window.Planner = (() => {
 
   function openSetup(date = null, focusIdx = null) {
     setup.editingDate = date;
+    setup.chimeOpenId = null;                      // start with every chime picker closed
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
     setup.wakeTime  = existing?.wake_time || '07:00';
     setup.activities = (existing?.activities||[]).map(a => ({
-      id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_enabled: !!a.chime_enabled, timing: a.timing || 'flexible',
+      id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_start: !!a.chime_start, chime_end: (a.chime_end!==undefined?!!a.chime_end:!!a.chime_enabled), timing: a.timing || 'flexible',
       undetermined: !!a.undetermined,
       fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
       med_display: a.med_display === 'ribbon' ? 'ribbon' : 'split', med_notify: !!a.med_notify,
@@ -2453,13 +2465,19 @@ window.Planner = (() => {
             ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
-            <button class="chime-btn${act.chime_enabled?'':' off'}" onclick="Planner.toggleChime('${act.id}')"
-              title="${act.chime_enabled?'Chime at end — click to silence':'No chime — click to enable'}">🔔</button>
+            ${(act.timing==='fixed'||act.timing==='flexible'||act.timing==='sustenance')
+              ? `<button class="chime-btn${(act.chime_start||act.chime_end)?'':' off'}" onclick="Planner.toggleChimePicker('${act.id}')" title="Chime at start and/or end — click to choose">🔔</button>`
+              : ''}
             <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',-1)" ${i===0?'disabled':''}>↑</button>
             <button class="act-ctrl" onclick="Planner.moveAct('${act.id}',1)" ${i===setup.activities.length-1?'disabled':''}>↓</button>
             <button class="act-ctrl act-del" onclick="Planner.removeAct('${act.id}')">×</button>
           </div>
         </div>
+        ${setup.chimeOpenId===act.id && (act.timing==='fixed'||act.timing==='flexible'||act.timing==='sustenance') ? `<div class="chime-pop">
+          <span class="chime-pop-lbl">Chime at:</span>
+          <label><input type="checkbox" ${act.chime_start?'checked':''} onchange="Planner.setChime('${act.id}','start',this.checked)"> Start</label>
+          <label><input type="checkbox" ${act.chime_end?'checked':''} onchange="Planner.setChime('${act.id}','end',this.checked)"> End</label>
+        </div>` : ''}
       </div>`).join('');
   }
   function renderDays() {
@@ -2473,7 +2491,7 @@ window.Planner = (() => {
     }).join('');
   }
 
-  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_enabled:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
+  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   // Clearing the name clears the rest too — so you can blank an activity without emptying every box.
   function onActName(id, val) {
     captureDOM();
@@ -2493,10 +2511,15 @@ window.Planner = (() => {
     if (!val.trim()) { a.hours=''; a.mins=''; a.fixed_start=''; a.fixed_end=''; a.goal_time=''; a.timing='flexible'; renderActs(); }
   }
 
-  function toggleChime(id) {
+  function toggleChimePicker(id) {
+    captureDOM();
+    setup.chimeOpenId = (setup.chimeOpenId === id) ? null : id;   // click the bell to open/close the Start/End picker
+    renderActs();
+  }
+  function setChime(id, which, on) {
     captureDOM();
     const a = setup.activities.find(a => a.id === id);
-    if (a) a.chime_enabled = !a.chime_enabled;
+    if (a) { if (which === 'start') a.chime_start = on; else a.chime_end = on; }
     renderActs();
   }
   function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
@@ -2523,7 +2546,7 @@ window.Planner = (() => {
       const undet = !!a.undetermined && timing!=='sustenance' && timing!=='med';   // open-ended: no known length
       const hasRange = isRange && !undet && a.fixed_start && a.fixed_end;
       const duration = undet ? 60 : (hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:(timing==='med'?5:15),(a.hours||0)*60+(a.mins||0)));
-      return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_enabled:!!a.chime_enabled,timing,
+      return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_start:!!a.chime_start,chime_end:!!a.chime_end,timing,
         undetermined: undet || undefined,
         fixed_start:hasStart&&a.fixed_start?a.fixed_start:undefined,
         fixed_end:(isRange&&!undet&&a.fixed_end)?a.fixed_end:undefined,
@@ -2558,7 +2581,7 @@ window.Planner = (() => {
     const activities = mapSetupActivities();
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
     const sched = {wake_time:wakeTime,activities};
-    const start=toISO(getMonday(weekStart)), days=getSetupDays();
+    const start=toISO(getMonday(weekStart)), days=getSetupDays(), todayStr=toISO(new Date());
     if (!weekData.dailyOverrides) weekData.dailyOverrides={};
     // Save the recurring template, then refresh per-date overrides — but NEVER touch a day the user
     // individually customized (custom:true). Those persist until the user edits that day again.
@@ -2566,9 +2589,10 @@ window.Planner = (() => {
     const wipeAll = activities.length === 0;
     if (wipeAll && !confirm('Clear the entire week — including any days you customized individually? This cannot be undone.')) return;
     const windowDs = new Set(days.map(d=>toISO(d)));
-    const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched)}}) ];
+    const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
     for (const d of days) {
       const ds=toISO(d), di=dayIdx(d);
+      if (ds < todayStr) continue;                                                            // never rewrite a PAST day — it's frozen history
       if (!wipeAll && (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom)) continue;   // a normal save preserves customized days
       const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
       weekData.dailyOverrides[ds]=data;
@@ -2577,7 +2601,7 @@ window.Planner = (() => {
     if (wipeAll) {
       // clear any customized days beyond the visible window too, and forget the custom-day marks
       for (const ds of [...customDays]) {
-        if (windowDs.has(ds)) continue;
+        if (windowDs.has(ds) || ds < todayStr) continue;   // skip past custom days — keep them as history
         const data={wake_time:wakeTime, activities:[]};
         weekData.dailyOverrides[ds]=data;
         ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
@@ -2598,9 +2622,11 @@ window.Planner = (() => {
     const wakeTime = '07:00', empty = { wake_time: wakeTime, activities: [] };
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
     // Every date we know about: the visible window, customized days, and whatever overrides are loaded.
+    const todayStr = toISO(new Date());
     const dates = new Set([ ...getSetupDays().map(d=>toISO(d)), ...customDays, ...Object.keys(weekData.dailyOverrides) ]);
-    const ops = [ api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(empty)}}) ];
+    const ops = [ api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(empty),today:todayStr}}) ];
     for (const ds of dates) {
+      if (ds < todayStr) continue;                            // never wipe a PAST day — it's frozen history
       weekData.dailyOverrides[ds] = { wake_time: wakeTime, activities: [] };
       ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(empty)}}));
     }
@@ -2662,7 +2688,7 @@ window.Planner = (() => {
     addActivity: addAct, removeAct, setColor, setTiming, toggleUndet, setActDay, moveAct, onActName, onActName,
     setupMealFood, setupMealCal, setMedDisplay, setMedNotify,
     toggleDay, selectAllDays, selectWeekdays,
-    saveSetup, saveDay, clearEverything, setStatus, toggleMedTaken, toggleChime,
+    saveSetup, saveDay, clearEverything, setStatus, toggleMedTaken, toggleChimePicker, setChime,
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,

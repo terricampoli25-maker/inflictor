@@ -231,9 +231,30 @@ async function handlePlanner(segments, request, env) {
     return json({ schedule: schedRow?parse(schedRow.schedule_data):null, dailyOverrides, notes:noteMap, memos:memoMap, taskLogs });
   }
   if (seg==='schedule'&&request.method==='PUT') {
-    const {week_start,schedule_data}=await request.json().catch(()=>({}));
+    const {week_start,schedule_data,today}=await request.json().catch(()=>({}));
     if (!week_start||!schedule_data) return json({error:'week_start and schedule_data required'},400);
     const raw=typeof schedule_data==='string'?schedule_data:JSON.stringify(schedule_data);
+    // FREEZE THE PAST: before overwriting this week's template, snapshot any of THIS week's days that
+    // are already in the past and have no daily override yet — using the OLD template — so changing the
+    // template (or clearing) can never silently rewrite history. `today` is the client's local date.
+    if (today) {
+      const oldRow = await db.prepare('SELECT schedule_data FROM weekly_schedules WHERE user_id=? AND week_start=?').bind(uid,week_start).first();
+      let oldTmpl=null; if (oldRow) { try { oldTmpl=JSON.parse(oldRow.schedule_data); } catch {} }
+      if (oldTmpl && Array.isArray(oldTmpl.activities)) {
+        const mon=new Date(`${week_start}T12:00:00Z`);
+        for (let i=0;i<7;i++) {
+          const d=new Date(mon); d.setUTCDate(mon.getUTCDate()+i);
+          const ds=d.toISOString().split('T')[0];
+          if (ds>=today) continue;                                                   // only days already in the past
+          const has=await db.prepare('SELECT 1 FROM daily_schedules WHERE user_id=? AND date=?').bind(uid,ds).first();
+          if (has) continue;                                                         // a custom card / prior freeze already exists — leave it
+          const di=(d.getUTCDay()===0?6:d.getUTCDay()-1);                            // 0=Mon..6=Sun
+          const acts=oldTmpl.activities.filter(a=>!a.days||a.days[di]);
+          const snap=JSON.stringify({ wake_time:oldTmpl.wake_time||'07:00', activities:acts, custom:true });
+          await db.prepare(`INSERT INTO daily_schedules (id,user_id,date,schedule_data,updated_at) VALUES (?,?,?,?,datetime('now')) ON CONFLICT(user_id,date) DO NOTHING`).bind(newId(),uid,ds,snap).run();
+        }
+      }
+    }
     await db.prepare(`INSERT INTO weekly_schedules (id,user_id,week_start,schedule_data,updated_at) VALUES (?,?,?,?,datetime('now')) ON CONFLICT(user_id,week_start) DO UPDATE SET schedule_data=excluded.schedule_data,updated_at=datetime('now')`).bind(newId(),uid,week_start,raw).run();
     return json({ok:true});
   }
@@ -331,7 +352,13 @@ async function handleAccount(segments, request, env) {
     if (user.stripe_subscription_id&&env.STRIPE_SECRET_KEY) {
       await fetch(`https://api.stripe.com/v1/subscriptions/${user.stripe_subscription_id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${env.STRIPE_SECRET_KEY}`}}).catch(()=>{});
     }
-    await db.prepare('DELETE FROM users WHERE id=?').bind(uid).run();
+    // Delete ALL of the user's data explicitly (not relying on ON DELETE CASCADE, which only fires if D1
+    // has foreign-key enforcement on). Batched so it runs as a single transaction — all or nothing.
+    const childTables=['sessions','password_resets','settings','tasks','weekly_schedules','daily_schedules','notes','task_logs','history','memos'];
+    await db.batch([
+      ...childTables.map(t=>db.prepare(`DELETE FROM ${t} WHERE user_id=?`).bind(uid)),
+      db.prepare('DELETE FROM users WHERE id=?').bind(uid),
+    ]);
     return json({ok:true});
   }
   return json({error:'Method not allowed'},405);
@@ -374,7 +401,7 @@ async function computeReport(db, uid, start, numDays) {
     let acts;
     if (overrides[ds]) acts=overrides[ds].activities||[];
     else { const tmpl=templates[rptMonday(ds)], di=rptDayIdx(ds); acts=tmpl?(tmpl.activities||[]).filter(a=>!a.days||a.days[di]):[]; }
-    const times=rptTimes(acts), carveList=acts.filter(a=>((a.timing||'')==='sustenance'||((a.timing||'')==='med'&&a.med_display!=='ribbon'))&&times[a.id]);
+    const times=rptTimes(acts), carveList=acts.filter(a=>(a.timing||'')==='sustenance'&&times[a.id]);   // only meals carve activity time — a med is a moment, not a block
     let dayMin=0, dayCal=0; const items=[];
     for (const a of acts) {
       const st=status[`${ds}:${a.id}`]||status[`${ds}:${a.name}`], timing=a.timing||'flexible';
