@@ -606,8 +606,9 @@ async function sendWelcomeEmail(db, env, userId, email, isNew) {
     <p style="margin:0 0 1rem"><a href="${downloadUrl}" style="${btn}">Download The Inflictor</a></p>
     <div style="border:1px solid #5a3010;background:#1a0f00;padding:1rem 1.2rem;margin:1.2rem 0;color:#e8d0a0;font-size:.88rem;line-height:1.6">
       <p style="margin:0 0 .5rem;color:#d4af37;font-weight:bold">⚠️ ${N[1]}. A heads-up so nothing alarms you</p>
-      <p style="margin:0 0 .6rem">The Inflictor is brand-new and built by one independent developer, so it isn't "code-signed" yet — which means Windows may treat it as an unknown program when you run it. This is completely normal, it is <b>not</b> a virus, and it's expected. What you might see, and what to do:</p>
-      <p style="margin:0 0 .4rem">• <b>Windows SmartScreen</b> — a blue <i>"Windows protected your PC"</i> box. It is <b>not</b> a virus warning. Click <b>More info</b>, then <b>Run anyway</b>.</p>
+      <p style="margin:0 0 .6rem">The Inflictor is brand-new and built by one independent developer, so it isn't "code-signed" yet — which means your browser and Windows may flag it as an unknown program as you download and open it. This is completely normal, it is <b>not</b> a virus, and it's expected. Here's what you might see at each point, and what to do:</p>
+      <p style="margin:0 0 .4rem">• <b>While it downloads</b> (Edge or Chrome) — your browser may say it <i>"isn't commonly downloaded"</i> and try to block it. It's flagged only because it's new, not because it's harmful. Keep it: in <b>Edge</b>, point at the download in the bar, click the <b>•••</b> (or the warning) and choose <b>Keep</b> → <b>Keep anyway</b>; in <b>Chrome</b>, click <b>Keep</b>.</p>
+      <p style="margin:0 0 .4rem">• <b>When you open it</b> — Windows SmartScreen may show a blue <i>"Windows protected your PC"</i> box. It is <b>not</b> a virus warning. Click <b>More info</b>, then <b>Run anyway</b>.</p>
       <p style="margin:0">• <b>Your antivirus or firewall</b> — it may scan the file or ask permission before it runs. Choose <b>Allow</b> or <b>Run anyway</b>. (Norton, for example, usually scans it, confirms it's clean, and lets it through.)</p>
     </div>
     <p style="margin:1.2rem 0 .3rem;color:#d4af37"><b>${N[2]}. Open it and log in</b></p>
