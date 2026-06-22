@@ -56,6 +56,15 @@
     #upgrade-overlay{position:fixed;inset:0;z-index:65;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.48);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .4s ease}
     #upgrade-overlay.visible{opacity:1;pointer-events:all}
     #upgrade-overlay.gone{display:none}
+    #paywall-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:rgba(6,2,4,.93);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .4s ease}
+    #paywall-overlay.visible{opacity:1;pointer-events:all}
+    #paywall-overlay.gone{display:none}
+    .paywall-box{background:var(--surface,rgba(20,15,8,.96));border:1px solid var(--border,rgba(180,150,80,.3));border-radius:4px;padding:2.2rem 2rem;max-width:420px;width:100%;text-align:center;box-shadow:0 30px 90px rgba(0,0,0,.75)}
+    .paywall-title{font-family:var(--font-display,'Cinzel',serif);font-size:1.25rem;letter-spacing:.08em;color:var(--accent,#d4af37);margin:.6rem 0 .8rem}
+    .paywall-text{font-family:var(--font-body,'Crimson Text',serif);font-size:.95rem;line-height:1.6;color:var(--text,#e8d0a0);margin-bottom:1.3rem}
+    .paywall-box .btn{display:block;width:100%;margin:.4rem 0}
+    .paywall-msg{font-size:.82rem;margin-top:.8rem;min-height:1.1em;color:var(--text-muted,#9a7838)}
+    .paywall-msg.error{color:#c46b6b}
     .upgrade-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:2rem 2.2rem;width:440px;max-width:96vw;text-align:center;box-shadow:0 30px 100px var(--shadow);position:relative}
     .upgrade-features{margin:1.4rem 0;display:flex;flex-direction:column;gap:.6rem;text-align:left}
     .upgrade-feature{font-family:var(--font-body);font-size:.95rem;color:var(--text);display:flex;align-items:center;gap:.6rem;padding:.35rem .5rem;border-left:2px solid var(--accent)}
@@ -1036,6 +1045,19 @@
 </div><!-- /settings-overlay -->
 
 <!-- Upgrade overlay -->
+<!-- Paywall — blocking subscribe gate (beta: an active subscription is required to use the app at all) -->
+<div id="paywall-overlay" class="gone">
+  <div class="paywall-box">
+    <div class="am-orn">★</div>
+    <div class="paywall-title">A subscription is required</div>
+    <div class="paywall-text">The Inflictor is a subscription app — <b>$1 / month</b> during the beta. There's no free version. Subscribe, then come back and tap “I've subscribed.”</div>
+    <button class="btn btn-primary" onclick="App.paywallSubscribe()">Subscribe — $1 / month</button>
+    <button class="btn btn-ghost" onclick="App.paywallRecheck()">I've subscribed — let me in</button>
+    <div class="paywall-msg" id="paywall-msg"></div>
+    <button class="btn-link" style="margin-top:.6rem" onclick="App.paywallLogout()">Log out</button>
+  </div>
+</div>
+
 <div id="upgrade-overlay" class="gone">
   <div class="upgrade-box">
     <button class="settings-close" style="position:absolute;top:1rem;right:1rem" onclick="Premium.close()">✕</button>
@@ -1311,6 +1333,17 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   App.claimSeat = () => { clearMsg(); App.showTab('register'); el('auth-tabs').style.display = ''; showAuthOverlay(); };
 
   async function enterApp() {
+    // If we just returned from a Stripe checkout, refresh the account's subscription status first.
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('premium') === 'success') {
+      window.history.replaceState({}, '', window.location.pathname);
+      const r = await api('auth/me'); if (r.ok && r.data.user) S.user = r.data.user;
+    } else if (params.get('premium') === 'cancelled') {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    // ── PAYWALL ── The app is paid: an active subscription is required to use it (beta = everyone pays,
+    // no free tier, no trial). Not subscribed → show the blocking subscribe screen and stop here.
+    if (!hasActiveSub()) { showPaywall(); return; }
     const u = S.user;
     el('ah-username').textContent = u?.username || '';
     // Avatar
@@ -1326,18 +1359,32 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
       if (data.avatar_color && av) { av.style.backgroundColor = data.avatar_color; applyAvatar(); }
     }
     Planner.init();
-    // Handle ?premium= redirect from Stripe
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('premium') === 'success') {
-      window.history.replaceState({}, '', window.location.pathname);
-      // Refresh user to get updated premium_status
-      const r = await api('auth/me');
-      if (r.ok && r.data.user) { S.user = r.data.user; }
-      setTimeout(() => Settings.open(), 600);
-    } else if (params.get('premium') === 'cancelled') {
-      window.history.replaceState({}, '', window.location.pathname);
-    }
   }
+  // A paid, active subscriber? (beta: only real subscribers get in — guests and unpaid accounts are blocked)
+  function hasActiveSub() {
+    const u = S.user;
+    return !!u && !u.is_guest && (u.premium_status === 'premium' || u.premium_status === 'trial');
+  }
+  // ── Paywall (blocking subscribe screen) ──
+  const SUBSCRIBE_URL = 'https://terristech.com';   // TODO: set to the Inflictor $1/mo Stripe link in step 2
+  function showPaywall() {
+    const op = el('opening-screen'); if (op) op.style.display = 'none';
+    hideAuthOverlay();
+    el('app').classList.remove('visible');
+    const m = el('paywall-msg'); if (m) { m.textContent = ''; m.className = 'paywall-msg'; }
+    const ov = el('paywall-overlay'); if (ov) { ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible'); }
+  }
+  function hidePaywall() {
+    const ov = el('paywall-overlay'); if (ov) { ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 400); }
+  }
+  App.paywallSubscribe = () => { try { window.open(SUBSCRIBE_URL, '_blank'); } catch {} };
+  App.paywallRecheck = async () => {
+    const m = el('paywall-msg'); if (m) { m.textContent = 'Checking…'; m.className = 'paywall-msg'; }
+    const { ok, data } = await api('auth/me');
+    if (ok && data.user) { S.user = data.user; if (hasActiveSub()) { hidePaywall(); enterApp(); return; } }
+    if (m) { m.textContent = "No active subscription found yet. If you just paid, give it a moment, then try again."; m.className = 'paywall-msg error'; }
+  };
+  App.paywallLogout = () => { try { localStorage.removeItem('inflictor_token'); } catch {} location.reload(); };
 
   function init() {
     const reset = new URLSearchParams(window.location.search).get('reset');
