@@ -67,6 +67,25 @@ async function getSession(request, db) {
   `).bind(auth.slice(7)).first();
 }
 
+// ─── Rate limiting (D1-backed fixed window) — throttles brute-force, signup/email spam, and hammering ──
+const clientIp = (request) => request.headers.get('CF-Connecting-IP') || (request.headers.get('X-Forwarded-For')||'').split(',')[0].trim() || 'unknown';
+// Returns true if ALLOWED, false if `id` has exceeded `limit` hits within `windowSec`. Fails OPEN on any
+// DB error so a limiter hiccup can never lock out real users.
+async function rateLimit(db, bucket, id, limit, windowSec) {
+  try {
+    const now = Math.floor(Date.now() / 1000);
+    const windowStart = now - (now % windowSec);
+    const k = `${bucket}:${String(id).slice(0,200)}:${windowStart}`;
+    const row = await db.prepare(
+      `INSERT INTO rate_limits (k, hits, expires_at) VALUES (?, 1, ?)
+       ON CONFLICT(k) DO UPDATE SET hits = hits + 1 RETURNING hits`
+    ).bind(k, windowStart + windowSec).first();
+    if (Math.random() < 0.02) { try { await db.prepare('DELETE FROM rate_limits WHERE expires_at < ?').bind(now).run(); } catch {} }
+    return (row?.hits || 1) <= limit;
+  } catch { return true; }
+}
+const tooMany = (retrySec = 60) => json({ error: 'Too many attempts — please wait a little and try again.' }, 429, { 'Retry-After': String(retrySec) });
+
 // ─── /api/auth/* ──────────────────────────────────────────────────────────────
 
 async function handleAuth(segments, request, env) {
@@ -74,6 +93,7 @@ async function handleAuth(segments, request, env) {
 
   if (action === 'register' && request.method === 'POST') {
     const { username = '', password = '', email = '' } = await request.json().catch(() => ({}));
+    if (!(await rateLimit(db, 'register-ip', clientIp(request), 6, 3600))) return tooMany(600);
     if (!username || !password)                  return json({ error: 'Username and password required' }, 400);
     if (!/^[a-zA-Z0-9_]{3,30}$/.test(username)) return json({ error: 'Username must be 3–30 chars (letters, numbers, _)' }, 400);
     if (password.length < 8)                     return json({ error: 'Password must be at least 8 characters' }, 400);
@@ -89,6 +109,7 @@ async function handleAuth(segments, request, env) {
 
   if (action === 'login' && request.method === 'POST') {
     const { username = '', password = '' } = await request.json().catch(() => ({}));
+    if (!(await rateLimit(db, 'login-ip', clientIp(request), 15, 300)) || !(await rateLimit(db, 'login-user', String(username).toLowerCase(), 8, 900))) return tooMany(300);
     const user = await db.prepare('SELECT * FROM users WHERE username = ? AND is_guest = 0').bind(username).first();
     if (!user || !(await verifyPassword(password, user.password_hash))) return json({ error: 'Invalid name or password' }, 401);
     const token = newToken(), sid = newId(), exp = new Date(Date.now() + 7 * 86_400_000).toISOString();
@@ -97,6 +118,7 @@ async function handleAuth(segments, request, env) {
   }
 
   if (action === 'guest' && request.method === 'POST') {
+    if (!(await rateLimit(db, 'guest-ip', clientIp(request), 6, 3600))) return tooMany(600);
     const id = newId(), username = `groundling_${newId().slice(0,8)}`, hash = await hashPassword(newToken());
     const token = newToken(), sid = newId(), exp = new Date(Date.now() + 86_400_000).toISOString();
     await db.prepare('INSERT INTO users (id,username,password_hash,is_guest) VALUES (?,?,?,1)').bind(id, username, hash).run();
@@ -125,6 +147,7 @@ async function handleAuth(segments, request, env) {
 
   if (action === 'forgot-password' && request.method === 'POST') {
     const { email = '' } = await request.json().catch(() => ({}));
+    if (!(await rateLimit(db, 'forgot-ip', clientIp(request), 6, 3600)) || !(await rateLimit(db, 'forgot-email', String(email).toLowerCase(), 4, 3600))) return tooMany(600);
     if (!email) return json({ error: 'Email required' }, 400);
     const user = await db.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
     if (user) {
@@ -145,6 +168,7 @@ async function handleAuth(segments, request, env) {
 
   if (action === 'reset-password' && request.method === 'POST') {
     const { token = '', password = '' } = await request.json().catch(() => ({}));
+    if (!(await rateLimit(db, 'reset-ip', clientIp(request), 12, 3600))) return tooMany(600);
     if (!token || !password || password.length < 8) return json({ error: 'Token and password (≥8 chars) required' }, 400);
     const reset = await db.prepare(`SELECT * FROM password_resets WHERE token=? AND expires_at>datetime('now') AND used=0`).bind(token).first();
     if (!reset) return json({ error: 'This token hath expired or been used already' }, 400);
@@ -204,6 +228,8 @@ async function handleSettings(segments, request, env) {
 async function handlePlanner(segments, request, env) {
   const db = env.DB, s = await getSession(request, db);
   if (!s) return json({ error: 'Unauthorized' }, 401);
+  // Generous per-account write cap — never trips for real use, but stops a script bloating the DB / costs.
+  if (request.method !== 'GET' && !(await rateLimit(db, 'write', s.user_id, 240, 60))) return tooMany(30);
   const uid = s.user_id, url = new URL(request.url), seg = segments[0];
 
   if (seg === 'week' && request.method === 'GET') {
@@ -322,6 +348,7 @@ async function handleHistory(segments, request, env) {
 async function handleAccount(segments, request, env) {
   const db=env.DB, s=await getSession(request,db);
   if (!s) return json({error:'Unauthorized'},401);
+  if (!(await rateLimit(db, 'account', s.user_id, 20, 600))) return tooMany(120);   // password hashing is CPU-heavy — cap hammering
   const uid=s.user_id;
   if (request.method==='PUT') {
     const {new_username,current_password,new_password}=await request.json().catch(()=>({}));
@@ -450,6 +477,7 @@ async function handleReport(request, env) {
 async function handleReportEmail(request, env) {
   const db = env.DB, s = await getSession(request, db);
   if (!s) return json({ error:'Unauthorized' }, 401);
+  if (!(await rateLimit(db, 'report-email', s.user_id, 12, 3600))) return tooMany(600);
   if (!s.email) return json({ error:'No email is on your account — add one in your profile to receive reports.' }, 400);
   if (!env.RESEND_API_KEY) return json({ error:'Email is not configured on the server yet.' }, 503);
   const { body='', period='Your report' } = await request.json().catch(() => ({}));
@@ -545,11 +573,12 @@ async function handleStripe(segments, request, env) {
 async function handleStripeWebhook(request, env) {
   const rawBody=await request.text();
 
-  if (env.STRIPE_WEBHOOK_SECRET) {
-    const sig=request.headers.get('Stripe-Signature')||'';
-    if (!(await verifyStripeSignature(rawBody,sig,env.STRIPE_WEBHOOK_SECRET)))
-      return json({error:'Invalid Stripe signature'},400);
-  }
+  // FAIL CLOSED: only ever act on a webhook whose signature verifies. If no secret is configured, reject
+  // everything — otherwise anyone could POST a fake "payment succeeded" and grant themselves premium.
+  if (!env.STRIPE_WEBHOOK_SECRET) return json({error:'Webhook not configured'},503);
+  const sig=request.headers.get('Stripe-Signature')||'';
+  if (!(await verifyStripeSignature(rawBody,sig,env.STRIPE_WEBHOOK_SECRET)))
+    return json({error:'Invalid Stripe signature'},400);
 
   let event;
   try { event=JSON.parse(rawBody); } catch { return json({error:'Invalid JSON'},400); }

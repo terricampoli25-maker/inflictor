@@ -128,7 +128,16 @@ CREATE TABLE IF NOT EXISTS memos (
   UNIQUE(user_id, date, item_id)
 );
 
+-- Rate limiting — fixed-window counters keyed `bucket:id:windowStart`. Throttles brute-force logins,
+-- signup/email spam, and endpoint hammering. Not tied to a user (keyed by IP/username/account id).
+CREATE TABLE IF NOT EXISTS rate_limits (
+  k          TEXT    PRIMARY KEY NOT NULL,
+  hits       INTEGER NOT NULL DEFAULT 0,
+  expires_at INTEGER NOT NULL
+);
+
 -- Indexes
+CREATE INDEX IF NOT EXISTS idx_rate_limits_expires ON rate_limits(expires_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_token        ON sessions(token);
 CREATE INDEX IF NOT EXISTS idx_memos_user_date       ON memos(user_id, date);
 CREATE INDEX IF NOT EXISTS idx_sessions_user         ON sessions(user_id);
