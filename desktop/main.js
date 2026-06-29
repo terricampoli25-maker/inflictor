@@ -121,6 +121,7 @@ function startServer(callback) {
 
 // ── Windows ───────────────────────────────────────────────────
 function createMainWindow(startHidden) {
+  if (mainWin) { if (!startHidden) showMain(); return; }   // never make a 2nd window — a stray one would hold keyboard focus while this one takes the clicks
   mainWin = new BrowserWindow({
     width: 1280, height: 820, minWidth: 900, minHeight: 600,
     title: 'The Inflictor',
@@ -130,6 +131,11 @@ function createMainWindow(startHidden) {
   });
   mainWin.loadURL(`http://127.0.0.1:${staticPort}/`);
   mainWin.setMenuBarVisibility(false);
+  // Make sure the window actually holds OS-level KEYBOARD focus once the page is up — a window can take
+  // mouse clicks while keystrokes go nowhere (the focused field won't type), which is what was happening.
+  mainWin.webContents.on('did-finish-load', () => { try { if (mainWin && mainWin.isVisible()) { mainWin.focus(); mainWin.webContents.focus(); } } catch {} });
+  mainWin.on('show',  () => { try { mainWin.webContents.focus(); } catch {} });
+  mainWin.on('focus', () => { try { mainWin.webContents.focus(); } catch {} });
   mainWin.on('closed', () => { mainWin = null; });
   // MINIMIZE goes to the taskbar normally — the app keeps running there (so reminders still fire) and
   // it's one click to grab back. CLOSING (X) tucks it into the tray instead of quitting, so it keeps

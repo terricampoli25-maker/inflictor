@@ -1166,6 +1166,12 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
       setTimeout(() => { __net.log.push(`tap tgt:${tgt} top:${top} foc:${__desc(document.activeElement)}`); __hud(); }, 0);
     } catch {}
   }, true);
+  // Keystroke probe: does the keyboard reach a focused field at all?
+  //  KEY lines but NO INPUT  → field is rejecting input (readonly/blocked).
+  //  KEY lines AND INPUT     → typing works at the DOM level (maybe just an invisible caret).
+  //  NO KEY lines at all     → keystrokes never reach the renderer = window keyboard-focus issue.
+  document.addEventListener('keydown', (e) => { try { __net.log.push(`KEY ${e.key} tgt:${__desc(e.target)}`); __hud(); } catch {} }, true);
+  document.addEventListener('input',   (e) => { try { __net.log.push(`INPUT "${(e.target && e.target.value || '').slice(0,12)}"`); __hud(); } catch {} }, true);
 
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
