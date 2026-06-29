@@ -1087,28 +1087,67 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   if (S.theme) document.body.classList.add(`theme-${S.theme}`);
   const el = id => document.getElementById(id);
 
+  // ── Network helpers ───────────────────────────────────────────
+  // No single request may hang open indefinitely: the browser allows only ~6 connections to the
+  // local server, so one wedged request quickly blocks every later call. Abort after a timeout.
+  const API_TIMEOUT_MS = 12000;
+  function fetchWithTimeout(url, opts = {}) {
+    const ac = new AbortController();
+    const to = setTimeout(() => ac.abort(), API_TIMEOUT_MS);
+    return fetch(url, { ...opts, signal: ac.signal }).finally(() => clearTimeout(to));
+  }
+
   // ── Offline queue ─────────────────────────────────────────────
   const OFFLINE_KEY = 'inflictor_offline_queue';
+  // A stable key for an idempotent write so repeated saves of the SAME resource collapse to the latest —
+  // this stops the queue (and the DB writes it replays) from growing without bound.
+  function opKey(path, body) {
+    const b = body || {};
+    const id = [b.date, b.week_start, b.item_id, b.task_id].filter(v => v != null && v !== '').join('|');
+    if (!id && path !== 'settings') return null;   // unknown / one-off shape → don't collapse, keep every op
+    return `${path}#${id}`;
+  }
   function enqueueOffline(path, opts) {
     const q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
-    q.push({ path, method: opts.method, body: opts.body, t: Date.now() });
-    localStorage.setItem(OFFLINE_KEY, JSON.stringify(q));
+    const key = opKey(path, opts.body);
+    // Drop any earlier queued write for the same resource — only the newest state matters (idempotent upserts).
+    const pruned = key ? q.filter(op => opKey(op.path, op.body) !== key) : q;
+    pruned.push({ path, method: opts.method, body: opts.body, t: Date.now() });
+    localStorage.setItem(OFFLINE_KEY, JSON.stringify(pruned));
     showOfflineBanner(true);
   }
+  let __flushing = false;
   async function flushOfflineQueue() {
-    const q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
+    if (__flushing) return;                       // single-flight: overlapping flushes were storming the DB
+    let q = JSON.parse(localStorage.getItem(OFFLINE_KEY) || '[]');
     if (!q.length) return;
-    const remaining = [];
-    for (const op of q) {
-      try {
-        const headers = { 'Content-Type': 'application/json' };
-        if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
-        const r = await fetch(`/api/${op.path}`, { method: op.method, headers, body: op.body !== undefined ? JSON.stringify(op.body) : undefined });
-        if (!r.ok) remaining.push(op);
-      } catch { remaining.push(op); break; }
+    // Collapse duplicate idempotent writes (including any legacy backlog saved before this fix) to the
+    // latest of each, so we replay one write per resource instead of a pile of stale repeats.
+    const seen = new Set(); const deduped = [];
+    for (let j = q.length - 1; j >= 0; j--) {
+      const op = q[j], k = opKey(op.path, op.body);
+      if (k) { if (seen.has(k)) continue; seen.add(k); }
+      deduped.unshift(op);
     }
-    localStorage.setItem(OFFLINE_KEY, JSON.stringify(remaining));
-    showOfflineBanner(remaining.length > 0);
+    q = deduped;
+    __flushing = true;
+    try {
+      let i = 0;
+      for (; i < q.length; i++) {
+        const op = q[i];
+        let ok = false;
+        try {
+          const headers = { 'Content-Type': 'application/json' };
+          if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
+          const r = await fetchWithTimeout(`/api/${op.path}`, { method: op.method, headers, body: op.body !== undefined ? JSON.stringify(op.body) : undefined });
+          ok = r.ok || (r.status >= 400 && r.status < 500);   // 4xx = a bad/duplicate op → drop it, don't retry forever
+        } catch { ok = false; }
+        if (!ok) break;                           // a write didn't land → stop, keep the rest, retry later (no hammering)
+      }
+      const remaining = q.slice(i);
+      localStorage.setItem(OFFLINE_KEY, JSON.stringify(remaining));
+      showOfflineBanner(remaining.length > 0);
+    } finally { __flushing = false; }
   }
   function showOfflineBanner(show) {
     let b = document.getElementById('offline-banner');
@@ -1128,13 +1167,13 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     const headers = { 'Content-Type': 'application/json' };
     if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
     try {
-      const r = await fetch(`/api/${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
+      const r = await fetchWithTimeout(`/api/${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
       const data = await r.json().catch(() => ({}));
-      // Flush any queued offline ops now that we're connected
+      // Flush any queued offline ops now that we're connected (single-flighted, so this can't storm).
       if (r.ok) flushOfflineQueue();
       return { ok: r.ok, status: r.status, data };
     } catch {
-      // Queue write operations; reads just fail gracefully
+      // Timed out or unreachable — queue write operations; reads just fail gracefully.
       if (opts.method && opts.method !== 'GET') enqueueOffline(path, opts);
       return { ok: false, status: 0, data: { error: 'Could not reach the stage.' } };
     }

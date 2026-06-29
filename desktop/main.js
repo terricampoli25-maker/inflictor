@@ -50,7 +50,17 @@ function startServer(callback) {
         const v = req.headers[name];
         if (v !== undefined) proxy.setHeader(name, v);
       }
+      // Respond exactly once, and never let a single upstream call wedge the local server: if it
+      // stalls past the timeout, or the page gives up on it first, abort the upstream and answer.
+      let settled = false;
+      const finish = (code, payload) => {
+        if (settled) return; settled = true; clearTimeout(killer);
+        try { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(payload)); } catch {}
+      };
+      const killer = setTimeout(() => { finish(504, { error: 'offline' }); try { proxy.abort(); } catch {} }, 15000);
       proxy.on('response', pres => {
+        if (settled) { try { pres.destroy(); } catch {} return; }
+        settled = true; clearTimeout(killer);
         // Electron's net already decompressed the body, so drop the upstream
         // content-encoding/length (and transfer-encoding) — otherwise the page
         // tries to decompress plain JSON again and ends up with an empty body.
@@ -59,14 +69,17 @@ function startServer(callback) {
         res.writeHead(pres.statusCode, h);
         pres.on('data', chunk => res.write(chunk));
         pres.on('end',  ()    => res.end());
+        pres.on('error', ()   => { try { res.end(); } catch {} });
       });
       proxy.on('error', (err) => {
-        console.error('[PROXY ERROR]', req.method, req.url, '->', target.href, '|', err.code || err.message, err);
-        res.writeHead(503, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'offline' }));
+        console.error('[PROXY ERROR]', req.method, req.url, '->', target.href, '|', err.code || err.message);
+        finish(503, { error: 'offline' });
       });
-      req.on('data', chunk => proxy.write(chunk));
-      req.on('end',  ()    => proxy.end());
+      proxy.on('abort', () => finish(503, { error: 'offline' }));
+      req.on('data', chunk => { try { proxy.write(chunk); } catch {} });
+      req.on('end',  ()    => { try { proxy.end(); } catch {} });
+      // The page aborted (its own timeout) or navigated away before we answered → drop the upstream call too.
+      req.on('close', () => { if (!settled) { try { proxy.abort(); } catch {} } });
       return;
     }
 
