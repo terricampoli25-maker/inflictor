@@ -1123,6 +1123,23 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     return fetch(url, { ...opts, signal: ac.signal }).finally(() => clearTimeout(to));
   }
 
+  // The desktop app loads from http://127.0.0.1 and used to send every API call through a local proxy
+  // in the Electron main process — that round-trip is what made saves slow to settle. Chromium already
+  // trusts the OS cert store (so direct HTTPS works through antivirus interception) and uses HTTP/2, so
+  // we call Cloudflare DIRECTLY. If a direct call can't be made at all (CORS/offline), fall back to the
+  // /api proxy so we're never worse than before. The web build (same origin) just uses relative /api.
+  const ON_DESKTOP = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+  const DIRECT_API_BASE = 'https://inflictor.pages.dev';
+  async function apiFetch(path, init) {
+    const urls = ON_DESKTOP ? [`${DIRECT_API_BASE}/api/${path}`, `/api/${path}`] : [`/api/${path}`];
+    let lastErr;
+    for (let k = 0; k < urls.length; k++) {
+      try { return await fetchWithTimeout(urls[k], init); }
+      catch (e) { lastErr = e; }                   // direct call couldn't be made → try the proxy fallback
+    }
+    throw lastErr;
+  }
+
   // ── Offline queue ─────────────────────────────────────────────
   const OFFLINE_KEY = 'inflictor_offline_queue';
   // A stable key for an idempotent write so repeated saves of the SAME resource collapse to the latest —
@@ -1165,7 +1182,7 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
         try {
           const headers = { 'Content-Type': 'application/json' };
           if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
-          const r = await fetchWithTimeout(`/api/${op.path}`, { method: op.method, headers, body: op.body !== undefined ? JSON.stringify(op.body) : undefined });
+          const r = await apiFetch(op.path, { method: op.method, headers, body: op.body !== undefined ? JSON.stringify(op.body) : undefined });
           ok = r.ok || (r.status >= 400 && r.status < 500);   // 4xx = a bad/duplicate op → drop it, don't retry forever
         } catch { ok = false; }
         if (!ok) break;                           // a write didn't land → stop, keep the rest, retry later (no hammering)
@@ -1193,7 +1210,7 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     const headers = { 'Content-Type': 'application/json' };
     if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
     try {
-      const r = await fetchWithTimeout(`/api/${path}`, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
+      const r = await apiFetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
       const data = await r.json().catch(() => ({}));
       // Flush any queued offline ops now that we're connected (single-flighted, so this can't storm).
       if (r.ok) flushOfflineQueue();
