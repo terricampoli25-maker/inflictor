@@ -1153,6 +1153,20 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   // On window so the Planner-scope handlers (saveSetup/openSetup/…) can reach it.
   window.__act = function __act(label) { __net.log.push(`▶ ${label}`); __hud(); };
 
+  // Tap probe: for each pointer-down log (a) what was tapped, (b) what element is ACTUALLY topmost at
+  // that pixel — reveals an invisible covering element if there is one — and (c) what ended up focused
+  // a tick later — reveals focus being refused/stolen. The single line tells us cover vs focus-block.
+  const __desc = el => !el ? 'null' : (el.tagName.toLowerCase()
+    + (el.id ? '#' + el.id : '')
+    + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/)[0] : ''));
+  document.addEventListener('pointerdown', (e) => {
+    try {
+      const tgt = __desc(e.target);
+      const top = __desc(document.elementFromPoint(e.clientX, e.clientY));
+      setTimeout(() => { __net.log.push(`tap tgt:${tgt} top:${top} foc:${__desc(document.activeElement)}`); __hud(); }, 0);
+    } catch {}
+  }, true);
+
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
   // local server, so one wedged request quickly blocks every later call. Abort after a timeout.
