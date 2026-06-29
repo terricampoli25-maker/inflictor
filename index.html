@@ -1087,6 +1087,32 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   if (S.theme) document.body.classList.add(`theme-${S.theme}`);
   const el = id => document.getElementById(id);
 
+  // ── In-app error reporter ─────────────────────────────────────
+  // Packaged builds can't easily open DevTools, so paint any uncaught error into a red bar on screen.
+  // This is diagnostic — it doesn't change behaviour, only makes a silent crash visible to read back.
+  (function () {
+    const show = (msg) => {
+      let b = document.getElementById('err-probe');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'err-probe';
+        b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#a40000;color:#fff;font:12px/1.45 monospace;padding:.55rem .7rem;white-space:pre-wrap;max-height:45vh;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.6);cursor:pointer';
+        b.addEventListener('click', () => b.remove());
+        (document.body || document.documentElement).appendChild(b);
+      }
+      b.textContent = '⚠ ' + msg + '\n(tap to dismiss)';
+    };
+    window.addEventListener('error', (e) => {
+      const where = e.filename ? ` @ ${String(e.filename).split('/').pop()}:${e.lineno}:${e.colno}` : '';
+      const stack = e.error && e.error.stack ? '\n' + e.error.stack.split('\n').slice(0, 4).join('\n') : '';
+      show((e.message || 'error') + where + stack);
+    });
+    window.addEventListener('unhandledrejection', (e) => {
+      const r = e.reason;
+      show('unhandled promise: ' + ((r && (r.stack || r.message)) || r));
+    });
+  })();
+
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
   // local server, so one wedged request quickly blocks every later call. Abort after a timeout.
