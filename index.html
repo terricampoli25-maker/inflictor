@@ -1139,7 +1139,7 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
         .filter(id => { const e = document.getElementById(id); return e && (e.classList.contains('visible') || (!e.classList.contains('gone') && getComputedStyle(e).display !== 'none')); });
       if (open.length) ovl = open.map(s => s.replace('-overlay','')).join(',');
     } catch {}
-    const head = `q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}  inflight:${inflight}  ovl:${ovl}`;
+    const head = `docFocus:${document.hasFocus()}  ovl:${ovl}  q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}`;
     h.textContent = h.dataset.exp === '1' ? head + '\n' + __net.log.slice(-16).join('\n') : head + '  (tap)';
   };
   // Long-task detector: if the JS thread blocks for >120ms, log it with its duration. If the freeze
@@ -1172,6 +1172,13 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   //  NO KEY lines at all     → keystrokes never reach the renderer = window keyboard-focus issue.
   document.addEventListener('keydown', (e) => { try { __net.log.push(`KEY ${e.key} tgt:${__desc(e.target)}`); __hud(); } catch {} }, true);
   document.addEventListener('input',   (e) => { try { __net.log.push(`INPUT "${(e.target && e.target.value || '').slice(0,12)}"`); __hud(); } catch {} }, true);
+  // Keep the focus indicator live. When the user clicks an INACTIVE window (the can't-type state),
+  // try to pull the window back to the foreground so a caret can appear and typing resumes.
+  window.addEventListener('focus', () => __hud());
+  window.addEventListener('blur',  () => __hud());
+  document.addEventListener('pointerdown', () => {
+    if (!document.hasFocus()) { try { window.focus(); } catch {} __net.log.push('!! window INACTIVE on click — tried window.focus()'); __hud(); }
+  }, true);
 
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
@@ -1898,7 +1905,7 @@ window.Planner = (() => {
     const btn = document.getElementById('report-email-btn'); if (btn) { btn.disabled=true; btn.textContent='Sending…'; }
     const { ok, data } = await api('report-email', { method:'POST', body:{ body: txt, period: "This Week's Report" } });
     if (btn) { btn.disabled=false; btn.textContent='✉ Email it to me'; }
-    alert(ok ? `Report emailed to ${data.sent_to || 'your address'}. 🎭` : (data.error || 'Could not send the report.'));
+    appNotify(ok ? `Report emailed to ${data.sent_to || 'your address'}. 🎭` : (data.error || 'Could not send the report.'));
   }
 
   // ── Single-activity editor (this day only — edit a duration/time after the fact) ──
@@ -2825,7 +2832,7 @@ window.Planner = (() => {
     // individually customized (custom:true). Those persist until the user edits that day again.
     // Emptying the whole box and saving = a deliberate "clear everything" — this DOES wipe customized days.
     const wipeAll = activities.length === 0;
-    if (wipeAll && !confirm("Clear this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.")) return;
+    if (wipeAll && !(await appConfirm("Clear this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.", 'Clear'))) return;
     const windowDs = new Set(days.map(d=>toISO(d)));
     const ops = [ () => api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
     for (const d of days) {
@@ -2863,10 +2870,37 @@ window.Planner = (() => {
     for (let i = 0; i < limit; i++) run();
   }
 
+  // In-app confirm/notify that NEVER spawn a native Windows dialog. Native dialogs can leave the window
+  // unable to take keyboard input (no caret) afterward — these are plain DOM, so they don't touch focus.
+  function appConfirm(message, okLabel = 'Yes') {
+    return new Promise((resolve) => {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)';
+      const box = document.createElement('div');
+      box.style.cssText = 'background:var(--surface,#1b1b1f);color:var(--text,#eee);border:1px solid var(--border,#555);border-radius:6px;padding:1.5rem 1.6rem;width:min(440px,92vw);box-shadow:0 24px 80px rgba(0,0,0,.55);font-family:Georgia,serif;line-height:1.5';
+      const msg = document.createElement('div'); msg.textContent = message; msg.style.marginBottom = '1.3rem';
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:.6rem;justify-content:flex-end';
+      const mk = (label, primary) => { const b = document.createElement('button'); b.textContent = label; b.style.cssText = `padding:.5rem 1.1rem;border-radius:4px;cursor:pointer;font-family:inherit;font-size:.9rem;border:1px solid var(--border,#555);background:${primary ? 'var(--accent,#3b82f6)' : 'transparent'};color:${primary ? '#fff' : 'var(--text,#eee)'}`; return b; };
+      const cancel = mk('Cancel', false), ok = mk(okLabel, true);
+      const done = (val) => { try { ov.remove(); } catch {} resolve(val); };
+      cancel.addEventListener('click', () => done(false));
+      ok.addEventListener('click', () => done(true));
+      row.append(cancel, ok); box.append(msg, row); ov.append(box);
+      document.body.appendChild(ov);
+    });
+  }
+  function appNotify(message) {
+    const t = document.createElement('div');
+    t.textContent = message;
+    t.style.cssText = 'position:fixed;left:50%;bottom:2.2rem;transform:translateX(-50%);z-index:200;background:var(--surface,#1b1b1f);color:var(--text,#eee);border:1px solid var(--border,#555);border-radius:6px;padding:.7rem 1.1rem;box-shadow:0 16px 50px rgba(0,0,0,.5);font-family:Georgia,serif;max-width:90vw;text-align:center';
+    document.body.appendChild(t);
+    setTimeout(() => { try { t.remove(); } catch {} }, 4500);
+  }
+
   // "Clear Everything" — a hard reset that reaches days the box can't show (customized days, anytime, etc.).
   async function clearEverything() {
     __act('clearEverything');
-    if (!confirm("Erase this week's schedule so you can rebuild it? Your PAST days and everything you've logged are kept — only today onward is cleared.")) return;
+    if (!(await appConfirm("Erase this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.", 'Erase'))) return;
     const wakeTime = '07:00', empty = { wake_time: wakeTime, activities: [] };
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
     // Every date we know about: the visible window, customized days, and whatever overrides are loaded.
