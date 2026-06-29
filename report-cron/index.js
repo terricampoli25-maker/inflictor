@@ -47,7 +47,7 @@ async function computeReport(db, uid, start, numDays) {
     for (const a of acts) {
       const st=status[`${ds}:${a.id}`]||status[`${ds}:${a.name}`], timing=a.timing||'flexible';
       if (timing==='sustenance') { const c=cals[`${ds}:cal:${a.id}`]||0; if(c)dayCal+=c; if(st==='completed'||c) items.push({type:'sus',name:a.name||'snack',calories:c}); continue; }
-      if (timing==='med') continue;                            // reminders aren't activity time
+      if (timing==='med') { if (a.with_food) { const c=cals[`${ds}:cal:${a.id}`]||0; if(c)dayCal+=c; } continue; }   // a med is a moment, not activity time; only its with-food calories count (med name stays private)
       if (st==='completed') done++; else if (st==='failed') { missed++; continue; }
       if (st!=='completed') continue;
       if (timing==='anytime') { items.push({type:'anytime',name:a.name}); continue; }

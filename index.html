@@ -1676,11 +1676,16 @@ window.Planner = (() => {
           if (status === 'completed' || cal) lines.push(`<div class="rpt-line rpt-sus">🍴 ${esc(a.name||'snack')}${cal?` · <span class="sus-cal">🔥${cal}</span>`:''}</div>`);
           continue;
         }
-        if (timing === 'med') {                               // reminders: optional, only if the user opted in
+        if (timing === 'med') {                               // medications: optional, only if the user opted in
+          // With-food calories count toward the day's total. Privacy: a Reminder-display med shows the
+          // discreet label, never the med name.
+          const mcal = a.with_food ? getCalories(ds, a.id) : 0;
+          if (mcal) dayCal += mcal;
           if (!showMeds) continue;
+          const mlbl = a.med_display === 'ribbon' ? ((a.display_label||'').trim() || 'Reminder') : (a.name||'Medication');
           weekMedsTotal++;
-          if (status === 'completed') { weekMedsTaken++; lines.push(`<div class="rpt-line">${medIcon(a)} ${esc(a.name||'Reminder')} · ✓ taken</div>`); }
-          else lines.push(`<div class="rpt-line" style="opacity:.6">${medIcon(a)} ${esc(a.name||'Reminder')} · not taken</div>`);
+          if (status === 'completed') { weekMedsTaken++; lines.push(`<div class="rpt-line">${medIcon(a)} ${esc(mlbl)} · ✓ taken${mcal?` · <span class="sus-cal">🔥${mcal}</span>`:''}</div>`); }
+          else lines.push(`<div class="rpt-line" style="opacity:.6">${medIcon(a)} ${esc(mlbl)} · not taken</div>`);
           continue;
         }
         if (status === 'completed') weekDone++; else if (status === 'failed') { weekMissed++; continue; }
@@ -1718,7 +1723,7 @@ window.Planner = (() => {
       for (const a of acts) {
         const status = taskStatus[`${ds}:${a.id}`], timing = a.timing||'flexible';
         if (timing==='sustenance') { const cal=getCalories(ds,a.id); if(cal)dayCal+=cal; if(status==='completed'||cal) lines.push(`  🍴 ${a.name||'snack'}${cal?` · ${cal} cal`:''}`); continue; }
-        if (timing==='med') { if(!showMeds) continue; weekMedsTotal++; if(status==='completed'){weekMedsTaken++; lines.push(`  ${medIcon(a)} ${a.name||'Reminder'} · taken`);} else lines.push(`  ${medIcon(a)} ${a.name||'Reminder'} · not taken`); continue; }
+        if (timing==='med') { const mcal=a.with_food?getCalories(ds,a.id):0; if(mcal)dayCal+=mcal; if(!showMeds) continue; const mlbl=a.med_display==='ribbon'?((a.display_label||'').trim()||'Reminder'):(a.name||'Medication'); weekMedsTotal++; if(status==='completed'){weekMedsTaken++; lines.push(`  ${medIcon(a)} ${mlbl} · taken${mcal?` · ${mcal} cal`:''}`);} else lines.push(`  ${medIcon(a)} ${mlbl} · not taken`); continue; }
         if (status==='completed') weekDone++; else if (status==='failed') { weekMissed++; continue; }
         if (status!=='completed') continue;
         if (timing==='anytime') { lines.push(`  • ${a.name} · done`); continue; }
@@ -2211,8 +2216,11 @@ window.Planner = (() => {
           </div></div>`;
       }
       if (p.med) {                                             // Reminder (🎗️) / medication (💊) — thin one-liner, taken/not checks
-        const lbl = (act.name||'').trim() || 'Reminder';
-        const dose = (getMemo(ds, act.id)||'').trim();
+        // Privacy: a Reminder-display med on its own card shows the user's discreet label, NEVER the med
+        // name or dose. A Split med with nothing to split shows its real name + dose.
+        const ribbon = act.med_display === 'ribbon';
+        const lbl = ribbon ? ((act.display_label||'').trim() || 'Reminder') : ((act.name||'').trim() || 'Medication');
+        const dose = ribbon ? '' : (getMemo(ds, act.id)||'').trim();
         const medStatus = status;
         return `<div class="slot slot-med slot-${medStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">
           <div class="sus-row">
@@ -2236,8 +2244,8 @@ window.Planner = (() => {
         const mt = times[m.id]?.start ?? p.s;
         const top = Math.max(2, Math.min(px-16, Math.round((mt-p.s)/Math.max(1,(p.e-p.s))*px)));
         const mst = taskStatus[`${ds}:${m.id}`]||'none';
-        const mdose = (getMemo(ds, m.id)||'').trim();
-        return `<button class="med-ribbon${mst==='completed'?' taken':''}${mst==='failed'?' missed':''}" style="top:${top}px" onclick="event.stopPropagation();Planner.toggleMedTaken('${esc(ds)}','${esc(m.id)}')" title="${esc((m.name||'Reminder').trim())} · ${fmtClock(mt)}${mdose?` · ${esc(mdose)}`:''} — click to mark taken">${medIcon(m)}</button>`;
+        const mlbl = (m.display_label||'').trim() || 'Reminder';   // privacy: the badge reveals only the discreet label, never the med name
+        return `<button class="med-ribbon${mst==='completed'?' taken':''}${mst==='failed'?' missed':''}" style="top:${top}px" onclick="event.stopPropagation();Planner.toggleMedTaken('${esc(ds)}','${esc(m.id)}')" title="${esc(mlbl)} · ${fmtClock(mt)} — click to mark taken">${medIcon(m)}</button>`;
       }).join('');
       if (p.cont) {                                           // 2nd+ part of a split activity — its OWN done/skip, tracked independently
         return `<div class="slot slot-cont slot-${segStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(segKey)}">${ribbonHtml}
