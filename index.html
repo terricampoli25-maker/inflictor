@@ -1117,8 +1117,11 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   // A small on-screen readout of what the app is actually DOING, so a freeze can be seen, not guessed.
   // q = pending writes, api done/started (+fails), how many calls went direct vs proxy, render count,
   // inflight = calls still waiting. Tap it to expand the last requests with status + timing.
-  const __net = { started: 0, done: 0, failed: 0, direct: 0, proxy: 0, renders: 0, log: [] };
-  function __hud() {
+  // Global (on window) so BOTH module scopes — the auth/api IIFE and the Planner IIFE where render()
+  // lives — can reach them. A plain const here is only visible to this IIFE, which made render() throw.
+  window.__net = window.__net || { started: 0, done: 0, failed: 0, direct: 0, proxy: 0, renders: 0, log: [] };
+  const __net = window.__net;
+  window.__hud = function __hud() {
     let h = document.getElementById('net-hud');
     if (!h) {
       h = document.createElement('div');
@@ -1131,7 +1134,7 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     const inflight = __net.started - __net.done - __net.failed;
     const head = `q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}  inflight:${inflight}`;
     h.textContent = h.dataset.exp === '1' ? head + '\n' + __net.log.slice(-14).join('\n') : head + '  (tap)';
-  }
+  };
 
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
