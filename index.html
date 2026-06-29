@@ -1766,7 +1766,8 @@ window.Planner = (() => {
       display_label: a.display_label || '',        // discreet label shown when a Reminder-display med isn't during an activity (hides the med name)
       med_display: a.med_display === 'split' ? 'split' : 'ribbon',   // default = Reminder (ribbon) for privacy
       med_notify: !!a.med_notify,
-      med_kind: a.med_kind === 'medication' ? 'medication' : 'reminder'
+      med_kind: a.med_kind === 'medication' ? 'medication' : 'reminder',
+      reminder: !!a.reminder                       // plain (non-med) reminder flag → 🎗️ on the card
     };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
@@ -1774,7 +1775,7 @@ window.Planner = (() => {
   }
   // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
   function openActAdd(ds) {
-    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_start: false, chime_end: false, food: '', cal: '', dose: '', with_food: false, display_label: '', med_display: 'ribbon', med_notify: false, med_kind: 'reminder' };
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_start: false, chime_end: false, food: '', cal: '', dose: '', with_food: false, display_label: '', med_display: 'ribbon', med_notify: false, med_kind: 'reminder', reminder: false };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
@@ -1804,7 +1805,7 @@ window.Planner = (() => {
         ? `<div class="act-fixed-group"><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="When you ate"><span class="dur-unit">for</span><input class="dur-num" id="ae-hours" type="number" min="0" max="5" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span></div>`
         : a.timing==='med'
         ? `<div class="act-fixed-group"><span class="dur-unit">at</span><input class="fixed-tt" id="ae-start" type="time" value="${esc(a.fixed_start)}" title="Time to take it"></div>`
-        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}${a.timing==='med' ? `<div style="margin-top:.7rem"><input class="form-input" id="ae-meddose" type="text" maxlength="120" placeholder="Dose / notes (optional) — e.g. 1 tablet, 20mg" value="${esc(a.dose||'')}" style="width:100%;margin-bottom:.5rem"><label class="act-undet-chk" style="margin-bottom:.5rem"><input type="checkbox" id="ae-withfood" ${a.with_food?'checked':''} onchange="Planner.actEditWithFood(this.checked)"> 🍴 Taken with food</label>${a.with_food ? `<input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="What food, today — e.g. crackers" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — optional, counts if filled" value="${esc(a.cal||'')}" style="width:100%;margin-bottom:.5rem">` : ''}<div class="actedit-sub" style="margin-bottom:.35rem">How it shows on the day — pick one:</div><label class="act-undet-chk"><input type="checkbox" id="ae-medsplit" ${a.med_display==='split'?'checked':''} onchange="Planner.actEditMedDisplay('split')"> Split — splits the activity, shows the med name</label><label class="act-undet-chk"><input type="checkbox" id="ae-medreminder" ${a.med_display!=='split'?'checked':''} onchange="Planner.actEditMedDisplay('ribbon')"> Reminder — a discreet 🎗️; its own card shows your label, not the med name</label>${a.med_display!=='split' ? `<input class="form-input" id="ae-medlabel" type="text" maxlength="40" placeholder="Discreet label to show — e.g. Reminder" value="${esc(a.display_label||'')}" style="width:100%;margin-top:.5rem">` : ''}<label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-mednotify" ${a.med_notify?'checked':''}> 🔔 Remind me at this time</label></div>` : ''}${(a.timing==='fixed'||a.timing==='flexible'||a.timing==='sustenance') ? `<div class="chime-pop" style="margin-top:.7rem"><span class="chime-pop-lbl">Chime at:</span><label><input type="checkbox" ${a.chime_start?'checked':''} onchange="Planner.actEditSetChime('start',this.checked)"> Start</label><label><input type="checkbox" ${a.chime_end?'checked':''} onchange="Planner.actEditSetChime('end',this.checked)"> End</label></div>` : ''}`;
+        : `<div class="act-dur-group"><input class="dur-num" id="ae-hours" type="number" min="0" max="23" value="${a.hours}"><span class="dur-unit">h</span><input class="dur-num" id="ae-mins" type="number" min="0" max="59" value="${a.mins}"><span class="dur-unit">m</span><span class="dur-unit" style="margin-left:.6rem">about when (optional):</span><input class="goal-tt" id="ae-goal" type="time" value="${esc(a.goal_time)}"><span class="goal-ish">-ish</span></div>`}</div>${a.timing==='sustenance' ? `<div style="margin-top:.7rem"><div class="actedit-sub" style="margin-bottom:.35rem">The sustenance and its calories — both optional.</div><input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — e.g. 350" value="${esc(a.cal||'')}" style="width:100%"></div>` : ''}${a.timing==='med' ? `<div style="margin-top:.7rem"><input class="form-input" id="ae-meddose" type="text" maxlength="120" placeholder="Dose / notes (optional) — e.g. 1 tablet, 20mg" value="${esc(a.dose||'')}" style="width:100%;margin-bottom:.5rem"><label class="act-undet-chk" style="margin-bottom:.5rem"><input type="checkbox" id="ae-withfood" ${a.with_food?'checked':''} onchange="Planner.actEditWithFood(this.checked)"> 🍴 Taken with food</label>${a.with_food ? `<input class="form-input" id="ae-food" type="text" maxlength="120" placeholder="What food, today — e.g. crackers" value="${esc(a.food||'')}" style="width:100%;margin-bottom:.5rem"><input class="form-input" id="ae-cal" type="number" min="0" max="9999" inputmode="numeric" placeholder="Calories — optional, counts if filled" value="${esc(a.cal||'')}" style="width:100%;margin-bottom:.5rem">` : ''}<div class="actedit-sub" style="margin-bottom:.35rem">How it shows on the day — pick one:</div><label class="act-undet-chk"><input type="checkbox" id="ae-medsplit" ${a.med_display==='split'?'checked':''} onchange="Planner.actEditMedDisplay('split')"> Split — splits the activity, shows the med name</label><label class="act-undet-chk"><input type="checkbox" id="ae-medreminder" ${a.med_display!=='split'?'checked':''} onchange="Planner.actEditMedDisplay('ribbon')"> Reminder — a discreet 🎗️; its own card shows your label, not the med name</label>${a.med_display!=='split' ? `<input class="form-input" id="ae-medlabel" type="text" maxlength="40" placeholder="Discreet label to show — e.g. Reminder" value="${esc(a.display_label||'')}" style="width:100%;margin-top:.5rem">` : ''}<label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-mednotify" ${a.med_notify?'checked':''}> 🔔 Remind me at this time</label></div>` : ''}${(a.timing!=='med'&&a.timing!=='sustenance') ? `<label class="act-undet-chk" style="margin-top:.55rem"><input type="checkbox" id="ae-reminder" ${a.reminder?'checked':''}> 🎗️ Reminder — shows a 🎗️ on the day (separate from medications)</label>` : ''}${(a.timing==='fixed'||a.timing==='flexible'||a.timing==='sustenance') ? `<div class="chime-pop" style="margin-top:.7rem"><span class="chime-pop-lbl">Chime at:</span><label><input type="checkbox" ${a.chime_start?'checked':''} onchange="Planner.actEditSetChime('start',this.checked)"> Start</label><label><input type="checkbox" ${a.chime_end?'checked':''} onchange="Planner.actEditSetChime('end',this.checked)"> End</label></div>` : ''}`;
   }
   function actEditCapture() {
     if (!actEdit) return;
@@ -1821,6 +1822,7 @@ window.Planner = (() => {
     if (g('ae-medlabel')) actEdit.display_label = g('ae-medlabel').value;
     if (g('ae-withfood')) actEdit.with_food = g('ae-withfood').checked;
     if (g('ae-mednotify')) actEdit.med_notify = g('ae-mednotify').checked;
+    if (g('ae-reminder')) actEdit.reminder = g('ae-reminder').checked;
   }
   function actEditMedDisplay(mode) { actEditCapture(); actEdit.med_display = (mode==='ribbon'?'ribbon':'split'); renderActEdit(); }
   function actEditWithFood(checked) { actEditCapture(); actEdit.with_food = checked; renderActEdit(); }
@@ -1875,7 +1877,8 @@ window.Planner = (() => {
       med_notify:  timing === 'med' ? !!a.med_notify : undefined,
       med_kind:    timing === 'med' ? 'medication' : undefined,
       with_food:   timing === 'med' ? !!a.with_food : undefined,
-      display_label: timing === 'med' && a.display_label ? a.display_label.trim() : undefined
+      display_label: timing === 'med' && a.display_label ? a.display_label.trim() : undefined,
+      reminder:    (timing !== 'med' && timing !== 'sustenance' && a.reminder) ? true : undefined
     };
   }
   // Save to THIS day only (a per-date custom override).
@@ -2249,7 +2252,7 @@ window.Planner = (() => {
       }).join('');
       if (p.cont) {                                           // 2nd+ part of a split activity — its OWN done/skip, tracked independently
         return `<div class="slot slot-cont slot-${segStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(segKey)}">${ribbonHtml}
-          <div class="slot-info"><div class="slot-name">↳ ${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}</div>
+          <div class="slot-info"><div class="slot-name">↳ ${act.reminder?'🎗️ ':''}${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}</div>
           <div class="slot-indicators">
             <span class="slot-check-group">
               <input type="checkbox" class="slot-chk-complete" ${segStatus==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(segId)}','${esc(act.name)}','completed',this.checked)" title="Completed this part">
@@ -2259,7 +2262,7 @@ window.Planner = (() => {
       }
       const isChecked = pausedSlotKeys.has(key);
       return `<div class="slot slot-${status}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(key)}">${ribbonHtml}
-        <div class="slot-info"><div class="slot-name">${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&(act.chime_start||act.chime_end)?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
+        <div class="slot-info"><div class="slot-name">${act.reminder?'🎗️ ':''}${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}<div class="slot-dur">${act.undetermined?'length unknown':fmtDur(segMin)}${notifEnabled&&(act.chime_start||act.chime_end)?'<span class="slot-bell" title="Chime set">🔔</span>':''}</div></div>
         <div class="slot-indicators">
           <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
@@ -2279,7 +2282,7 @@ window.Planner = (() => {
         ? `<span class="anytime-dur" style="font-style:italic">length unknown</span>`
         : (act.goal_time ? `<span class="anytime-dur">~${fmtClock(parseTime(act.goal_time))}</span>` : '') + (act.duration_minutes ? `<span class="anytime-dur">${fmtDur(act.duration_minutes)}</span>` : '');
       return `<div class="anytime-item slot-${status}" data-key="${esc(key)}">
-        <div class="anytime-name-row"><span class="anytime-name">${esc(act.name)}</span>${durLabel}</div>
+        <div class="anytime-name-row"><span class="anytime-name">${act.reminder?'🎗️ ':''}${esc(act.name)}</span>${durLabel}</div>
         <div class="slot-indicators">
           <button class="slot-edit-btn" onclick="Planner.openActEdit('${esc(ds)}','${esc(act.id)}')" title="Edit just this activity (this day only)">✎</button>
           <button class="slot-memo-btn${hasMemo?' has-memo':''}" onclick="Planner.openMemo('${ds}','${esc(act.id)}')" title="${hasMemo?'Memo — click to view or edit':'Add a memo'}">M</button>
@@ -2467,6 +2470,7 @@ window.Planner = (() => {
       fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
       med_display: a.med_display === 'split' ? 'split' : 'ribbon', med_notify: !!a.med_notify,
       med_kind: 'medication', with_food: !!a.with_food, display_label: a.display_label || '',
+      reminder: !!a.reminder,
       days: Array.isArray(a.days) ? a.days.slice() : Array(7).fill(true)
     }));
     if (!setup.activities.length) addAct();
@@ -2519,7 +2523,7 @@ window.Planner = (() => {
             ? `<div class="act-fixed-group"><span class="dur-unit">at</span><input class="fixed-tt fixed-start" type="time" value="${esc(act.fixed_start||'')}" title="Time to take it"></div>`
             : `<div class="act-dur-group"><input class="dur-num" type="number" min="0" max="23" value="${act.hours}"><span class="dur-unit">h</span><input class="dur-num" type="number" min="0" max="59" value="${act.mins}"><span class="dur-unit">m</span></div>`}
         </div>
-        ${act.timing!=='sustenance' && act.timing!=='med' ? `<div class="act-unsure-row"><label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label></div>` : ''}
+        ${act.timing!=='sustenance' && act.timing!=='med' ? `<div class="act-unsure-row"><label class="act-undet-chk" title="A plain reminder — shows a 🎗️ on the day (separate from medications)"><input type="checkbox" ${act.reminder?'checked':''} onchange="Planner.setReminder('${act.id}',this.checked)"> 🎗️ reminder</label><label class="act-undet-chk" style="margin-left:.6rem" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label></div>` : ''}
         ${act.timing==='sustenance' && setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}
         ${act.timing==='med' ? `<div class="act-med-opts"><span class="act-med-label">Shows as:</span><label class="act-undet-chk"><input type="checkbox" ${act.med_display==='split'?'checked':''} onchange="Planner.setMedDisplay('${act.id}','split')"> Split</label><label class="act-undet-chk"><input type="checkbox" ${act.med_display!=='split'?'checked':''} onchange="Planner.setMedDisplay('${act.id}','ribbon')"> Reminder</label><label class="act-undet-chk"><input type="checkbox" ${act.with_food?'checked':''} onchange="Planner.setMedWithFood('${act.id}',this.checked)"> 🍴 food</label><label class="act-undet-chk" style="margin-left:auto"><input type="checkbox" ${act.med_notify?'checked':''} onchange="Planner.setMedNotify('${act.id}',this.checked)"> 🔔 Remind</label></div>${act.med_display!=='split' ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="40" placeholder="Discreet label — e.g. Reminder" value="${esc(act.display_label||'')}" onchange="Planner.setMedLabel('${act.id}',this.value)" style="width:100%"></div>` : ''}${setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Dose / notes — e.g. 1 tablet" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"></div>${act.with_food ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Food today — e.g. crackers" value="${esc(getMemo(setup.editingDate, 'food:'+act.id))}" onchange="Planner.setupMedFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}` : ''}` : ''}
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
@@ -2599,6 +2603,7 @@ window.Planner = (() => {
   function setMedLabel(id,v) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.display_label=v; }
   function setupMedFood(id,v) { if (setup.editingDate) setMemo(setup.editingDate, 'food:'+id, (v||'').trim()); }
   function toggleUndet(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.undetermined=checked; renderActs(); }
+  function setReminder(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.reminder=checked; renderActs(); }
   function moveAct(id,dir) {
     captureDOM(); const idx=setup.activities.findIndex(a=>a.id===id), swap=idx+dir;
     if(idx<0||swap<0||swap>=setup.activities.length) return;
@@ -2627,6 +2632,7 @@ window.Planner = (() => {
         med_kind:    timing==='med' ? 'medication' : undefined,
         with_food:   timing==='med' ? !!a.with_food : undefined,
         display_label: timing==='med' && a.display_label ? a.display_label.trim() : undefined,
+        reminder:    (timing!=='med' && timing!=='sustenance' && a.reminder) ? true : undefined,
         days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
     });
   }
@@ -2768,7 +2774,7 @@ window.Planner = (() => {
   return {
     init, render,
     openSetup, closeSetup,
-    addActivity: addAct, removeAct, setColor, setTiming, toggleUndet, setActDay, moveAct, onActName, onActName,
+    addActivity: addAct, removeAct, setColor, setTiming, toggleUndet, setReminder, setActDay, moveAct, onActName, onActName,
     setupMealFood, setupMealCal, setupMedFood, setMedDisplay, setMedNotify, setMedWithFood, setMedLabel,
     toggleDay, selectAllDays, selectWeekdays,
     saveSetup, saveDay, clearEverything, setStatus, toggleMedTaken, toggleChimePicker, setChime,
