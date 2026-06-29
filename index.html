@@ -1113,6 +1113,26 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     });
   })();
 
+  // ── Live network HUD (temporary diagnostic) ───────────────────
+  // A small on-screen readout of what the app is actually DOING, so a freeze can be seen, not guessed.
+  // q = pending writes, api done/started (+fails), how many calls went direct vs proxy, render count,
+  // inflight = calls still waiting. Tap it to expand the last requests with status + timing.
+  const __net = { started: 0, done: 0, failed: 0, direct: 0, proxy: 0, renders: 0, log: [] };
+  function __hud() {
+    let h = document.getElementById('net-hud');
+    if (!h) {
+      h = document.createElement('div');
+      h.id = 'net-hud';
+      h.style.cssText = 'position:fixed;bottom:0;right:0;z-index:99998;background:rgba(0,0,0,.85);color:#8f8;font:11px/1.35 monospace;padding:.35rem .5rem;max-width:72vw;max-height:42vh;overflow:auto;white-space:pre-wrap;cursor:pointer;border-top-left-radius:6px';
+      h.addEventListener('click', () => { h.dataset.exp = h.dataset.exp === '1' ? '0' : '1'; __hud(); });
+      (document.body || document.documentElement).appendChild(h);
+    }
+    let q = 0; try { q = JSON.parse(localStorage.getItem('inflictor_offline_queue') || '[]').length; } catch {}
+    const inflight = __net.started - __net.done - __net.failed;
+    const head = `q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}  inflight:${inflight}`;
+    h.textContent = h.dataset.exp === '1' ? head + '\n' + __net.log.slice(-14).join('\n') : head + '  (tap)';
+  }
+
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
   // local server, so one wedged request quickly blocks every later call. Abort after a timeout.
@@ -1131,11 +1151,24 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   const ON_DESKTOP = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
   const DIRECT_API_BASE = 'https://inflictor.pages.dev';
   async function apiFetch(path, init) {
-    const urls = ON_DESKTOP ? [`${DIRECT_API_BASE}/api/${path}`, `/api/${path}`] : [`/api/${path}`];
+    const urls = ON_DESKTOP ? [[`${DIRECT_API_BASE}/api/${path}`, 'direct'], [`/api/${path}`, 'proxy']] : [[`/api/${path}`, 'web']];
     let lastErr;
     for (let k = 0; k < urls.length; k++) {
-      try { return await fetchWithTimeout(urls[k], init); }
-      catch (e) { lastErr = e; }                   // direct call couldn't be made → try the proxy fallback
+      const [url, kind] = urls[k];
+      const t0 = (performance && performance.now) ? performance.now() : Date.now();
+      try {
+        const r = await fetchWithTimeout(url, init);
+        const ms = Math.round(((performance && performance.now) ? performance.now() : Date.now()) - t0);
+        if (kind === 'direct') __net.direct++; else if (kind === 'proxy') __net.proxy++;
+        __net.log.push(`${(init && init.method) || 'GET'} ${path} ${kind} ${r.status} ${ms}ms`);
+        __hud();
+        return r;
+      } catch (e) {
+        const ms = Math.round(((performance && performance.now) ? performance.now() : Date.now()) - t0);
+        __net.log.push(`${(init && init.method) || 'GET'} ${path} ${kind} ERR ${ms}ms`);
+        __hud();
+        lastErr = e;                               // direct call couldn't be made → try the proxy fallback
+      }
     }
     throw lastErr;
   }
@@ -1207,15 +1240,18 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   window.addEventListener('offline', () => showOfflineBanner(true));
 
   async function api(path, opts = {}) {
+    __net.started++; __hud();
     const headers = { 'Content-Type': 'application/json' };
     if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
     try {
       const r = await apiFetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
       const data = await r.json().catch(() => ({}));
+      __net.done++; __hud();
       // Flush any queued offline ops now that we're connected (single-flighted, so this can't storm).
       if (r.ok) flushOfflineQueue();
       return { ok: r.ok, status: r.status, data };
     } catch {
+      __net.failed++; __hud();
       // Timed out or unreachable — queue write operations; reads just fail gracefully.
       if (opts.method && opts.method !== 'GET') enqueueOffline(path, opts);
       return { ok: false, status: 0, data: { error: 'Could not reach the stage.' } };
@@ -2134,6 +2170,7 @@ window.Planner = (() => {
 
   // ── Render ─────────────────────────────────────────────────────
   function render() {
+    __net.renders++; __hud();
     const days = getWeekDays();
     const s = days[0], e = days[6];
     const sLabel=s.toLocaleDateString('en-GB',{day:'numeric',month:'short'}), eLabel=e.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
