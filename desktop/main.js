@@ -8,6 +8,12 @@ const { ACTIVATION_ENABLED } = require('./activation');
 const CLOUDFLARE_API = 'https://inflictor.pages.dev';
 const APP_DIR        = path.join(__dirname, 'app');
 
+// Safety net: a stray error in the main process should never throw Electron's raw
+// "A JavaScript error occurred in the main process" dialog at a user. Log it (visible
+// when run from a console) and keep going. Renderer errors still surface in DevTools.
+process.on('uncaughtException',  (err)    => console.error('[uncaughtException]', err));
+process.on('unhandledRejection', (reason) => console.error('[unhandledRejection]', reason));
+
 const MIME = {
   '.html':'text/html', '.js':'application/javascript', '.css':'text/css',
   '.png':'image/png',  '.jpg':'image/jpeg',  '.ico':'image/x-icon',
@@ -82,6 +88,18 @@ function startServer(callback) {
       res.end(data);
     });
   });
+  // Bind the fixed port; if it's momentarily taken (an old copy lingering during an upgrade, or a
+  // sandbox like Norton Cyber Capture), fall back to any free port instead of throwing an uncaught
+  // "A JavaScript error occurred" dialog at the user. The window uses whatever port we report back.
+  let triedFallback = false;
+  srv.on('error', (err) => {
+    if (!triedFallback && err && err.code === 'EADDRINUSE') {
+      triedFallback = true;
+      srv.listen(0, '127.0.0.1', () => callback(srv.address().port));   // 0 = any free port
+    } else {
+      console.error('[STATIC SERVER ERROR]', (err && (err.code || err.message)) || err);
+    }
+  });
   srv.listen(37842, '127.0.0.1', () => callback(srv.address().port));
 }
 
@@ -92,15 +110,15 @@ function createMainWindow(startHidden) {
     title: 'The Inflictor',
     show: !startHidden,
     icon: path.join(__dirname, '../icons/inflictor.ico'),
-    webPreferences: { nodeIntegration: false, contextIsolation: true },
+    webPreferences: { nodeIntegration: false, contextIsolation: true, backgroundThrottling: false },
   });
   mainWin.loadURL(`http://127.0.0.1:${staticPort}/`);
   mainWin.setMenuBarVisibility(false);
   mainWin.on('closed', () => { mainWin = null; });
-  // MINIMIZE tucks the app into the tray (window vanishes, app keeps running so reminders still
-  // fire). CLOSING the window quits normally — important so an installer can actually close the
-  // app to replace it. Persistent background = minimize, or the tray's "Start with Windows".
-  mainWin.on('minimize', (e) => { if (trayReady) { e.preventDefault(); mainWin.hide(); } });
+  // MINIMIZE goes to the taskbar normally — the app keeps running there (so reminders still fire) and
+  // it's one click to grab back. CLOSING (X) tucks it into the tray instead of quitting, so it keeps
+  // running in the background for reminders. Actually quitting is the tray's "Quit" (sets isQuitting).
+  mainWin.on('close', (e) => { if (!isQuitting && trayReady) { e.preventDefault(); mainWin.hide(); } });
 }
 
 // Bring the (possibly hidden) main window back, or recreate it.
@@ -185,8 +203,8 @@ ipcMain.on('activation-failed-permanently', () => {
   app.quit();
 });
 
-// Closing the window quits (so installers/updaters can close the app). Background reminders come
-// from MINIMIZING to the tray or "Start with Windows" — the window stays alive there, just hidden.
+// X now hides to the tray (see the window's 'close' handler), so the app keeps running for reminders.
+// This only fires on a REAL quit — the tray's "Quit" sets isQuitting and lets the window actually close.
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
 app.on('before-quit', () => { isQuitting = true; });
 app.on('activate', () => {

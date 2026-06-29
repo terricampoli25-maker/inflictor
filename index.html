@@ -52,10 +52,7 @@
     .ah-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:.72rem;font-weight:700;color:#0d0a00;flex-shrink:0;cursor:pointer;transition:transform .2s}
     .ah-avatar:hover{transform:scale(1.1)}
 
-    /* ── Upgrade overlay ──────────────────────────────────────── */
-    #upgrade-overlay{position:fixed;inset:0;z-index:65;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.48);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .4s ease}
-    #upgrade-overlay.visible{opacity:1;pointer-events:all}
-    #upgrade-overlay.gone{display:none}
+    /* ── Paywall overlay ──────────────────────────────────────── */
     #paywall-overlay{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:1.5rem;background:rgba(6,2,4,.93);backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .4s ease}
     #paywall-overlay.visible{opacity:1;pointer-events:all}
     #paywall-overlay.gone{display:none}
@@ -65,11 +62,6 @@
     .paywall-box .btn{display:block;width:100%;margin:.4rem 0}
     .paywall-msg{font-size:.82rem;margin-top:.8rem;min-height:1.1em;color:var(--text-muted,#9a7838)}
     .paywall-msg.error{color:#c46b6b}
-    .upgrade-box{background:var(--surface);backdrop-filter:blur(22px);border:1px solid var(--border);border-radius:2px;padding:2rem 2.2rem;width:440px;max-width:96vw;text-align:center;box-shadow:0 30px 100px var(--shadow);position:relative}
-    .upgrade-features{margin:1.4rem 0;display:flex;flex-direction:column;gap:.6rem;text-align:left}
-    .upgrade-feature{font-family:var(--font-body);font-size:.95rem;color:var(--text);display:flex;align-items:center;gap:.6rem;padding:.35rem .5rem;border-left:2px solid var(--accent)}
-    .upgrade-price{font-family:var(--font-display);font-size:1.1rem;color:var(--accent);letter-spacing:.1em;margin-bottom:1.2rem}
-    .upgrade-small{font-family:var(--font-body);font-style:italic;font-size:.8rem;color:var(--text-muted);margin-top:.6rem}
 
     /* ── Legal overlay ────────────────────────────────────────── */
     #legal-overlay{position:fixed;inset:0;z-index:75;display:flex;align-items:center;justify-content:center;padding:1rem;background:rgba(0,0,0,.52);backdrop-filter:blur(5px);opacity:0;pointer-events:none;transition:opacity .3s ease}
@@ -89,6 +81,9 @@
     .premium-badge{font-family:var(--font-display);font-size:.6rem;letter-spacing:.12em;background:var(--accent);color:var(--btn-text);padding:.15rem .45rem;vertical-align:middle;margin-left:.35rem}
     .locked-pill{opacity:.45;cursor:pointer;position:relative}
     .locked-pill::after{content:'★';font-size:.7rem;color:var(--accent);margin-left:.3rem}
+    /* Themes that exist as colour schemes but don't have their stage artwork yet — shown but not selectable */
+    .soon-pill{opacity:.4;cursor:not-allowed}
+    .soon-pill::after{content:'soon';font-family:var(--font-display);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-left:.4rem;vertical-align:middle}
 
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%;overflow:hidden}
@@ -524,7 +519,7 @@
     </div>
     <div class="msg" id="auth-msg"></div>
     <form class="auth-form active" id="form-login" onsubmit="App.doLogin(event)">
-      <div class="form-group"><label class="form-label" for="l-user">Thy Name</label><input class="form-input" type="text" id="l-user" placeholder="username" autocomplete="username" required></div>
+      <div class="form-group"><label class="form-label" for="l-user" data-plain="Username or email">Thy Name</label><input class="form-input" type="text" id="l-user" placeholder="username or email" autocomplete="username" required></div>
       <div class="form-group"><label class="form-label" for="l-pass">Thy Secret</label><input class="form-input" type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" required>
         <div style="text-align:right;margin-top:.38rem"><button type="button" class="btn-link" onclick="App.showForm('forgot')">Forgot thy secret?</button></div>
       </div>
@@ -764,9 +759,9 @@
           <div class="set-pills" style="margin-top:.5rem">
             <label class="set-pill" id="sp-light"    onclick="Settings.pickTheme('light')"><input type="radio" name="st-theme" value="light"> Light</label>
             <label class="set-pill" id="sp-dark"     onclick="Settings.pickTheme('dark')"><input type="radio" name="st-theme" value="dark"> Dark</label>
-            <label class="set-pill locked-pill" id="sp-crimson"  onclick="Settings.pickTheme('crimson')" title="Premium"><input type="radio" name="st-theme" value="crimson"> Crimson</label>
-            <label class="set-pill locked-pill" id="sp-gilded"   onclick="Settings.pickTheme('gilded')"  title="Premium"><input type="radio" name="st-theme" value="gilded"> Gilded</label>
-            <label class="set-pill locked-pill" id="sp-sapphire" onclick="Settings.pickTheme('sapphire')" title="Premium"><input type="radio" name="st-theme" value="sapphire"> Sapphire</label>
+            <label class="set-pill soon-pill" id="sp-crimson"  title="Coming soon — artwork in progress"><input type="radio" name="st-theme" value="crimson" disabled> Crimson</label>
+            <label class="set-pill soon-pill" id="sp-gilded"   title="Coming soon — artwork in progress"><input type="radio" name="st-theme" value="gilded" disabled> Gilded</label>
+            <label class="set-pill soon-pill" id="sp-sapphire" title="Coming soon — artwork in progress"><input type="radio" name="st-theme" value="sapphire" disabled> Sapphire</label>
           </div>
         </div>
         <div class="mode-card">
@@ -777,11 +772,11 @@
           </div>
         </div>
         <div class="set-row" style="margin-top:.6rem;align-items:flex-start;flex-wrap:wrap;gap:.5rem" id="ss-fonts">
-          <span class="set-row-label">Typography <span class="premium-badge">PREMIUM</span></span>
+          <span class="set-row-label">Typography</span>
           <div style="display:flex;gap:.4rem;flex-wrap:wrap">
             <label class="set-pill" id="sf-classic"  onclick="Settings.setFont('classic')"><input type="radio" name="sf-font" value="classic"> Classical</label>
-            <label class="set-pill locked-pill" id="sf-modern"  onclick="Settings.setPremiumFont('modern')"><input type="radio" name="sf-font" value="modern"> Modern</label>
-            <label class="set-pill locked-pill" id="sf-romantic" onclick="Settings.setPremiumFont('romantic')"><input type="radio" name="sf-font" value="romantic"> Romantic</label>
+            <label class="set-pill" id="sf-modern"  onclick="Settings.setFont('modern')"><input type="radio" name="sf-font" value="modern"> Modern</label>
+            <label class="set-pill" id="sf-romantic" onclick="Settings.setFont('romantic')"><input type="radio" name="sf-font" value="romantic"> Romantic</label>
           </div>
         </div>
       </div>
@@ -870,16 +865,11 @@
       <div class="set-section" id="ss-guest-note" style="display:none">
         <div class="set-section-title" data-plain="Account">Thy Account</div>
         <p class="set-row-hint" style="line-height:1.65;margin-bottom:.7rem">Thou art a Groundling. Create an account to save thy schedule, history and settings across devices.</p>
-        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" data-plain="Get Premium" onclick="Settings.close();App.claimSeat()">Claim Thy Seat</button>
+        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" data-plain="Create Account" onclick="Settings.close();App.claimSeat()">Claim Thy Seat</button>
       </div>
 
-      <div class="set-section" id="ss-premium-free">
-        <div class="set-section-title">Premium</div>
-        <p class="set-row-hint" style="line-height:1.65;margin-bottom:.8rem">Unlock Crimson, Gilded &amp; Sapphire themes, custom typography, and a profile avatar. Includes a 7-day free trial.</p>
-        <button class="btn btn-primary" style="width:auto;padding:.6rem 1.2rem" onclick="Premium.open()">Start Free Trial</button>
-      </div>
-      <div class="set-section" id="ss-premium-active" style="display:none">
-        <div class="set-section-title">Premium <span class="premium-badge" id="pm-badge">ACTIVE</span></div>
+      <div class="set-section" id="ss-subscription">
+        <div class="set-section-title">Subscription <span class="premium-badge" id="pm-badge">ACTIVE</span></div>
         <div class="set-row"><span class="set-row-label">Status</span><span class="set-row-hint" id="pm-status-text"></span></div>
         <div style="display:flex;flex-direction:column;gap:.5rem;margin-top:.5rem">
           <button class="btn btn-ghost" style="width:auto" onclick="Premium.portal()">Manage Subscription</button>
@@ -1058,25 +1048,6 @@
   </div>
 </div>
 
-<div id="upgrade-overlay" class="gone">
-  <div class="upgrade-box">
-    <button class="settings-close" style="position:absolute;top:1rem;right:1rem" onclick="Premium.close()">✕</button>
-    <div class="am-orn">★</div>
-    <div class="am-title" style="font-size:1.4rem">PREMIUM</div>
-    <div class="am-sub">Unlock the full stage experience</div>
-    <div class="upgrade-features">
-      <div class="upgrade-feature">🎭 Three exclusive stage themes: Crimson, Gilded &amp; Sapphire</div>
-      <div class="upgrade-feature">✒️ Alternative typography: Modern &amp; Romantic</div>
-      <div class="upgrade-feature">👤 Custom profile avatar colour</div>
-      <div class="upgrade-feature">⭐ 7-day free trial — no charge until day 8</div>
-    </div>
-    <div class="upgrade-price" id="upgrade-price">Then $4.99 / month</div>
-    <button class="btn btn-primary" id="btn-upgrade" onclick="Premium.checkout()">Start Free Trial</button>
-    <p class="upgrade-small">Cancel anytime via Settings → Manage Subscription</p>
-    <div class="msg" id="upgrade-msg" style="margin-top:.8rem;margin-bottom:0"></div>
-  </div>
-</div>
-
 <!-- Legal overlay -->
 <div id="legal-overlay" class="gone">
   <div class="legal-box">
@@ -1169,7 +1140,10 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     }
   }
 
+  // These themes have colour schemes but no stage artwork yet — never let one actually apply.
+  const COMING_SOON_THEMES = ['crimson','gilded','sapphire'];
   function applyTheme(theme) {
+    if (COMING_SOON_THEMES.includes(theme)) theme = 'dark';
     document.body.classList.remove('theme-light','theme-dark','theme-crimson','theme-gilded','theme-sapphire','theme-plain-light','theme-plain-dark');
     document.body.classList.add(`theme-${theme}`);
     S.theme = theme;
@@ -1181,6 +1155,7 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   }
 
   function setBgImages(theme) {
+    if (COMING_SOON_THEMES.includes(theme)) theme = 'dark';
     const premiumBase = ['crimson','gilded','sapphire'];
     if (theme && theme.startsWith('plain-')) {
       // Plainspeak themes use a clean solid backdrop (--stage-fallback) — no art needed.
@@ -1855,10 +1830,10 @@ window.Planner = (() => {
     const base = getDaySchedule(ds) || { wake_time: '07:00' };
     // custom:true → this day is now user-customized and survives whole-week re-saves.
     const data = { wake_time: base.wake_time || '07:00', activities: acts, custom: true };
-    await api('day-override', { method:'PUT', body:{ date: ds, schedule_data: JSON.stringify(data) } });
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
-    weekData.dailyOverrides[ds] = data;
+    weekData.dailyOverrides[ds] = data;                  // update local state first — the UI never waits on the network
     markCustomDay(ds);
+    api('day-override', { method:'PUT', body:{ date: ds, schedule_data: JSON.stringify(data) } }).catch(()=>{});  // sync in background
   }
   // Build the saved activity object from the editor's current state.
   function buildActFromEdit() {
@@ -1898,20 +1873,20 @@ window.Planner = (() => {
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
     const tmpl = weekData?.schedule || { wake_time:'07:00', activities: [] };
     const sched = { ...tmpl, activities: [ ...(tmpl.activities||[]), newAct ] };
-    const ops = [ api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(sched)}}) ];
+    const ops = [ () => api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(sched)}}) ];
     for (const d of getSetupDays()) {
       const ds = toISO(d);
       if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;   // leave customized days untouched
       const base = weekData.dailyOverrides[ds] || getDaySchedule(ds) || { wake_time:'07:00', activities: [] };
       const data = { wake_time: base.wake_time || '07:00', activities: [ ...(base.activities||[]), newAct ] };
       weekData.dailyOverrides[ds] = data;
-      ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+      ops.push(() => api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
     }
     weekData.schedule = sched;
-    await Promise.all(ops);
     if (updated.timing === 'sustenance') setMealData(actEdit.ds, newAct.id, actEdit.food, actEdit.cal);
     if (updated.timing === 'med') setMemo(actEdit.ds, newAct.id, (actEdit.dose||'').trim());
-    closeActEdit(); render(); scheduleNotifs();
+    closeActEdit(); render(); scheduleNotifs();   // update the screen instantly
+    bgSync(ops);                                    // persist a couple at a time in the background — a flood freezes the app
   }
   async function removeActEdit() {
     const a = actEdit;
@@ -2456,6 +2431,7 @@ window.Planner = (() => {
   function openSetup(date = null, focusIdx = null) {
     setup.editingDate = date;
     setup.chimeOpenId = null;                      // start with every chime picker closed
+    clearTimeout(window.__setupGoneTimer);         // a pending close-animation timer must not hide us after we reopen
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
     setup.wakeTime  = existing?.wake_time || '07:00';
     setup.activities = (existing?.activities||[]).map(a => ({
@@ -2491,7 +2467,7 @@ window.Planner = (() => {
       }, 120);
     }
   }
-  function closeSetup() { const ov = document.getElementById('week-setup-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 450); }
+  function closeSetup() { const ov = document.getElementById('week-setup-overlay'); ov.classList.remove('visible'); clearTimeout(window.__setupGoneTimer); window.__setupGoneTimer = setTimeout(() => ov.classList.add('gone'), 450); }
 
   function renderSetup() {
     document.getElementById('setup-wake-time').value = setup.wakeTime;
@@ -2631,13 +2607,13 @@ window.Planner = (() => {
     const activities = mapSetupActivities().filter(a => !a.days || a.days[di]);   // only acts that run that day
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
     const dayData = {wake_time:wakeTime, activities, custom:true};
-    await api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(dayData)}});
     if (!weekData.dailyOverrides) weekData.dailyOverrides={};
     weekData.dailyOverrides[ds]=dayData;
     markCustomDay(ds);
     const conflicts = detectConflicts(activities, ds);   // date-aware: skip clashes already in the past
-    closeSetup(); render(); scheduleNotifs();
+    closeSetup(); render(); scheduleNotifs();             // update the screen instantly — never wait on the network
     if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
+    api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(dayData)}}).catch(()=>{});  // sync in background
   }
 
   // "Set the Stage" — save to the whole recurring week (template + every non-custom day).
@@ -2654,14 +2630,14 @@ window.Planner = (() => {
     const wipeAll = activities.length === 0;
     if (wipeAll && !confirm("Clear this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.")) return;
     const windowDs = new Set(days.map(d=>toISO(d)));
-    const ops = [ api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
+    const ops = [ () => api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
     for (const d of days) {
       const ds=toISO(d), di=dayIdx(d);
       if (ds < todayStr) continue;                                                            // never rewrite a PAST day — it's frozen history
       if (!wipeAll && (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom)) continue;   // a normal save preserves customized days
       const data={wake_time:wakeTime, activities:activities.filter(a=>!a.days||a.days[di])};
       weekData.dailyOverrides[ds]=data;
-      ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+      ops.push(() => api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
     }
     if (wipeAll) {
       // clear any customized days beyond the visible window too, and forget the custom-day marks
@@ -2669,16 +2645,25 @@ window.Planner = (() => {
         if (windowDs.has(ds) || ds < todayStr) continue;   // skip past custom days — keep them as history
         const data={wake_time:wakeTime, activities:[]};
         weekData.dailyOverrides[ds]=data;
-        ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
+        ops.push(() => api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(data)}}));
       }
       customDays.clear();
       try { localStorage.removeItem('inflictor_custom_days'); } catch {}
     }
-    await Promise.all(ops);
     weekData.schedule=sched;
     const conflicts = detectConflicts(activities);
-    closeSetup(); render(); scheduleNotifs();
+    closeSetup(); render(); scheduleNotifs();    // update the screen instantly — never wait on the network
     if (conflicts.length) setTimeout(() => showConflicts(conflicts), 300);
+    bgSync(ops);                                  // persist a couple at a time in the background — a flood of calls freezes the app
+  }
+
+  // Persist a batch of writes in the background, at most `limit` in flight. A FLOOD of simultaneous API calls
+  // chokes the Electron proxy and briefly FREEZES the window (clear used to fire ~15 at once → the first Set Week
+  // open after a clear was caught in that freeze). Local state is already updated, so failures here are ignored.
+  function bgSync(thunks, limit = 2) {
+    const q = thunks.slice();
+    const run = () => { const t = q.shift(); if (t) return Promise.resolve().then(t).catch(()=>{}).then(run); };
+    for (let i = 0; i < limit; i++) run();
   }
 
   // "Clear Everything" — a hard reset that reaches days the box can't show (customized days, anytime, etc.).
@@ -2689,11 +2674,12 @@ window.Planner = (() => {
     // Every date we know about: the visible window, customized days, and whatever overrides are loaded.
     const todayStr = toISO(new Date());
     const dates = new Set([ ...getSetupDays().map(d=>toISO(d)), ...customDays, ...Object.keys(weekData.dailyOverrides) ]);
-    const ops = [ api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(empty),today:todayStr}}) ];
+    const ops = [ () => api('schedule',{method:'PUT',body:{week_start:toISO(getMonday(weekStart)),schedule_data:JSON.stringify(empty),today:todayStr}}) ];
     for (const ds of dates) {
       if (ds < todayStr) continue;                            // never wipe a PAST day — it's frozen history
+      if (!customDays.has(ds) && !weekData.dailyOverrides[ds]) continue;   // a plain day just follows the (now-empty) template — no wipe call needed
       weekData.dailyOverrides[ds] = { wake_time: wakeTime, activities: [] };
-      ops.push(api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(empty)}}));
+      ops.push(() => api('day-override',{method:'PUT',body:{date:ds,schedule_data:JSON.stringify(empty)}}));
     }
     weekData.schedule = { wake_time: wakeTime, activities: [] };
     customDays.clear();
@@ -2701,8 +2687,8 @@ window.Planner = (() => {
       localStorage.removeItem('inflictor_custom_days');
       Object.keys(localStorage).filter(k=>k.startsWith('inflictor_anytime_')).forEach(k=>localStorage.removeItem(k));
     } catch {}
-    await Promise.all(ops);
-    closeSetup(); render(); scheduleNotifs();
+    closeSetup(); render(); scheduleNotifs();   // update the screen instantly — the data's already changed locally
+    bgSync(ops);                                 // persist a couple at a time in the background — a flood of calls freezes the app
   }
 
   async function init() {
@@ -2812,8 +2798,6 @@ window.Settings = (() => {
 
     const {ok,data} = await api('settings');
     if (ok && data) {
-      const isPremium = Premium.isPremium();
-      ['crimson','gilded','sapphire'].forEach(t => el(`sp-${t}`)?.classList.toggle('locked-pill', !isPremium));
       refreshStageUI();                                      // active theme pill + which mode box is checked
       if (el('s-wake-time')) el('s-wake-time').value = data.wake_time || '07:00';
       ['sun','mon'].forEach((n,i) => el(`sp-${n}`)?.classList.toggle('active', (data.week_start_day||0)===i));
@@ -2832,23 +2816,13 @@ window.Settings = (() => {
       updateNotifNote();
       // Font pills
       const font = data.font_style || 'classic';
-      ['classic','modern','romantic'].forEach(f => {
-        const pill = el(`sf-${f}`);
-        if (!pill) return;
-        pill.classList.toggle('active', font === f);
-        pill.classList.toggle('locked-pill', ['modern','romantic'].includes(f) && !isPremium);
-      });
-      // Premium section visibility
+      ['classic','modern','romantic'].forEach(f => el(`sf-${f}`)?.classList.toggle('active', font === f));
+      // Subscription status (everyone in the app is a paid subscriber)
       const pStatus = App.getUser()?.premium_status;
-      const hasPremium = isPremium || pStatus === 'past_due';
-      el('ss-premium-free').style.display   = hasPremium ? 'none' : '';
-      el('ss-premium-active').style.display = hasPremium ? '' : 'none';
-      if (hasPremium) {
-        const badge = el('pm-badge');
-        const txt   = el('pm-status-text');
-        if (badge) badge.textContent = pStatus === 'trial' ? 'TRIAL' : pStatus === 'past_due' ? 'PAST DUE' : 'ACTIVE';
-        if (txt)   txt.textContent   = pStatus === 'trial' ? '7-day free trial active' : pStatus === 'past_due' ? 'Payment issue — update card to continue' : 'Premium active';
-      }
+      const badge = el('pm-badge');
+      const txt   = el('pm-status-text');
+      if (badge) badge.textContent = pStatus === 'past_due' ? 'PAST DUE' : 'ACTIVE';
+      if (txt)   txt.textContent   = pStatus === 'past_due' ? 'Payment issue — update your card to continue' : 'Active — billed monthly';
     }
     showView('main');
     const ov = el('settings-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
@@ -3026,7 +3000,7 @@ window.Settings = (() => {
   const ALL_THEMES = ['light','dark','crimson','gilded','sapphire','plain-light','plain-dark'];
   // Apply a theme — sets the look, the matching voice, the background, and persists it.
   function pickTheme(t) {
-    if (['crimson','gilded','sapphire'].includes(t) && !Premium.isPremium()) { Premium.open(); return; }
+    if (['crimson','gilded','sapphire'].includes(t)) t = 'dark';   // not selectable until artwork exists
     App.applyTheme(t); localStorage.setItem('inflictor_theme', t);
     document.getElementById('stage-bg').style.backgroundImage = isPlainTheme(t) ? 'none' : (['crimson','gilded','sapphire'].includes(t) ? "url('dark-stage.png')" : `url('${t}-stage.png')`);
     const plain = isPlainTheme(t);
@@ -3058,10 +3032,7 @@ window.Settings = (() => {
     api('settings',{method:'PUT',body:{font_style:f}});
   }
 
-  function setPremiumFont(f) {
-    if (!Premium.isPremium()) { Premium.open(); return; }
-    setFont(f);
-  }
+  function setPremiumFont(f) { setFont(f); }   // back-compat: all fonts unlocked for subscribers
 
   return {
     open, close, showView, loadMore, setGuideMode,
@@ -3081,28 +3052,8 @@ window.Premium = (() => {
   const api = (p,o) => App.api(p,o);
   const el  = id => document.getElementById(id);
 
-  function isPremium() {
-    const u = App.getUser();
-    if (!u) return false;
-    return u.premium_status === 'premium' || u.premium_status === 'trial';
-  }
-
-  function open() {
-    const ov = el('upgrade-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
-  }
-  function close() {
-    const ov = el('upgrade-overlay'); ov.classList.remove('visible'); setTimeout(() => ov.classList.add('gone'), 400);
-  }
-
-  async function checkout() {
-    const btn = el('btn-upgrade'), m = el('upgrade-msg');
-    if (btn) { btn.disabled=true; btn.textContent='Preparing…'; }
-    if (m)   { m.className='msg'; }
-    const {ok,data} = await api('stripe/create-checkout',{method:'POST'});
-    if (btn) { btn.disabled=false; btn.textContent='Start Free Trial'; }
-    if (ok && data.url) { window.location.href = data.url; }
-    else if (m) { m.className='msg error show'; m.textContent = data.error || 'Could not connect to Stripe. Please try again.'; }
-  }
+  // The whole app is paid — anyone past the paywall is a subscriber, so all extras are unlocked.
+  function isPremium() { return true; }   // back-compat for any remaining callers
 
   async function portal() {
     const {ok,data} = await api('stripe/portal',{method:'POST'});
@@ -3110,7 +3061,7 @@ window.Premium = (() => {
     else Settings.close(); // fallback
   }
 
-  return { open, close, checkout, portal, isPremium };
+  return { portal, isPremium };
 })();
 
 

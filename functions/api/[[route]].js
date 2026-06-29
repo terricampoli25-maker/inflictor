@@ -642,6 +642,9 @@ async function handleStripeWebhook(request, env) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session=event.data.object;
+      // Inflictor is the ONLY subscription product. One-time purchases on this same Stripe account (e.g. Ere Long,
+      // The Measure) fire this same webhook — ignore them so a non-Inflictor buyer never gets an Inflictor account/email.
+      if (session.mode !== 'subscription') break;
       const email=(session.customer_details?.email || session.customer_email || '').toLowerCase().trim();
       let userId=session.client_reference_id, isNew=false;   // client_reference_id is set only for the in-app (logged-in) checkout
       if (!userId && email) {
