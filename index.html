@@ -2457,8 +2457,8 @@ window.Planner = (() => {
       id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_start: !!a.chime_start, chime_end: (a.chime_end!==undefined?!!a.chime_end:!!a.chime_enabled), timing: a.timing || 'flexible',
       undetermined: !!a.undetermined,
       fixed_start: a.fixed_start || a.fixed_time || '', fixed_end: a.fixed_end || '', goal_time: a.goal_time || '',
-      med_display: a.med_display === 'ribbon' ? 'ribbon' : 'split', med_notify: !!a.med_notify,
-      med_kind: a.med_kind === 'medication' ? 'medication' : 'reminder',
+      med_display: a.med_display === 'split' ? 'split' : 'ribbon', med_notify: !!a.med_notify,
+      med_kind: 'medication', with_food: !!a.with_food, display_label: a.display_label || '',
       days: Array.isArray(a.days) ? a.days.slice() : Array(7).fill(true)
     }));
     if (!setup.activities.length) addAct();
@@ -2513,7 +2513,7 @@ window.Planner = (() => {
         </div>
         ${act.timing!=='sustenance' && act.timing!=='med' ? `<div class="act-unsure-row"><label class="act-undet-chk" title="Not sure how long this will take — leave it open-ended"><input type="checkbox" ${act.undetermined?'checked':''} onchange="Planner.toggleUndet('${act.id}',this.checked)"> ⏳ unsure</label></div>` : ''}
         ${act.timing==='sustenance' && setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Sustenance — e.g. Chicken salad" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}
-        ${act.timing==='med' ? `<div class="act-med-opts"><span class="act-med-label">Shows as:</span><button class="timing-opt${act.med_display!=='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','split')" title="Splits the activity, with a 💊 pill between the halves">Split</button><button class="timing-opt${act.med_display==='ribbon'?' on':''}" onclick="Planner.setMedDisplay('${act.id}','ribbon')" title="A discreet 🎗️ ribbon pinned on the activity — doesn't split it">Pin</button><label class="act-undet-chk" style="margin-left:auto"><input type="checkbox" ${act.med_notify?'checked':''} onchange="Planner.setMedNotify('${act.id}',this.checked)"> 🔔 Remind</label></div>` : ''}
+        ${act.timing==='med' ? `<div class="act-med-opts"><span class="act-med-label">Shows as:</span><label class="act-undet-chk"><input type="checkbox" ${act.med_display==='split'?'checked':''} onchange="Planner.setMedDisplay('${act.id}','split')"> Split</label><label class="act-undet-chk"><input type="checkbox" ${act.med_display!=='split'?'checked':''} onchange="Planner.setMedDisplay('${act.id}','ribbon')"> Reminder</label><label class="act-undet-chk"><input type="checkbox" ${act.with_food?'checked':''} onchange="Planner.setMedWithFood('${act.id}',this.checked)"> 🍴 food</label><label class="act-undet-chk" style="margin-left:auto"><input type="checkbox" ${act.med_notify?'checked':''} onchange="Planner.setMedNotify('${act.id}',this.checked)"> 🔔 Remind</label></div>${act.med_display!=='split' ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="40" placeholder="Discreet label — e.g. Reminder" value="${esc(act.display_label||'')}" onchange="Planner.setMedLabel('${act.id}',this.value)" style="width:100%"></div>` : ''}${setup.editingDate ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Dose / notes — e.g. 1 tablet" value="${esc(getMemo(setup.editingDate, act.id))}" onchange="Planner.setupMealFood('${act.id}',this.value)"></div>${act.with_food ? `<div class="act-sus-cal"><input class="form-input" type="text" maxlength="120" placeholder="Food today — e.g. crackers" value="${esc(getMemo(setup.editingDate, 'food:'+act.id))}" onchange="Planner.setupMedFood('${act.id}',this.value)"><input class="dur-num" type="number" min="0" max="9999" placeholder="cal" value="${esc(getMemo(setup.editingDate,'cal:'+act.id))}" onchange="Planner.setupMealCal('${act.id}',this.value)" title="Calories"></div>` : ''}` : ''}` : ''}
         ${setup.editingDate ? '' : `<div class="act-days">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((lbl,di)=>`<button class="actday-pill${(!act.days||act.days[di])?' on':''}" onclick="Planner.setActDay('${act.id}',${di})" title="${lbl}">${lbl}</button>`).join('')}</div>`}
         <div class="act-row-foot">
           <div class="act-timing">
@@ -2521,7 +2521,7 @@ window.Planner = (() => {
             <button class="timing-opt${(act.timing||'flexible')==='flexible'?' on':''}" onclick="Planner.setTiming('${act.id}','flexible')" title="A start–end time that can shift when you wake late or pause (~)">Flexible</button>
             <button class="timing-opt${act.timing==='anytime'?' on':''}" onclick="Planner.setTiming('${act.id}','anytime')" title="Sometime that day; optionally set an ~ish time">Anytime</button>
             <button class="timing-opt${act.timing==='sustenance'?' on':''}" onclick="Planner.setTiming('${act.id}','sustenance')" title="A meal or snack (🍴) — never conflicts; splits an activity it lands inside">Sustenance</button>
-            <button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med')" title="A reminder / med at a set time — never conflicts; choose Split (💊) or Pin (🎗️) below">Reminder</button>
+            <button class="timing-opt${act.timing==='med'?' on':''}" onclick="Planner.setTiming('${act.id}','med')" title="A medication (💊) at a set time — never conflicts; with-food + dose, shows as Split or a discreet Reminder">Medication</button>
             ${act.timing==='anytime' ? `<div class="act-goal-group"><input class="goal-tt" type="time" value="${esc(act.goal_time||'')}" title="About when — optional"><span class="goal-ish">-ish</span></div>` : ''}
           </div>
           <div class="act-controls">
@@ -2584,9 +2584,12 @@ window.Planner = (() => {
   }
   function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
   function setColor(id,c) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.color=c; renderActs(); }
-  function setTiming(id,mode,kind) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; if(!a.mins) a.mins=20; } if(mode==='med'){ a.undetermined=false; if(!a.med_display) a.med_display='split'; a.med_kind = kind || a.med_kind || 'reminder'; } } renderActs(); }
+  function setTiming(id,mode,kind) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; if(!a.mins) a.mins=20; } if(mode==='med'){ a.undetermined=false; if(!a.med_display) a.med_display='ribbon'; a.med_kind='medication'; } } renderActs(); }
   function setMedDisplay(id,mode) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.med_display=(mode==='ribbon'?'ribbon':'split'); renderActs(); }
   function setMedNotify(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.med_notify=checked; renderActs(); }
+  function setMedWithFood(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.with_food=checked; renderActs(); }
+  function setMedLabel(id,v) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.display_label=v; }
+  function setupMedFood(id,v) { if (setup.editingDate) setMemo(setup.editingDate, 'food:'+id, (v||'').trim()); }
   function toggleUndet(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.undetermined=checked; renderActs(); }
   function moveAct(id,dir) {
     captureDOM(); const idx=setup.activities.findIndex(a=>a.id===id), swap=idx+dir;
@@ -2611,9 +2614,11 @@ window.Planner = (() => {
         fixed_start:hasStart&&a.fixed_start?a.fixed_start:undefined,
         fixed_end:(isRange&&!undet&&a.fixed_end)?a.fixed_end:undefined,
         goal_time:(timing==='anytime'&&!undet&&a.goal_time)?a.goal_time:undefined,
-        med_display: timing==='med' ? (a.med_display==='ribbon'?'ribbon':'split') : undefined,
+        med_display: timing==='med' ? (a.med_display==='split'?'split':'ribbon') : undefined,
         med_notify:  timing==='med' ? !!a.med_notify : undefined,
-        med_kind:    timing==='med' ? (a.med_kind==='medication'?'medication':'reminder') : undefined,
+        med_kind:    timing==='med' ? 'medication' : undefined,
+        with_food:   timing==='med' ? !!a.with_food : undefined,
+        display_label: timing==='med' && a.display_label ? a.display_label.trim() : undefined,
         days:Array.isArray(a.days)?a.days:Array(7).fill(true)};
     });
   }
@@ -2756,13 +2761,13 @@ window.Planner = (() => {
     init, render,
     openSetup, closeSetup,
     addActivity: addAct, removeAct, setColor, setTiming, toggleUndet, setActDay, moveAct, onActName, onActName,
-    setupMealFood, setupMealCal, setMedDisplay, setMedNotify,
+    setupMealFood, setupMealCal, setupMedFood, setMedDisplay, setMedNotify, setMedWithFood, setMedLabel,
     toggleDay, selectAllDays, selectWeekdays,
     saveSetup, saveDay, clearEverything, setStatus, toggleMedTaken, toggleChimePicker, setChime,
     toggleSound, setSoundEnabled, setCheerEnabled, setAwwEnabled, setNotifEnabled, setNotifRepeat,
     rescheduleNotifs: scheduleNotifs,
     togglePause, cancelPause, togglePauseSlot, beginAgain, applyWakeTime,
-    openActEdit, openActAdd, actEditTiming, actEditMedDisplay, actEditSetChime, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
+    openActEdit, openActAdd, actEditTiming, actEditMedDisplay, actEditWithFood, actEditSetChime, saveActEdit, saveActEveryDay, removeActEdit, closeActEdit,
     openMemo, saveMemo, closeMemo, closeConflict,
     openCalories, saveCalories, closeCalories, openReport, closeReport, emailReport,
     applyWeekView, setWeekView,
