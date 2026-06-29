@@ -1087,98 +1087,8 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   if (S.theme) document.body.classList.add(`theme-${S.theme}`);
   const el = id => document.getElementById(id);
 
-  // ── In-app error reporter ─────────────────────────────────────
-  // Packaged builds can't easily open DevTools, so paint any uncaught error into a red bar on screen.
-  // This is diagnostic — it doesn't change behaviour, only makes a silent crash visible to read back.
-  (function () {
-    const show = (msg) => {
-      let b = document.getElementById('err-probe');
-      if (!b) {
-        b = document.createElement('div');
-        b.id = 'err-probe';
-        b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#a40000;color:#fff;font:12px/1.45 monospace;padding:.55rem .7rem;white-space:pre-wrap;max-height:45vh;overflow:auto;box-shadow:0 2px 10px rgba(0,0,0,.6);cursor:pointer';
-        b.addEventListener('click', () => b.remove());
-        (document.body || document.documentElement).appendChild(b);
-      }
-      b.textContent = '⚠ ' + msg + '\n(tap to dismiss)';
-    };
-    window.addEventListener('error', (e) => {
-      const where = e.filename ? ` @ ${String(e.filename).split('/').pop()}:${e.lineno}:${e.colno}` : '';
-      const stack = e.error && e.error.stack ? '\n' + e.error.stack.split('\n').slice(0, 4).join('\n') : '';
-      show((e.message || 'error') + where + stack);
-    });
-    window.addEventListener('unhandledrejection', (e) => {
-      const r = e.reason;
-      show('unhandled promise: ' + ((r && (r.stack || r.message)) || r));
-    });
-  })();
-
-  // ── Live network HUD (temporary diagnostic) ───────────────────
-  // A small on-screen readout of what the app is actually DOING, so a freeze can be seen, not guessed.
-  // q = pending writes, api done/started (+fails), how many calls went direct vs proxy, render count,
-  // inflight = calls still waiting. Tap it to expand the last requests with status + timing.
-  // Global (on window) so BOTH module scopes — the auth/api IIFE and the Planner IIFE where render()
-  // lives — can reach them. A plain const here is only visible to this IIFE, which made render() throw.
-  window.__net = window.__net || { started: 0, done: 0, failed: 0, direct: 0, proxy: 0, renders: 0, log: [] };
-  const __net = window.__net;
-  window.__hud = function __hud() {
-    let h = document.getElementById('net-hud');
-    if (!h) {
-      h = document.createElement('div');
-      h.id = 'net-hud';
-      h.style.cssText = 'position:fixed;bottom:0;right:0;z-index:99998;background:rgba(0,0,0,.85);color:#8f8;font:11px/1.35 monospace;padding:.35rem .5rem;max-width:72vw;max-height:42vh;overflow:auto;white-space:pre-wrap;cursor:pointer;border-top-left-radius:6px';
-      h.addEventListener('click', () => { h.dataset.exp = h.dataset.exp === '1' ? '0' : '1'; __hud(); });
-      (document.body || document.documentElement).appendChild(h);
-    }
-    let q = 0; try { q = JSON.parse(localStorage.getItem('inflictor_offline_queue') || '[]').length; } catch {}
-    const inflight = __net.started - __net.done - __net.failed;
-    // Which overlay (if any) is currently open — a stuck-open one would sit over the board and look "frozen".
-    let ovl = 'none';
-    try {
-      const open = ['week-setup-overlay','actedit-overlay','report-overlay','conflict-overlay','calorie-overlay','memo-overlay','settings-overlay']
-        .filter(id => { const e = document.getElementById(id); return e && (e.classList.contains('visible') || (!e.classList.contains('gone') && getComputedStyle(e).display !== 'none')); });
-      if (open.length) ovl = open.map(s => s.replace('-overlay','')).join(',');
-    } catch {}
-    const head = `docFocus:${document.hasFocus()}  ovl:${ovl}  q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}`;
-    h.textContent = h.dataset.exp === '1' ? head + '\n' + __net.log.slice(-16).join('\n') : head + '  (tap)';
-  };
-  // Long-task detector: if the JS thread blocks for >120ms, log it with its duration. If the freeze
-  // produces NO long-task entries, the thread isn't blocking — the problem is a stuck overlay/state.
-  try {
-    new PerformanceObserver((list) => {
-      for (const e of list.getEntries()) if (e.duration >= 120) { __net.log.push(`⏱ block ${Math.round(e.duration)}ms`); __hud(); }
-    }).observe({ entryTypes: ['longtask'] });
-  } catch {}
-  // Mark a user action in the log so what follows can be correlated to what was clicked.
-  // On window so the Planner-scope handlers (saveSetup/openSetup/…) can reach it.
-  window.__act = function __act(label) { __net.log.push(`▶ ${label}`); __hud(); };
-
-  // Tap probe: for each pointer-down log (a) what was tapped, (b) what element is ACTUALLY topmost at
-  // that pixel — reveals an invisible covering element if there is one — and (c) what ended up focused
-  // a tick later — reveals focus being refused/stolen. The single line tells us cover vs focus-block.
-  const __desc = el => !el ? 'null' : (el.tagName.toLowerCase()
-    + (el.id ? '#' + el.id : '')
-    + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/)[0] : ''));
-  document.addEventListener('pointerdown', (e) => {
-    try {
-      const tgt = __desc(e.target);
-      const top = __desc(document.elementFromPoint(e.clientX, e.clientY));
-      setTimeout(() => { __net.log.push(`tap tgt:${tgt} top:${top} foc:${__desc(document.activeElement)}`); __hud(); }, 0);
-    } catch {}
-  }, true);
-  // Keystroke probe: does the keyboard reach a focused field at all?
-  //  KEY lines but NO INPUT  → field is rejecting input (readonly/blocked).
-  //  KEY lines AND INPUT     → typing works at the DOM level (maybe just an invisible caret).
-  //  NO KEY lines at all     → keystrokes never reach the renderer = window keyboard-focus issue.
-  document.addEventListener('keydown', (e) => { try { __net.log.push(`KEY ${e.key} tgt:${__desc(e.target)}`); __hud(); } catch {} }, true);
-  document.addEventListener('input',   (e) => { try { __net.log.push(`INPUT "${(e.target && e.target.value || '').slice(0,12)}"`); __hud(); } catch {} }, true);
-  // Keep the focus indicator live. When the user clicks an INACTIVE window (the can't-type state),
-  // try to pull the window back to the foreground so a caret can appear and typing resumes.
-  window.addEventListener('focus', () => __hud());
-  window.addEventListener('blur',  () => __hud());
-  document.addEventListener('pointerdown', () => {
-    if (!document.hasFocus()) { try { window.focus(); } catch {} __net.log.push('!! window INACTIVE on click — tried window.focus()'); __hud(); }
-  }, true);
+  // If the user clicks an inactive window, nudge it back to the foreground so fields can take a caret.
+  document.addEventListener('pointerdown', () => { if (!document.hasFocus()) { try { window.focus(); } catch {} } }, true);
 
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
@@ -1198,24 +1108,11 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   const ON_DESKTOP = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
   const DIRECT_API_BASE = 'https://inflictor.pages.dev';
   async function apiFetch(path, init) {
-    const urls = ON_DESKTOP ? [[`${DIRECT_API_BASE}/api/${path}`, 'direct'], [`/api/${path}`, 'proxy']] : [[`/api/${path}`, 'web']];
+    const urls = ON_DESKTOP ? [`${DIRECT_API_BASE}/api/${path}`, `/api/${path}`] : [`/api/${path}`];
     let lastErr;
     for (let k = 0; k < urls.length; k++) {
-      const [url, kind] = urls[k];
-      const t0 = (performance && performance.now) ? performance.now() : Date.now();
-      try {
-        const r = await fetchWithTimeout(url, init);
-        const ms = Math.round(((performance && performance.now) ? performance.now() : Date.now()) - t0);
-        if (kind === 'direct') __net.direct++; else if (kind === 'proxy') __net.proxy++;
-        __net.log.push(`${(init && init.method) || 'GET'} ${path} ${kind} ${r.status} ${ms}ms`);
-        __hud();
-        return r;
-      } catch (e) {
-        const ms = Math.round(((performance && performance.now) ? performance.now() : Date.now()) - t0);
-        __net.log.push(`${(init && init.method) || 'GET'} ${path} ${kind} ERR ${ms}ms`);
-        __hud();
-        lastErr = e;                               // direct call couldn't be made → try the proxy fallback
-      }
+      try { return await fetchWithTimeout(urls[k], init); }
+      catch (e) { lastErr = e; }                   // direct call couldn't be made → try the proxy fallback
     }
     throw lastErr;
   }
@@ -1287,18 +1184,15 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   window.addEventListener('offline', () => showOfflineBanner(true));
 
   async function api(path, opts = {}) {
-    __net.started++; __hud();
     const headers = { 'Content-Type': 'application/json' };
     if (S.token) headers['Authorization'] = `Bearer ${S.token}`;
     try {
       const r = await apiFetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined });
       const data = await r.json().catch(() => ({}));
-      __net.done++; __hud();
       // Flush any queued offline ops now that we're connected (single-flighted, so this can't storm).
       if (r.ok) flushOfflineQueue();
       return { ok: r.ok, status: r.status, data };
     } catch {
-      __net.failed++; __hud();
       // Timed out or unreachable — queue write operations; reads just fail gracefully.
       if (opts.method && opts.method !== 'GET') enqueueOffline(path, opts);
       return { ok: false, status: 0, data: { error: 'Could not reach the stage.' } };
@@ -2217,7 +2111,6 @@ window.Planner = (() => {
 
   // ── Render ─────────────────────────────────────────────────────
   function render() {
-    __net.renders++; __hud();
     const days = getWeekDays();
     const s = days[0], e = days[6];
     const sLabel=s.toLocaleDateString('en-GB',{day:'numeric',month:'short'}), eLabel=e.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
@@ -2625,7 +2518,7 @@ window.Planner = (() => {
   }
 
   function openSetup(date = null, focusIdx = null) {
-    __act('openSetup' + (date ? '(day)' : '(week)')); setup.editingDate = date;
+    setup.editingDate = date;
     setup.chimeOpenId = null;                      // start with every chime picker closed
     clearTimeout(window.__setupGoneTimer);         // a pending close-animation timer must not hide us after we reopen
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
@@ -2729,7 +2622,7 @@ window.Planner = (() => {
     }).join('');
   }
 
-  function addAct()   { __act('addAct'); captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
+  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   // Clearing the name clears the rest too — so you can blank an activity without emptying every box.
   function onActName(id, val) {
     captureDOM();
@@ -2805,7 +2698,7 @@ window.Planner = (() => {
 
   // "Edit" — save the current acts to ONE day only (the day being edited, or today). Never the week.
   async function saveDay() {
-    __act('saveDay'); captureDOM();
+    captureDOM();
     const ds = setup.editingDate || toISO(new Date());
     const di = dayIdx(new Date(ds + 'T12:00:00'));
     const activities = mapSetupActivities().filter(a => !a.days || a.days[di]);   // only acts that run that day
@@ -2822,7 +2715,7 @@ window.Planner = (() => {
 
   // "Set the Stage" — save to the whole recurring week (template + every non-custom day).
   async function saveSetup() {
-    __act('saveSetup(SetTheStage)'); captureDOM();
+    captureDOM();
     const activities = mapSetupActivities();
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
     const sched = {wake_time:wakeTime,activities};
@@ -2899,7 +2792,6 @@ window.Planner = (() => {
 
   // "Clear Everything" — a hard reset that reaches days the box can't show (customized days, anytime, etc.).
   async function clearEverything() {
-    __act('clearEverything');
     if (!(await appConfirm("Erase this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.", 'Erase'))) return;
     const wakeTime = '07:00', empty = { wake_time: wakeTime, activities: [] };
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};
