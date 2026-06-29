@@ -1132,9 +1132,26 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     }
     let q = 0; try { q = JSON.parse(localStorage.getItem('inflictor_offline_queue') || '[]').length; } catch {}
     const inflight = __net.started - __net.done - __net.failed;
-    const head = `q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}  inflight:${inflight}`;
-    h.textContent = h.dataset.exp === '1' ? head + '\n' + __net.log.slice(-14).join('\n') : head + '  (tap)';
+    // Which overlay (if any) is currently open — a stuck-open one would sit over the board and look "frozen".
+    let ovl = 'none';
+    try {
+      const open = ['week-setup-overlay','actedit-overlay','report-overlay','conflict-overlay','calorie-overlay','memo-overlay','settings-overlay']
+        .filter(id => { const e = document.getElementById(id); return e && (e.classList.contains('visible') || (!e.classList.contains('gone') && getComputedStyle(e).display !== 'none')); });
+      if (open.length) ovl = open.map(s => s.replace('-overlay','')).join(',');
+    } catch {}
+    const head = `q:${q}  api ${__net.done}/${__net.started}${__net.failed ? ' fail:' + __net.failed : ''}  direct:${__net.direct} proxy:${__net.proxy}  rend:${__net.renders}  inflight:${inflight}  ovl:${ovl}`;
+    h.textContent = h.dataset.exp === '1' ? head + '\n' + __net.log.slice(-16).join('\n') : head + '  (tap)';
   };
+  // Long-task detector: if the JS thread blocks for >120ms, log it with its duration. If the freeze
+  // produces NO long-task entries, the thread isn't blocking — the problem is a stuck overlay/state.
+  try {
+    new PerformanceObserver((list) => {
+      for (const e of list.getEntries()) if (e.duration >= 120) { __net.log.push(`⏱ block ${Math.round(e.duration)}ms`); __hud(); }
+    }).observe({ entryTypes: ['longtask'] });
+  } catch {}
+  // Mark a user action in the log so what follows can be correlated to what was clicked.
+  // On window so the Planner-scope handlers (saveSetup/openSetup/…) can reach it.
+  window.__act = function __act(label) { __net.log.push(`▶ ${label}`); __hud(); };
 
   // ── Network helpers ───────────────────────────────────────────
   // No single request may hang open indefinitely: the browser allows only ~6 connections to the
@@ -2581,7 +2598,7 @@ window.Planner = (() => {
   }
 
   function openSetup(date = null, focusIdx = null) {
-    setup.editingDate = date;
+    __act('openSetup' + (date ? '(day)' : '(week)')); setup.editingDate = date;
     setup.chimeOpenId = null;                      // start with every chime picker closed
     clearTimeout(window.__setupGoneTimer);         // a pending close-animation timer must not hide us after we reopen
     const existing = date ? getDaySchedule(date) : weekData?.schedule;
@@ -2685,7 +2702,7 @@ window.Planner = (() => {
     }).join('');
   }
 
-  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
+  function addAct()   { __act('addAct'); captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   // Clearing the name clears the rest too — so you can blank an activity without emptying every box.
   function onActName(id, val) {
     captureDOM();
@@ -2761,7 +2778,7 @@ window.Planner = (() => {
 
   // "Edit" — save the current acts to ONE day only (the day being edited, or today). Never the week.
   async function saveDay() {
-    captureDOM();
+    __act('saveDay'); captureDOM();
     const ds = setup.editingDate || toISO(new Date());
     const di = dayIdx(new Date(ds + 'T12:00:00'));
     const activities = mapSetupActivities().filter(a => !a.days || a.days[di]);   // only acts that run that day
@@ -2778,7 +2795,7 @@ window.Planner = (() => {
 
   // "Set the Stage" — save to the whole recurring week (template + every non-custom day).
   async function saveSetup() {
-    captureDOM();
+    __act('saveSetup(SetTheStage)'); captureDOM();
     const activities = mapSetupActivities();
     const wakeTime = document.getElementById('setup-wake-time').value || '07:00';
     const sched = {wake_time:wakeTime,activities};
@@ -2828,6 +2845,7 @@ window.Planner = (() => {
 
   // "Clear Everything" — a hard reset that reaches days the box can't show (customized days, anytime, etc.).
   async function clearEverything() {
+    __act('clearEverything');
     if (!confirm("Erase this week's schedule so you can rebuild it? Your PAST days and everything you've logged are kept — only today onward is cleared.")) return;
     const wakeTime = '07:00', empty = { wake_time: wakeTime, activities: [] };
     if (!weekData.dailyOverrides) weekData.dailyOverrides = {};

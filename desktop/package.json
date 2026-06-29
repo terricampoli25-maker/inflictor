@@ -1,6 +1,6 @@
 {
   "name": "inflictor-desktop",
-  "version": "1.0.67",
+  "version": "1.0.68",
   "description": "The Inflictor — Desktop",
   "main": "main.js",
   "scripts": {
