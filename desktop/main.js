@@ -78,8 +78,11 @@ function startServer(callback) {
       proxy.on('abort', () => finish(503, { error: 'offline' }));
       req.on('data', chunk => { try { proxy.write(chunk); } catch {} });
       req.on('end',  ()    => { try { proxy.end(); } catch {} });
-      // The page aborted (its own timeout) or navigated away before we answered → drop the upstream call too.
-      req.on('close', () => { if (!settled) { try { proxy.abort(); } catch {} } });
+      // If the PAGE gives up before we answer (its own timeout / navigation), the response socket closes
+      // while still unsettled → drop the upstream call too. (Use res, not req: req 'close' also fires on a
+      // normal completed POST, which would wrongly abort every request.)
+      res.on('error', () => {});                       // swallow write-after-disconnect noise
+      res.on('close', () => { if (!settled) { try { proxy.abort(); } catch {} } });
       return;
     }
 
