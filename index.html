@@ -2269,7 +2269,10 @@ window.Planner = (() => {
           </div></div>`;
       }
       const t = times[act.id];
-      const rs = p.s!=null ? p.s : (t?t.start:null), re = p.e!=null ? p.e : (t?t.end:null);
+      const rs = p.s!=null ? p.s : (t?t.start:null);
+      // The main (first) piece of a split activity keeps the activity's FULL span in its label — a 1:00–4:30
+      // activity split by a 4:00 med still reads "1:00–4:30" on top; only the continuation half below shows its slice.
+      const re = (!p.cont && t) ? t.end : (p.e!=null ? p.e : (t?t.end:null));
       const timeBig = (rs!=null)
         ? (t&&t.undet
             ? `${t.fixed?'<span class="t-star">★</span>':'~'} ${fmtClock(rs)} <span class="undet-tag">→ ongoing</span>`
