@@ -488,6 +488,7 @@
 
 <!-- Theme selector -->
 <div id="theme-selector" class="hidden">
+  <button id="ts-close" onclick="App.closeThemePicker()" style="display:none;position:absolute;top:1.2rem;right:1.4rem;background:transparent;border:1px solid #5a3810;color:#d4af37;padding:.4rem .85rem;border-radius:3px;cursor:pointer;font-family:var(--font-body);letter-spacing:.1em;font-size:.85rem">✕ Close</button>
   <div class="ts-eyebrow">Presented by the Structure Inflictor</div>
   <div class="ts-title">THE INFLICTOR</div>
   <div class="ts-subtitle">"Hold the mirror up to nature — and mark what is done."</div>
@@ -779,6 +780,9 @@
             <label class="set-pill" id="sp-plain-dark"  onclick="Settings.pickTheme('plain-dark')"><input type="radio" name="st-theme" value="plain-dark"> Dark</label>
             <label class="set-pill" id="sp-standard"     onclick="Settings.pickTheme('standard')"><input type="radio" name="st-theme" value="standard"> Standard</label>
           </div>
+        </div>
+        <div class="set-row" style="margin-top:.5rem">
+          <button class="set-pill" style="cursor:pointer" onclick="App.reopenThemePicker()">🎭 See the opening theme cards</button>
         </div>
         <div class="set-row" style="margin-top:.6rem;align-items:flex-start;flex-wrap:wrap;gap:.5rem" id="ss-fonts">
           <span class="set-row-label">Typography</span>
@@ -1267,6 +1271,19 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     const ts = el('theme-selector'); ts.classList.add('fading');
     setTimeout(() => { ts.classList.add('hidden'); if (cb) cb(); }, 650);
   }
+  // Reopen the theme picker from inside the app (Settings) just to view/pick — apply live and stay put,
+  // rather than re-running the whole opening sequence.
+  let __themePreview = false;
+  App.reopenThemePicker = () => {
+    __themePreview = true;
+    const ts = el('theme-selector'); ts.classList.remove('hidden','fading');
+    const c = el('ts-close'); if (c) c.style.display = '';
+  };
+  App.closeThemePicker = () => {
+    __themePreview = false;
+    const c = el('ts-close'); if (c) c.style.display = 'none';
+    hideThemeSelector();
+  };
   function showOpening() {
     const os = el('opening-screen'); setBgImages(S.theme);
     os.style.display = 'block'; void os.offsetWidth;
@@ -1321,6 +1338,15 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     clearMsg();
   };
   App.selectTheme = theme => {
+    // Reopened from Settings just to view/pick: apply + persist through the normal Settings path, then
+    // close back to the app (no opening sequence).
+    if (__themePreview) {
+      __themePreview = false;
+      const c = el('ts-close'); if (c) c.style.display = 'none';
+      try { Settings.pickTheme(theme); } catch { applyTheme(theme); localStorage.setItem('inflictor_theme', theme); }
+      hideThemeSelector();
+      return;
+    }
     applyTheme(theme); localStorage.setItem('inflictor_theme', theme);
     // Standard + Plainspeak speak plain English; Light/Dark keep the theatrical voice. Set it so the
     // opening choice is coherent (and Settings reflects the right mode afterward).
