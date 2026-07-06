@@ -134,6 +134,15 @@
 
     /* Opening screen */
     #opening-screen{position:fixed;inset:0;z-index:40;background-size:cover;background-position:center;background-color:#060204;display:none;opacity:0;cursor:pointer;transition:opacity 1.2s ease;pointer-events:none}
+    /* Standard theme has no stage artwork — its opening page is drawn in CSS to match the theme. */
+    .os-standard{display:none}
+    .theme-standard #opening-screen{background-color:#edeff2}
+    .theme-standard #opening-screen .os-standard{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:1.1rem;animation:ossRise 1.4s ease both}
+    .oss-eyebrow{font-family:var(--font-body);font-size:.78rem;letter-spacing:.3em;text-transform:uppercase;color:#8b939c}
+    .oss-title{font-family:var(--font-display);font-weight:700;font-size:clamp(2rem,5vw,3.6rem);letter-spacing:.28em;color:#2d343c}
+    .oss-line{width:64px;height:3px;border-radius:2px;background:#5b7a8c}
+    .oss-sub{font-family:var(--font-body);font-size:1rem;color:#5f666e}
+    @keyframes ossRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
     #opening-screen.visible{opacity:1;pointer-events:auto}
     .os-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);font-family:var(--font-body);font-style:italic;color:rgba(212,175,55,.6);font-size:.9rem;letter-spacing:.1em;white-space:nowrap;pointer-events:none;animation:pulseHint 2.4s ease-in-out infinite}
     @keyframes pulseHint{0%,100%{opacity:.35}50%{opacity:.85}}
@@ -536,6 +545,12 @@
 
 <!-- Opening screen -->
 <div id="opening-screen" onclick="App.skipOpening()">
+  <div class="os-standard">
+    <div class="oss-eyebrow">Presented by the Structure Inflictor</div>
+    <div class="oss-title">THE INFLICTOR</div>
+    <div class="oss-line"></div>
+    <div class="oss-sub">A schedule that bends to your day.</div>
+  </div>
 </div>
 
 <!-- Auth overlay -->
