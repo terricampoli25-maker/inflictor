@@ -37,6 +37,8 @@
     /* ── Plainspeak themes — clean & modern, a deliberate contrast to the ornate ones ── */
     .theme-plain-light{--surface:rgba(255,255,255,.98);--text:#1a1a1a;--text-muted:#5a5f66;--accent:#2563eb;--accent-hi:#3b82f6;--border:#d4d8dd;--input-bg:#ffffff;--btn-bg:#2563eb;--btn-hover:#3b82f6;--btn-text:#ffffff;--ghost-border:#cbd5e1;--ghost-text:#475569;--error-col:#dc2626;--success-col:#16a34a;--shadow:rgba(0,0,0,.18);--header-bg:rgba(30,41,59,.94);--header-text:#f1f5f9;--slot-bg:rgba(248,250,252,.97);--slot-border:rgba(203,213,225,.9);--col-head-bg:rgba(241,245,249,.99);--stage-fallback:#e9edf2}
     .theme-plain-dark{--surface:rgba(24,28,36,.96);--text:#e8eaed;--text-muted:#9aa0a6;--accent:#4f9cf9;--accent-hi:#73b3ff;--border:#3a3f4a;--input-bg:rgba(32,36,44,.98);--btn-bg:#4f9cf9;--btn-hover:#73b3ff;--btn-text:#0a0d12;--ghost-border:#3a3f4a;--ghost-text:#9aa0a6;--error-col:#f06363;--success-col:#4ec94e;--shadow:rgba(0,0,0,.6);--header-bg:rgba(15,18,24,.9);--header-text:#e8eaed;--slot-bg:rgba(30,34,42,.72);--slot-border:rgba(58,63,74,.6);--col-head-bg:rgba(20,23,30,.95);--stage-fallback:#11141b}
+    /* Standard — a clean, modern, neutral look (plain English voice, no stage artwork needed). */
+    .theme-standard{--surface:rgba(255,255,255,.98);--text:#25292e;--text-muted:#5f666e;--accent:#5b7a8c;--accent-hi:#7596a8;--border:#d9dde1;--input-bg:#ffffff;--btn-bg:#5b7a8c;--btn-hover:#7596a8;--btn-text:#ffffff;--ghost-border:#c9cfd5;--ghost-text:#4b535b;--error-col:#cf4a42;--success-col:#3a9d5a;--shadow:rgba(0,0,0,.15);--header-bg:rgba(45,52,60,.95);--header-text:#eef1f3;--slot-bg:rgba(250,251,252,.97);--slot-border:rgba(214,219,224,.9);--col-head-bg:rgba(242,244,247,.99);--stage-fallback:#edeff2}
 
     /* Premium stage background filters */
     .theme-crimson  #stage-bg,.theme-crimson  #opening-screen{background-image:url('dark-stage.png')!important;filter:hue-rotate(200deg) saturate(1.4) brightness(.82)}
@@ -108,6 +110,7 @@
     .ts-card:hover .ts-card-bg{transform:scale(1.07)}
     [data-theme="light"] .ts-card-bg{background-image:url('light-open.png')}
     [data-theme="dark"]  .ts-card-bg{background-image:url('dark-open.png')}
+    [data-theme="standard"] .ts-card-bg{background:linear-gradient(160deg,#f7f8fa 0%,#e8ebef 52%,#d3d8de 100%)}
     .ts-card-info{position:absolute;bottom:0;left:0;right:0;padding:2.5rem 1.5rem 1.5rem;background:linear-gradient(transparent,rgba(0,0,0,.92))}
     .ts-card-label{display:block;font-family:var(--font-display);font-weight:600;font-size:1.45rem;letter-spacing:.22em;color:#d4af37;margin-bottom:.25rem}
     .ts-card-sub{font-family:var(--font-body);font-style:italic;color:#807050;font-size:.85rem}
@@ -498,6 +501,10 @@
       <div class="ts-card-bg"></div>
       <div class="ts-card-info"><span class="ts-card-label">DARK</span><span class="ts-card-sub">The Midnight Stage</span></div>
     </div>
+    <div class="ts-card" data-theme="standard" onclick="App.selectTheme('standard')">
+      <div class="ts-card-bg"></div>
+      <div class="ts-card-info"><span class="ts-card-label">STANDARD</span><span class="ts-card-sub">Clean &amp; modern</span></div>
+    </div>
   </div>
 </div>
 
@@ -770,6 +777,7 @@
           <div class="set-pills" style="margin-top:.5rem">
             <label class="set-pill" id="sp-plain-light" onclick="Settings.pickTheme('plain-light')"><input type="radio" name="st-theme" value="plain-light"> Light</label>
             <label class="set-pill" id="sp-plain-dark"  onclick="Settings.pickTheme('plain-dark')"><input type="radio" name="st-theme" value="plain-dark"> Dark</label>
+            <label class="set-pill" id="sp-standard"     onclick="Settings.pickTheme('standard')"><input type="radio" name="st-theme" value="standard"> Standard</label>
           </div>
         </div>
         <div class="set-row" style="margin-top:.6rem;align-items:flex-start;flex-wrap:wrap;gap:.5rem" id="ss-fonts">
@@ -1204,7 +1212,7 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   const COMING_SOON_THEMES = ['crimson','gilded','sapphire'];
   function applyTheme(theme) {
     if (COMING_SOON_THEMES.includes(theme)) theme = 'dark';
-    document.body.classList.remove('theme-light','theme-dark','theme-crimson','theme-gilded','theme-sapphire','theme-plain-light','theme-plain-dark');
+    document.body.classList.remove('theme-light','theme-dark','theme-crimson','theme-gilded','theme-sapphire','theme-plain-light','theme-plain-dark','theme-standard');
     document.body.classList.add(`theme-${theme}`);
     S.theme = theme;
   }
@@ -1217,8 +1225,8 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   function setBgImages(theme) {
     if (COMING_SOON_THEMES.includes(theme)) theme = 'dark';
     const premiumBase = ['crimson','gilded','sapphire'];
-    if (theme && theme.startsWith('plain-')) {
-      // Plainspeak themes use a clean solid backdrop (--stage-fallback) — no art needed.
+    if (theme && (theme.startsWith('plain-') || theme === 'standard')) {
+      // Plainspeak + Standard use a clean solid backdrop (--stage-fallback) — no art needed.
       el('stage-bg').style.backgroundImage = 'none';
       el('opening-screen').style.backgroundImage = 'none';
     } else if (premiumBase.includes(theme)) {
@@ -1312,7 +1320,17 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     else { el('auth-tabs').style.display = ''; App.showTab(form || 'login'); }
     clearMsg();
   };
-  App.selectTheme = theme => { applyTheme(theme); localStorage.setItem('inflictor_theme', theme); hideThemeSelector(() => showOpening()); };
+  App.selectTheme = theme => {
+    applyTheme(theme); localStorage.setItem('inflictor_theme', theme);
+    // Standard + Plainspeak speak plain English; Light/Dark keep the theatrical voice. Set it so the
+    // opening choice is coherent (and Settings reflects the right mode afterward).
+    const plain = theme === 'standard' || theme.startsWith('plain-');
+    window.__plain = plain;
+    localStorage.setItem('inflictor_tone', plain ? 'plain' : 'theatrical');
+    localStorage.setItem(plain ? 'inflictor_plain_theme' : 'inflictor_shakes_theme', theme);
+    try { window.applyTone && window.applyTone(); } catch {}
+    hideThemeSelector(() => showOpening());
+  };
   App.skipOpening = () => transitionToStage();
 
   App.doLogin = async e => {
@@ -3153,9 +3171,9 @@ window.Settings = (() => {
   }
 
   // ── Stage: theme + voice (Shakespeare vs plain are picked together as a "mode") ──
-  const PLAIN_THEMES = ['plain-light','plain-dark'];
+  const PLAIN_THEMES = ['plain-light','plain-dark','standard'];
   const isPlainTheme = t => PLAIN_THEMES.includes(t);
-  const ALL_THEMES = ['light','dark','crimson','gilded','sapphire','plain-light','plain-dark'];
+  const ALL_THEMES = ['light','dark','crimson','gilded','sapphire','plain-light','plain-dark','standard'];
   // Apply a theme — sets the look, the matching voice, the background, and persists it.
   function pickTheme(t) {
     if (['crimson','gilded','sapphire'].includes(t)) t = 'dark';   // not selectable until artwork exists
