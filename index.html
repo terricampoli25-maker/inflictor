@@ -1717,52 +1717,45 @@ window.Planner = (() => {
   }
 
   // ── This-week report — completed-activity time (minus any meal carved out) + calories ──
-  function openReport() {
-    const days = getWeekDays();
+  // Aggregate the 7 days in view into per-activity completion counts: how many times each activity was
+  // COMPLETED out of how many times it was scheduled on days that have already happened (future days don't
+  // count toward "supposed to" yet). Grouped by NAME, so a recurring activity tallies across the week even
+  // if a customized day gave it a different id. Meds tally under their (privacy) label; meals just add calories.
+  function computeWeekReport(days) {
     const showMeds = localStorage.getItem('inflictor_report_meds') === '1';
-    let weekTime = 0, weekCal = 0, weekDone = 0, weekMissed = 0, weekMedsTaken = 0, weekMedsTotal = 0;
-    const blocks = days.map(d => {
+    const today = toISO(new Date());
+    const acts = new Map();    // name  -> { done, sched }
+    const meds = new Map();    // label -> { done, sched }
+    let cal = 0, totalDone = 0, totalSched = 0;
+    for (const d of days) {
       const ds = toISO(d);
-      const acts = getDaySchedule(ds)?.activities || [];
-      const times = computeDayTimes(acts, 0, 0, null);                 // scheduled times, no live offset
-      const carveList = acts.filter(a => (a.timing||'')==='sustenance' && times[a.id]);   // only meals carve activity time — a med is a moment, not a block
-      let dayTime = 0, dayCal = 0; const lines = [];
-      for (const a of acts) {
-        const status = taskStatus[`${ds}:${a.id}`], timing = a.timing || 'flexible';
-        if (timing === 'sustenance') {
-          const cal = getCalories(ds, a.id);
-          if (cal) dayCal += cal;
-          if (status === 'completed' || cal) lines.push(`<div class="rpt-line rpt-sus">🍴 ${esc(a.name||'snack')}${cal?` · <span class="sus-cal">🔥${cal}</span>`:''}</div>`);
-          continue;
-        }
-        if (timing === 'med') {                               // medications: optional, only if the user opted in
-          // With-food calories count toward the day's total. Privacy: a Reminder-display med shows the
-          // discreet label, never the med name.
-          const mcal = a.with_food ? getCalories(ds, a.id) : 0;
-          if (mcal) dayCal += mcal;
+      if (ds > today) continue;                                  // hasn't happened yet → not "supposed to" yet
+      for (const a of (getDaySchedule(ds)?.activities || [])) {
+        const timing = a.timing || 'flexible';
+        const done = taskStatus[`${ds}:${a.id}`] === 'completed';
+        if (timing === 'sustenance') { cal += getCalories(ds, a.id); continue; }
+        if (timing === 'med') {
+          if (a.with_food) cal += getCalories(ds, a.id);
           if (!showMeds) continue;
-          const mlbl = a.med_display === 'ribbon' ? ((a.display_label||'').trim() || 'Reminder') : (a.name||'Medication');
-          weekMedsTotal++;
-          if (status === 'completed') { weekMedsTaken++; lines.push(`<div class="rpt-line">${medIcon(a)} ${esc(mlbl)} · ✓ taken${mcal?` · <span class="sus-cal">🔥${mcal}</span>`:''}</div>`); }
-          else lines.push(`<div class="rpt-line" style="opacity:.6">${medIcon(a)} ${esc(mlbl)} · not taken</div>`);
+          const lbl = a.med_display === 'ribbon' ? ((a.display_label||'').trim() || 'Reminder') : (a.name||'Medication');
+          const r = meds.get(lbl) || { done:0, sched:0 }; r.sched++; if (done) r.done++; meds.set(lbl, r);
           continue;
         }
-        if (status === 'completed') weekDone++; else if (status === 'failed') { weekMissed++; continue; }
-        if (status !== 'completed') continue;
-        if (timing === 'anytime') { lines.push(`<div class="rpt-line">${esc(a.name)} · ✓</div>`); continue; }
-        if (a.undetermined) { lines.push(`<div class="rpt-line">${esc(a.name)} · ✓ <span class="undet-tag">(open-ended)</span></div>`); continue; }
-        const t = times[a.id]; if (!t) continue;
-        const dur = completedSegMins(ds, a, acts, times);   // only the COMPLETED split-segments' time — each part on its own
-        dayTime += dur;
-        lines.push(`<div class="rpt-line">${esc(a.name)} · <b>${fmtDur(dur)}</b></div>`);
+        const name = (a.name||'').trim() || 'Untitled';
+        const r = acts.get(name) || { done:0, sched:0 }; r.sched++; if (done) r.done++; acts.set(name, r);
+        totalSched++; if (done) totalDone++;
       }
-      weekTime += dayTime; weekCal += dayCal;
-      if (!lines.length) return '';
-      const dl = d.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-      return `<div class="rpt-day"><div class="rpt-day-hdr">${dl} — <b>${fmtDur(dayTime)}</b>${dayCal?` · <span class="sus-cal">🔥${dayCal}</span>`:''}</div>${lines.join('')}</div>`;
-    }).join('');
-    const summary = `<div class="rpt-summary"><b>${fmtDur(weekTime)}</b> active${weekCal?` · <span class="sus-cal">🔥${weekCal}</span>`:''} · ${weekDone} completed${showMeds&&weekMedsTotal?` · 🎗️ ${weekMedsTaken}/${weekMedsTotal} taken`:''}</div>`;
-    document.getElementById('report-body').innerHTML = summary + (blocks || '<div class="rpt-empty">Nothing logged yet this week.</div>');
+    }
+    return { showMeds, cal, totalDone, totalSched, acts, meds };
+  }
+  const rptByName = m => [...m.entries()].sort((a,b) => a[0].localeCompare(b[0]));
+  function openReport() {
+    const r = computeWeekReport(getWeekDays());
+    const actLines = rptByName(r.acts).map(([name,v]) => `<div class="rpt-line">${esc(name)} · <b>${v.done}/${v.sched}</b></div>`).join('');
+    const medLines = r.showMeds ? rptByName(r.meds).map(([lbl,v]) => `<div class="rpt-line">🎗️ ${esc(lbl)} · <b>${v.done}/${v.sched}</b></div>`).join('') : '';
+    const summary = `<div class="rpt-summary"><b>${r.totalDone}/${r.totalSched}</b> completed this week${r.cal?` · <span class="sus-cal">🔥${r.cal}</span>`:''}</div>`;
+    const body = (actLines || medLines) || '<div class="rpt-empty">Nothing logged yet this week.</div>';
+    document.getElementById('report-body').innerHTML = summary + body;
     const ov = document.getElementById('report-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
   }
   function closeReport() {
@@ -1770,32 +1763,13 @@ window.Planner = (() => {
   }
   // Email the same week report to the user's own address (server sends via Resend).
   async function emailReport() {
-    const days = getWeekDays();
-    const showMeds = localStorage.getItem('inflictor_report_meds') === '1';
-    let weekTime=0, weekCal=0, weekDone=0, weekMissed=0, weekMedsTaken=0, weekMedsTotal=0; const dayTexts=[];
-    for (const d of days) {
-      const ds = toISO(d);
-      const acts = getDaySchedule(ds)?.activities || [];
-      const times = computeDayTimes(acts, 0, 0, null);
-      const carveList = acts.filter(a => (a.timing||'')==='sustenance' && times[a.id]);   // only meals carve activity time — a med is a moment, not a block
-      let dayTime=0, dayCal=0; const lines=[];
-      for (const a of acts) {
-        const status = taskStatus[`${ds}:${a.id}`], timing = a.timing||'flexible';
-        if (timing==='sustenance') { const cal=getCalories(ds,a.id); if(cal)dayCal+=cal; if(status==='completed'||cal) lines.push(`  🍴 ${a.name||'snack'}${cal?` · ${cal} cal`:''}`); continue; }
-        if (timing==='med') { const mcal=a.with_food?getCalories(ds,a.id):0; if(mcal)dayCal+=mcal; if(!showMeds) continue; const mlbl=a.med_display==='ribbon'?((a.display_label||'').trim()||'Reminder'):(a.name||'Medication'); weekMedsTotal++; if(status==='completed'){weekMedsTaken++; lines.push(`  ${medIcon(a)} ${mlbl} · taken${mcal?` · ${mcal} cal`:''}`);} else lines.push(`  ${medIcon(a)} ${mlbl} · not taken`); continue; }
-        if (status==='completed') weekDone++; else if (status==='failed') { weekMissed++; continue; }
-        if (status!=='completed') continue;
-        if (timing==='anytime') { lines.push(`  • ${a.name} · done`); continue; }
-        if (a.undetermined) { lines.push(`  • ${a.name} · done (open-ended)`); continue; }
-        const t=times[a.id]; if(!t) continue;
-        const dur = completedSegMins(ds, a, acts, times);   // only the COMPLETED split-segments' time — each part on its own
-        dayTime+=dur;
-        lines.push(`  • ${a.name} · ${fmtDur(dur)}`);
-      }
-      weekTime+=dayTime; weekCal+=dayCal;
-      if (lines.length) { const dl=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'}); dayTexts.push(`${dl} — ${fmtDur(dayTime)}${dayCal?` · ${dayCal} cal`:''}\n`+lines.join('\n')); }
-    }
-    const txt = `Week total: ${fmtDur(weekTime)} active${weekCal?` · ${weekCal} calories`:''} · ${weekDone} completed${showMeds&&weekMedsTotal?` · 🎗️ ${weekMedsTaken}/${weekMedsTotal} reminders taken`:''}\n\n` + (dayTexts.join('\n\n') || 'Nothing logged yet this week.');
+    const r = computeWeekReport(getWeekDays());
+    const actLines = rptByName(r.acts).map(([n,v]) => `  ${n} — ${v.done}/${v.sched}`).join('\n');
+    const medLines = r.showMeds ? rptByName(r.meds).map(([l,v]) => `  ${l} — ${v.done}/${v.sched}`).join('\n') : '';
+    const parts = [`This week: ${r.totalDone}/${r.totalSched} completed${r.cal?` · ${r.cal} calories`:''}`];
+    if (actLines) parts.push('Each activity — completed / scheduled:\n' + actLines);
+    if (medLines) parts.push('Reminders & medications — taken / scheduled:\n' + medLines);
+    const txt = (actLines || medLines) ? parts.join('\n\n') : 'Nothing logged yet this week.';
     const btn = document.getElementById('report-email-btn'); if (btn) { btn.disabled=true; btn.textContent='Sending…'; }
     const { ok, data } = await api('report-email', { method:'POST', body:{ body: txt, period: "This Week's Report" } });
     if (btn) { btn.disabled=false; btn.textContent='✉ Email it to me'; }

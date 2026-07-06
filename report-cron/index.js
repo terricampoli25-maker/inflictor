@@ -21,7 +21,7 @@ function rptTimes(acts) {
   }
   return out;
 }
-async function computeReport(db, uid, start, numDays) {
+async function computeReport(db, uid, start, numDays, todayLocal) {
   const dates=[]; { const d0=new Date(`${start}T12:00:00Z`); for (let i=0;i<numDays;i++){ const d=new Date(d0); d.setUTCDate(d0.getUTCDate()+i); dates.push(d.toISOString().split('T')[0]); } }
   const end=dates[dates.length-1];
   const [ovrRes, logsRes, memosRes] = await Promise.all([
@@ -37,31 +37,28 @@ async function computeReport(db, uid, start, numDays) {
   const mondays=[...new Set(dates.map(rptMonday))];
   const tmplRows=await Promise.all(mondays.map(mon=>db.prepare('SELECT schedule_data FROM weekly_schedules WHERE user_id=? AND week_start=?').bind(uid,mon).first()));
   const templates={}; mondays.forEach((mon,i)=>templates[mon]=tmplRows[i]?parse(tmplRows[i].schedule_data):null);
-  let totMin=0, totCal=0, done=0, missed=0; const byDay=[];
+  // Per-activity completion: how many times each activity was COMPLETED out of how many times it was
+  // scheduled, over days that have already happened. Grouped by name so a recurring activity tallies
+  // across the week. Meals just add calories; meds stay private in the auto-email (only their with-food cals count).
+  const agg = new Map();   // name -> { done, sched }
+  let cal=0, totalDone=0, totalSched=0;
   for (const ds of dates) {
+    if (todayLocal && ds > todayLocal) continue;                 // hasn't happened yet → not "supposed to" yet
     let acts;
     if (overrides[ds]) acts=overrides[ds].activities||[];
     else { const tmpl=templates[rptMonday(ds)], di=rptDayIdx(ds); acts=tmpl?(tmpl.activities||[]).filter(a=>!a.days||a.days[di]):[]; }
-    const times=rptTimes(acts), carveList=acts.filter(a=>((a.timing||'')==='sustenance'||((a.timing||'')==='med'&&a.med_display!=='ribbon'))&&times[a.id]);
-    let dayMin=0, dayCal=0; const items=[];
     for (const a of acts) {
       const st=status[`${ds}:${a.id}`]||status[`${ds}:${a.name}`], timing=a.timing||'flexible';
-      if (timing==='sustenance') { const c=cals[`${ds}:cal:${a.id}`]||0; if(c)dayCal+=c; if(st==='completed'||c) items.push({type:'sus',name:a.name||'snack',calories:c}); continue; }
-      if (timing==='med') { if (a.with_food) { const c=cals[`${ds}:cal:${a.id}`]||0; if(c)dayCal+=c; } continue; }   // a med is a moment, not activity time; only its with-food calories count (med name stays private)
-      if (st==='completed') done++; else if (st==='failed') { missed++; continue; }
-      if (st!=='completed') continue;
-      if (timing==='anytime') { items.push({type:'anytime',name:a.name}); continue; }
-      if (a.undetermined) { items.push({type:'open',name:a.name}); continue; }
-      const t=times[a.id]; if(!t) continue;
-      let dur=t.end-t.start;
-      for (const su of carveList) { const sst=times[su.id]; if (sst.start>t.start && sst.start<t.end) dur-=Math.min(sst.end,t.end)-sst.start; }
-      dur=Math.max(0,dur); dayMin+=dur;
-      items.push({type:'act',name:a.name,minutes:dur});
+      const done = st==='completed';
+      if (timing==='sustenance') { cal += cals[`${ds}:cal:${a.id}`]||0; continue; }
+      if (timing==='med') { if (a.with_food) cal += cals[`${ds}:cal:${a.id}`]||0; continue; }
+      const name=(a.name||'').trim()||'Untitled';
+      const r=agg.get(name)||{done:0,sched:0}; r.sched++; if(done)r.done++; agg.set(name,r);
+      totalSched++; if(done)totalDone++;
     }
-    totMin+=dayMin; totCal+=dayCal;
-    if (items.length) byDay.push({ date:ds, minutes:dayMin, calories:dayCal, items });
   }
-  return { start, days:numDays, total:{ minutes:totMin, calories:totCal, done, missed }, byDay };
+  const activities=[...agg.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([name,v])=>({name,done:v.done,sched:v.sched}));
+  return { start, days:numDays, total:{ calories:cal, done:totalDone, sched:totalSched }, activities };
 }
 
 // ─── email rendering ─────────────────────────────────────────────────────────
@@ -70,29 +67,24 @@ function fmtMin(m){ const h=Math.floor((m||0)/60), mm=(m||0)%60; return ((h?`${h
 function prettyDate(ds){ const d=new Date(`${ds}T12:00:00Z`); return d.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'}); }
 function renderReportHtml(rep, period){
   const t=rep.total||{};
-  let days='';
-  for (const d of rep.byDay||[]) {
-    let items='';
-    for (const it of d.items) {
-      if (it.type==='act') items+=`<li>${esc(it.name)} — ${fmtMin(it.minutes)}</li>`;
-      else if (it.type==='sus') items+=`<li>🍴 ${esc(it.name)}${it.calories?` — ${it.calories} cal`:''}</li>`;
-      else if (it.type==='anytime') items+=`<li>${esc(it.name)} ✓</li>`;
-      else if (it.type==='open') items+=`<li>${esc(it.name)} <span style="color:#a07840">(open-ended)</span></li>`;
-    }
-    days+=`<div style="margin:.8rem 0"><div style="color:#d4af37;font-weight:bold;border-bottom:1px solid #3a2410;padding-bottom:.2rem">${esc(prettyDate(d.date))}</div><ul style="margin:.4rem 0;padding-left:1.2rem;color:#e8d0a0;line-height:1.6">${items||'<li style="color:#6a5030">nothing logged</li>'}</ul></div>`;
+  let rows='';
+  for (const a of rep.activities||[]) {
+    const short = a.done < a.sched;   // dim the ones not fully done
+    rows+=`<li style="color:${short?'#e8d0a0':'#7ac77a'}">${esc(a.name)} — <b>${a.done}/${a.sched}</b></li>`;
   }
-  if (!days) days='<p style="color:#a07840;font-style:italic;text-align:center;margin:1.5rem 0">Nothing logged this period — the stage was dark.</p>';
+  const list = rows
+    ? `<div style="margin:.8rem 0"><div style="color:#d4af37;font-weight:bold;border-bottom:1px solid #3a2410;padding-bottom:.2rem">Each activity — completed / scheduled</div><ul style="margin:.5rem 0;padding-left:1.2rem;line-height:1.8">${rows}</ul></div>`
+    : '<p style="color:#a07840;font-style:italic;text-align:center;margin:1.5rem 0">Nothing logged this period — the stage was dark.</p>';
   return `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;background:#110800;color:#d4af37;border:1px solid #5a3010">
     <h1 style="text-align:center;letter-spacing:.1em;margin:0">THE INFLICTOR</h1>
     <p style="text-align:center;font-style:italic;color:#a07840;margin:.3rem 0 1.2rem">${esc(period)}</p>
     <div style="display:table;width:100%;text-align:center;background:#1a0f00;border:1px solid #3a2410;margin-bottom:1rem">
       <div style="display:table-row">
-        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#d4af37">${fmtMin(t.minutes||0)}</div><div style="font-size:.7rem;color:#a07840">active</div></div>
+        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#7ac77a">${t.done||0}/${t.sched||0}</div><div style="font-size:.7rem;color:#a07840">completed</div></div>
         ${(t.calories||0)>0?`<div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#d4af37">${t.calories}</div><div style="font-size:.7rem;color:#a07840">calories</div></div>`:''}
-        <div style="display:table-cell;padding:.9rem"><div style="font-size:1.25rem;color:#7ac77a">${t.done||0}</div><div style="font-size:.7rem;color:#a07840">completed</div></div>
       </div>
     </div>
-    ${days}
+    ${list}
     <p style="font-size:.72rem;color:#6a5030;text-align:center;margin-top:1.4rem">Sent from The Inflictor · ${esc(new Date().toDateString())}</p>
   </div>`;
 }
@@ -134,7 +126,7 @@ async function runScheduledReports(env, force=false){
     if (force) { due=true; if (r.report_frequency!=='daily'){ start=rptMonday(localDate); numDays=7; } }
     if (!due) { out.push({user:r.user_id,freq:r.report_frequency,skipped:'not-due',localHour:lh}); continue; }
     if (r.report_last_sent===localDate && !force) { out.push({user:r.user_id,freq:r.report_frequency,skipped:'already-sent'}); continue; }
-    const report = await computeReport(db, r.user_id, start, numDays);
+    const report = await computeReport(db, r.user_id, start, numDays, localDate);
     const html = renderReportHtml(report, period);
     const sent = await sendReport(env, r.email, period, html);
     if (sent.ok) await db.prepare('UPDATE settings SET report_last_sent=? WHERE user_id=?').bind(localDate, r.user_id).run();
