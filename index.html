@@ -2288,7 +2288,7 @@ window.Planner = (() => {
       }).join('');
       if (p.cont) {                                           // 2nd+ part of a split activity — its OWN done/skip, tracked independently
         return `<div class="slot slot-cont slot-${segStatus}${dimmed?' slot-paused':''}" style="height:${px}px" data-key="${esc(segKey)}">${ribbonHtml}
-          <div class="slot-info"><div class="slot-name">↳ ${act.reminder?'🎗️ ':''}${esc(act.name)}</div>${timeBig?`<div class="slot-time">${timeBig}</div>`:''}</div>
+          <div class="slot-info"><div class="slot-name">↳ ${act.reminder?'🎗️ ':''}${esc(act.name)}</div></div>
           <div class="slot-indicators">
             <span class="slot-check-group">
               <input type="checkbox" class="slot-chk-complete" ${segStatus==='completed'?'checked':''} onchange="Planner.setStatus('${esc(ds)}','${esc(segId)}','${esc(act.name)}','completed',this.checked)" title="Completed this part">
