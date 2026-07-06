@@ -1910,7 +1910,7 @@ window.Planner = (() => {
   }
   // Quick-add a meal/snack (or any single activity) directly to ONE day — touches nothing else.
   function openActAdd(ds) {
-    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 20, chime_start: false, chime_end: false, food: '', cal: '', dose: '', with_food: false, display_label: '', med_display: 'ribbon', med_notify: false, med_kind: 'reminder', reminder: false };
+    actEdit = { ds, id: uid(), isNew: true, name: '', timing: 'sustenance', fixed_start: '', fixed_end: '', goal_time: '', hours: 0, mins: 0, chime_start: false, chime_end: false, food: '', cal: '', dose: '', with_food: false, display_label: '', med_display: 'ribbon', med_notify: false, med_kind: 'reminder', reminder: false };
     renderActEdit();
     const ov = document.getElementById('actedit-overlay'); ov.classList.remove('gone'); void ov.offsetWidth; ov.classList.add('visible');
     setTimeout(() => document.getElementById('ae-start')?.focus(), 80);
@@ -2740,7 +2740,7 @@ window.Planner = (() => {
   }
   function removeAct(id) { captureDOM(); setup.activities=setup.activities.filter(a=>a.id!==id); renderActs(); }
   function setColor(id,c) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.color=c; renderActs(); }
-  function setTiming(id,mode,kind) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; if(!a.mins) a.mins=20; } if(mode==='med'){ a.undetermined=false; if(!a.med_display) a.med_display='ribbon'; a.med_kind='medication'; } } renderActs(); }
+  function setTiming(id,mode,kind) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a){ a.timing=mode; if(mode==='sustenance'){ a.undetermined=false; a.hours=0; } if(mode==='med'){ a.undetermined=false; if(!a.med_display) a.med_display='ribbon'; a.med_kind='medication'; } } renderActs(); }
   function setMedDisplay(id,mode) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.med_display=(mode==='ribbon'?'ribbon':'split'); renderActs(); }
   function setMedNotify(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.med_notify=checked; renderActs(); }
   function setMedWithFood(id,checked) { captureDOM(); const a=setup.activities.find(a=>a.id===id); if(a) a.with_food=checked; renderActs(); }
