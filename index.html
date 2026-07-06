@@ -1272,18 +1272,8 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     setTimeout(() => { ts.classList.add('hidden'); if (cb) cb(); }, 650);
   }
   // Reopen the theme picker from inside the app (Settings) just to view/pick — apply live and stay put,
-  // rather than re-running the whole opening sequence.
+  // rather than re-running the whole opening sequence. (The App.* handlers are attached after App exists.)
   let __themePreview = false;
-  App.reopenThemePicker = () => {
-    __themePreview = true;
-    const ts = el('theme-selector'); ts.classList.remove('hidden','fading');
-    const c = el('ts-close'); if (c) c.style.display = '';
-  };
-  App.closeThemePicker = () => {
-    __themePreview = false;
-    const c = el('ts-close'); if (c) c.style.display = 'none';
-    hideThemeSelector();
-  };
   function showOpening() {
     const os = el('opening-screen'); setBgImages(S.theme);
     os.style.display = 'block'; void os.offsetWidth;
@@ -1327,6 +1317,17 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   }
 
   window.App = {};
+  // Reopen the opening theme picker from inside the app (Settings) — view/pick, then close back.
+  App.reopenThemePicker = () => {
+    __themePreview = true;
+    const ts = el('theme-selector'); ts.classList.remove('hidden','fading');
+    const c = el('ts-close'); if (c) c.style.display = '';
+  };
+  App.closeThemePicker = () => {
+    __themePreview = false;
+    const c = el('ts-close'); if (c) c.style.display = 'none';
+    hideThemeSelector();
+  };
   App.showTab = tab => {
     ['login','register'].forEach(t => { el(`tab-${t}`).classList.toggle('active', t === tab); el(`form-${t}`).classList.toggle('active', t === tab); });
     clearMsg();
