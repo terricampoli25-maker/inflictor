@@ -2632,7 +2632,7 @@ window.Planner = (() => {
     }).join('');
   }
 
-  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:1,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
+  function addAct()   { captureDOM(); setup.activities.push({id:uid(),name:'',hours:0,mins:0,color:COLORS[setup.activities.length%COLORS.length],chime_start:false,chime_end:false,timing:'flexible',fixed_start:'',fixed_end:'',goal_time:'',days:Array(7).fill(true)}); renderActs(); }
   // Clearing the name clears the rest too — so you can blank an activity without emptying every box.
   function onActName(id, val) {
     captureDOM();
