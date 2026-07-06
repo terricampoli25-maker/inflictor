@@ -2495,7 +2495,21 @@ window.Planner = (() => {
     setup.editingDate = date;
     setup.chimeOpenId = null;                      // start with every chime picker closed
     clearTimeout(window.__setupGoneTimer);         // a pending close-animation timer must not hide us after we reopen
-    const existing = date ? getDaySchedule(date) : weekData?.schedule;
+    let existing = date ? getDaySchedule(date) : weekData?.schedule;
+    // SAFETY: if the recurring template is missing/empty but the week's days still have activities
+    // (e.g. a template write was lost while the per-day copies survived), rebuild the box from those
+    // days instead of opening empty — otherwise "Set the Stage" would overwrite the week with nothing.
+    if (!date && !((existing?.activities || []).length)) {
+      const today = toISO(new Date());
+      const byId = new Map();
+      for (const dd of getSetupDays()) {
+        const ds = toISO(dd);
+        if (ds < today) continue;                                                     // don't resurrect past/frozen days
+        if (customDays.has(ds) || weekData?.dailyOverrides?.[ds]?.custom) continue;    // custom days aren't part of the template
+        for (const a of (weekData?.dailyOverrides?.[ds]?.activities || [])) if (a && !byId.has(a.id)) byId.set(a.id, a);   // each carries its own days[] array
+      }
+      if (byId.size) existing = { wake_time: existing?.wake_time || '07:00', activities: [...byId.values()] };
+    }
     setup.wakeTime  = existing?.wake_time || '07:00';
     setup.activities = (existing?.activities||[]).map(a => ({
       id: a.id || uid(), name: a.name, hours: Math.floor(a.duration_minutes/60), mins: a.duration_minutes%60, color: a.color||COLORS[0], chime_start: !!a.chime_start, chime_end: (a.chime_end!==undefined?!!a.chime_end:!!a.chime_enabled), timing: a.timing || 'flexible',
@@ -2700,6 +2714,21 @@ window.Planner = (() => {
     // Emptying the whole box and saving = a deliberate "clear everything" — this DOES wipe customized days.
     const wipeAll = activities.length === 0;
     if (wipeAll && !(await appConfirm("Clear this week's schedule so you can rebuild it? Your past days and everything you've logged are kept — only today onward is cleared.", 'Clear'))) return;
+    // DATA-LOSS GUARD: if this save would REMOVE activities that are currently on the week's upcoming
+    // non-custom days (i.e. the box was opened without the full set), make the user confirm first — so a
+    // partial Prepare Week can never quietly wipe the week. Compares by name against what's scheduled now.
+    if (!wipeAll) {
+      const keep = new Set(activities.map(a => (a.name||'').trim()).filter(Boolean));
+      const current = new Set();
+      for (const d of days) {
+        const ds = toISO(d);
+        if (ds < todayStr) continue;                                                    // past days are frozen — not touched
+        if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;          // custom days are preserved
+        for (const a of (getDaySchedule(ds)?.activities || [])) { const n=(a.name||'').trim(); if (n) current.add(n); }
+      }
+      const dropped = [...current].filter(n => !keep.has(n));
+      if (dropped.length && !(await appConfirm(`Heads up: saving now removes ${dropped.length} activit${dropped.length>1?'ies':'y'} from your week — ${dropped.slice(0,6).join(', ')}${dropped.length>6?'…':''}. Save anyway?`, 'Save anyway'))) return;
+    }
     const windowDs = new Set(days.map(d=>toISO(d)));
     const ops = [ () => api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
     for (const d of days) {
