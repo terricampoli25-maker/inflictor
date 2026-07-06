@@ -35,4 +35,14 @@ for (const item of ITEMS) {
   console.log(`  copied  ${item}`);
 }
 
+// Stamp the built index.html with the app version (single source of truth = package.json) so the
+// running build is identifiable in-app — makes stale-install confusion obvious.
+try {
+  const pkg = JSON.parse(fs.readFileSync(path.join(__dirname, 'package.json'), 'utf8'));
+  const idxPath = path.join(DEST, 'index.html');
+  const stamped = fs.readFileSync(idxPath, 'utf8').replace(/__APP_VERSION__/g, pkg.version);
+  fs.writeFileSync(idxPath, stamped);
+  console.log(`  stamped version ${pkg.version}`);
+} catch (e) { console.warn('  version stamp failed:', e.message); }
+
 console.log('Build complete → desktop/app/');
