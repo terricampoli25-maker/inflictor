@@ -2718,16 +2718,24 @@ window.Planner = (() => {
     // non-custom days (i.e. the box was opened without the full set), make the user confirm first — so a
     // partial Prepare Week can never quietly wipe the week. Compares by name against what's scheduled now.
     if (!wipeAll) {
-      const keep = new Set(activities.map(a => (a.name||'').trim()).filter(Boolean));
-      const current = new Set();
+      const have = new Set(activities.map(a => (a.name||'').trim()).filter(Boolean));
+      // Gather activities scheduled on upcoming non-custom days that AREN'T in the box (would be dropped).
+      const droppedActs = new Map();   // name -> the activity object (to fold back if the user keeps it)
       for (const d of days) {
         const ds = toISO(d);
         if (ds < todayStr) continue;                                                    // past days are frozen — not touched
         if (customDays.has(ds) || weekData.dailyOverrides[ds]?.custom) continue;          // custom days are preserved
-        for (const a of (getDaySchedule(ds)?.activities || [])) { const n=(a.name||'').trim(); if (n) current.add(n); }
+        for (const a of (getDaySchedule(ds)?.activities || [])) { const n=(a.name||'').trim(); if (n && !have.has(n) && !droppedActs.has(n)) droppedActs.set(n, a); }
       }
-      const dropped = [...current].filter(n => !keep.has(n));
-      if (dropped.length && !(await appConfirm(`Heads up: saving now removes ${dropped.length} activit${dropped.length>1?'ies':'y'} from your week — ${dropped.slice(0,6).join(', ')}${dropped.length>6?'…':''}. Save anyway?`, 'Save anyway'))) return;
+      const dropped = [...droppedActs.keys()];
+      if (dropped.length) {
+        const choice = await appChoice(
+          `Saving your week would drop ${dropped.length} activit${dropped.length>1?'ies':'y'} that ${dropped.length>1?'are':'is'} still on it: ${dropped.slice(0,6).join(', ')}${dropped.length>6?'…':''}. Keep ${dropped.length>1?'them':'it'} on your week, or remove?`,
+          [ { label:`Keep ${dropped.length>1?'them':'it'}`, value:'keep', primary:true }, { label:`Remove ${dropped.length>1?'them':'it'}`, value:'remove' }, { label:'Cancel', value:'cancel' } ]
+        );
+        if (choice !== 'keep' && choice !== 'remove') return;                             // cancel / dismissed
+        if (choice === 'keep') { for (const a of droppedActs.values()) activities.push(a); }   // fold them back so nothing is lost (sched.activities is the same array)
+      }
     }
     const windowDs = new Set(days.map(d=>toISO(d)));
     const ops = [ () => api('schedule',{method:'PUT',body:{week_start:start,schedule_data:JSON.stringify(sched),today:todayStr}}) ];
@@ -2783,6 +2791,25 @@ window.Planner = (() => {
       ok.addEventListener('click', () => done(true));
       row.append(cancel, ok); box.append(msg, row); ov.append(box);
       document.body.appendChild(ov);
+    });
+  }
+  // Like appConfirm but with N buttons — returns the chosen button's value (buttons: [{label,value,primary}]).
+  function appChoice(message, buttons) {
+    return new Promise((resolve) => {
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)';
+      const box = document.createElement('div');
+      box.style.cssText = 'background:var(--surface,#1b1b1f);color:var(--text,#eee);border:1px solid var(--border,#555);border-radius:6px;padding:1.5rem 1.6rem;width:min(470px,92vw);box-shadow:0 24px 80px rgba(0,0,0,.55);font-family:Georgia,serif;line-height:1.5';
+      const msg = document.createElement('div'); msg.textContent = message; msg.style.marginBottom = '1.3rem';
+      const row = document.createElement('div'); row.style.cssText = 'display:flex;gap:.6rem;justify-content:flex-end;flex-wrap:wrap';
+      const done = (v) => { try { ov.remove(); } catch {} resolve(v); };
+      for (const b of buttons) {
+        const el = document.createElement('button'); el.textContent = b.label;
+        el.style.cssText = `padding:.5rem 1.1rem;border-radius:4px;cursor:pointer;font-family:inherit;font-size:.9rem;border:1px solid var(--border,#555);background:${b.primary ? 'var(--accent,#3b82f6)' : 'transparent'};color:${b.primary ? '#fff' : 'var(--text,#eee)'}`;
+        el.addEventListener('click', () => done(b.value));
+        row.appendChild(el);
+      }
+      box.append(msg, row); ov.append(box); document.body.appendChild(ov);
     });
   }
   function appNotify(message) {
