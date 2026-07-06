@@ -914,7 +914,7 @@
         </div>
         <div class="guide-block">
           <h4>1 · Build your week</h4>
-          <p>Click <b>Prepare/Edit Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes, and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). When you save, two buttons set the scope: <b>Edit</b> saves to just <b>one day</b>, while <b>Set the Stage</b> applies to your <b>whole recurring week</b>. To change a single day, click the little <b>pencil</b> on that day's header — that view <b>only</b> saves to that day (no "Set the Stage"), so it can't overwrite the rest of your week. To wipe the slate and start fresh, use <b>Clear Everything</b> in the Prepare Week box. <b>Tip:</b> clearing an activity's <b>name</b> also clears its time/length, so you can blank one out without emptying every box.</p>
+          <p>Click <b>Prepare/Edit Week</b> (top-left of the planner). Add an <b>activity</b> for each thing you do — give it a name and a length in hours and minutes (<b>5 minutes minimum</b>), and set which days it runs using its row of <b>weekday buttons</b> (Mon–Sun). When you save, two buttons set the scope: <b>Edit</b> saves to just <b>one day</b>, while <b>Set the Stage</b> applies to your <b>whole recurring week</b>. To change a single day, click the little <b>pencil</b> on that day's header — that view <b>only</b> saves to that day (no "Set the Stage"), so it can't overwrite the rest of your week. To wipe the slate and start fresh, use <b>Clear Everything</b> in the Prepare Week box. <b>Tip:</b> clearing an activity's <b>name</b> also clears its time/length, so you can blank one out without emptying every box.</p>
         </div>
         <div class="guide-block">
           <h4>Fixed, Flexible, Anytime &amp; Sustenance</h4>
@@ -962,7 +962,7 @@
         </div>
         <div class="guide-block">
           <h4>Act I · Lay thy week upon the boards</h4>
-          <p>Press <b>Prepare/Edit Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes, and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). When thou savest, two buttons set the reach: <b>Edit</b> bestoweth thy changes upon <b>one day alone</b>, whilst <b>Set the Stage</b> bindeth thy <b>whole recurring week</b>. To mend a single day, tap the small <b>pencil</b> upon that day's header — that view saveth to that day <b>only</b> (no "Set the Stage"), and so cannot trouble the rest of thy week. To sweep all away and begin anew, use <b>Clear Everything</b> within the Prepare Week box. <b>Mark:</b> to clear an act's <b>name</b> cleareth its hour and span as well, that thou needest not empty every box.</p>
+          <p>Press <b>Prepare/Edit Week</b> (high on the planner's left hand). For every deed thou keepest, conjure an <b>Act</b> — christen it, grant it a span of hours and minutes (<b>five minutes at the least</b>), and appoint the days it shall tread by its rank of <b>weekday buttons</b> (Mon to Sun). When thou savest, two buttons set the reach: <b>Edit</b> bestoweth thy changes upon <b>one day alone</b>, whilst <b>Set the Stage</b> bindeth thy <b>whole recurring week</b>. To mend a single day, tap the small <b>pencil</b> upon that day's header — that view saveth to that day <b>only</b> (no "Set the Stage"), and so cannot trouble the rest of thy week. To sweep all away and begin anew, use <b>Clear Everything</b> within the Prepare Week box. <b>Mark:</b> to clear an act's <b>name</b> cleareth its hour and span as well, that thou needest not empty every box.</p>
         </div>
         <div class="guide-block">
           <h4>Of four humours of Time · Fixed, Flexible, Anytime &amp; Sustenance</h4>
@@ -1917,7 +1917,7 @@ window.Planner = (() => {
     const isRange = timing === 'fixed' || timing === 'flexible';
     const hasStart = isRange || timing === 'sustenance' || timing === 'med';
     const hasRange = isRange && a.fixed_start && a.fixed_end;
-    const duration = hasRange ? Math.max(15, parseTime(a.fixed_end) - parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:(timing==='med'?5:15), (a.hours||0)*60 + (a.mins||0));
+    const duration = hasRange ? Math.max(5, parseTime(a.fixed_end) - parseTime(a.fixed_start)) : Math.max(5, (a.hours||0)*60 + (a.mins||0));
     return {
       name: (a.name || '').trim() || (timing==='sustenance' ? '' : timing==='med' ? 'Medication' : 'Untitled'), duration_minutes: duration, timing,
       undetermined: a.undetermined || undefined,
@@ -2690,7 +2690,7 @@ window.Planner = (() => {
       const hasStart = isRange || timing==='sustenance' || timing==='med';   // these carry a clock time
       const undet = !!a.undetermined && timing!=='sustenance' && timing!=='med';   // open-ended: no known length
       const hasRange = isRange && !undet && a.fixed_start && a.fixed_end;
-      const duration = undet ? 60 : (hasRange ? Math.max(15, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(timing==='sustenance'?5:(timing==='med'?5:15),(a.hours||0)*60+(a.mins||0)));
+      const duration = undet ? 60 : (hasRange ? Math.max(5, parseTime(a.fixed_end)-parseTime(a.fixed_start)) : Math.max(5,(a.hours||0)*60+(a.mins||0)));
       return {id:a.id,name:a.name.trim(),duration_minutes:duration,color:a.color,chime_start:!!a.chime_start,chime_end:!!a.chime_end,timing,
         undetermined: undet || undefined,
         fixed_start:hasStart&&a.fixed_start?a.fixed_start:undefined,
