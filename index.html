@@ -110,7 +110,24 @@
     .ts-card:hover .ts-card-bg{transform:scale(1.07)}
     [data-theme="light"] .ts-card-bg{background-image:url('light-open.png')}
     [data-theme="dark"]  .ts-card-bg{background-image:url('dark-open.png')}
-    [data-theme="standard"] .ts-card-bg{background:linear-gradient(160deg,#f7f8fa 0%,#e8ebef 52%,#d3d8de 100%)}
+    /* Standard card = a mini mockup of the app in the Standard theme's colours (no screenshot needed). */
+    [data-theme="standard"] .ts-card-bg{background:#edeff2}
+    .ts-mock{display:flex;flex-direction:column;background:#edeff2}
+    .tm-header{background:#2d343c;color:#eef1f3;display:flex;align-items:center;justify-content:space-between;padding:7px 9px;flex-shrink:0}
+    .tm-logo{font-family:var(--font-display);font-size:9px;letter-spacing:.14em}
+    .tm-dots{display:flex;gap:3px}
+    .tm-dots i{width:5px;height:5px;border-radius:50%;background:#7596a8}
+    .tm-tools{display:flex;align-items:center;gap:5px;padding:7px 9px 5px;flex-shrink:0}
+    .tm-btn{background:#5b7a8c;color:#fff;font-size:7px;padding:3px 6px;border-radius:2px;font-family:var(--font-body);letter-spacing:.03em}
+    .tm-nav{display:flex;gap:3px;margin-left:auto}
+    .tm-nav i{width:9px;height:9px;border-radius:2px;background:#d3d9df}
+    .tm-grid{flex:1;display:flex;gap:4px;padding:2px 9px 34px}
+    .tm-col{flex:1;display:flex;flex-direction:column;gap:3px}
+    .tm-day{font-size:6px;color:#5f666e;text-align:center;letter-spacing:.08em;font-family:var(--font-body);margin-bottom:1px}
+    .tm-slot{background:#fff;border:1px solid #dce0e4;border-left:2px solid #5b7a8c;border-radius:2px;padding:3px 4px}
+    .tm-slot.a2{border-left-color:#7596a8}
+    .tm-slot b{display:block;height:3px;width:72%;background:#c4cbd2;border-radius:1px;margin-bottom:2px}
+    .tm-slot span{display:block;height:2px;width:48%;background:#e0e4e8;border-radius:1px}
     .ts-card-info{position:absolute;bottom:0;left:0;right:0;padding:2.5rem 1.5rem 1.5rem;background:linear-gradient(transparent,rgba(0,0,0,.92))}
     .ts-card-label{display:block;font-family:var(--font-display);font-weight:600;font-size:1.45rem;letter-spacing:.22em;color:#d4af37;margin-bottom:.25rem}
     .ts-card-sub{font-family:var(--font-body);font-style:italic;color:#807050;font-size:.85rem}
@@ -503,7 +520,15 @@
       <div class="ts-card-info"><span class="ts-card-label">DARK</span><span class="ts-card-sub">The Midnight Stage</span></div>
     </div>
     <div class="ts-card" data-theme="standard" onclick="App.selectTheme('standard')">
-      <div class="ts-card-bg"></div>
+      <div class="ts-card-bg ts-mock">
+        <div class="tm-header"><span class="tm-logo">THE INFLICTOR</span><span class="tm-dots"><i></i><i></i><i></i></span></div>
+        <div class="tm-tools"><span class="tm-btn">Prepare/Edit Week</span><span class="tm-nav"><i></i><i></i></span></div>
+        <div class="tm-grid">
+          <div class="tm-col"><div class="tm-day">MON</div><div class="tm-slot"><b></b><span></span></div><div class="tm-slot a2"><b></b><span></span></div></div>
+          <div class="tm-col"><div class="tm-day">TUE</div><div class="tm-slot"><b></b><span></span></div><div class="tm-slot"><b></b><span></span></div><div class="tm-slot a2"><b></b><span></span></div></div>
+          <div class="tm-col"><div class="tm-day">WED</div><div class="tm-slot a2"><b></b><span></span></div><div class="tm-slot"><b></b><span></span></div></div>
+        </div>
+      </div>
       <div class="ts-card-info"><span class="ts-card-label">STANDARD</span><span class="ts-card-sub">Clean &amp; modern</span></div>
     </div>
   </div>
@@ -1071,6 +1096,34 @@
     </div>
   </div>
 </div>
+
+<!-- Minimal always-on startup safety net: installed BEFORE the main script so a fatal boot error is never
+     a silent white screen. Shows one dismissible line only when something actually throws. -->
+<script>
+  (function () {
+    function showFatal(msg) {
+      try {
+        var b = document.getElementById('fatal-err');
+        if (!b) {
+          b = document.createElement('div');
+          b.id = 'fatal-err';
+          b.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#8a0000;color:#fff;font:12px/1.45 system-ui,Segoe UI,monospace;padding:.5rem .7rem;white-space:pre-wrap;box-shadow:0 2px 10px rgba(0,0,0,.55);cursor:pointer';
+          b.title = 'Tap to dismiss';
+          b.addEventListener('click', function () { b.remove(); });
+          (document.body || document.documentElement).appendChild(b);
+        }
+        b.textContent = '⚠ The Inflictor hit a startup error — please screenshot this and send it:\n' + msg + '\n(tap to dismiss)';
+      } catch (e) {}
+    }
+    window.addEventListener('error', function (e) {
+      showFatal((e && e.message ? e.message : 'error') + (e && e.filename ? '  @ ' + String(e.filename).split('/').pop() + ':' + e.lineno + ':' + e.colno : ''));
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      var r = e && e.reason;
+      showFatal('promise rejection: ' + ((r && (r.message || r)) || 'unknown'));
+    });
+  })();
+</script>
 
 <script>
 // ════════════════════════════════════════════════
