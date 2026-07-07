@@ -4,13 +4,14 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+const THEME = process.argv[2] || 'standard';   // e.g. electron test-opening.js plain-dark
 
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ show: false, width: 1200, height: 800, webPreferences: { nodeIntegration: false, contextIsolation: true } });
   const idx = path.join(__dirname, 'app', 'index.html');
   await win.loadFile(idx);
-  // Seed the theme, then reload so boot runs the standard path from the start.
-  await win.webContents.executeJavaScript(`localStorage.setItem('inflictor_theme','standard'); true`);
+  // Seed the theme, then reload so boot runs the themed path from the start.
+  await win.webContents.executeJavaScript(`localStorage.setItem('inflictor_theme','${THEME}'); true`);
   win.webContents.reload();
   await new Promise(r => win.webContents.once('did-finish-load', r));
   await sleep(1200); // let init() run and the opening fade in
@@ -32,7 +33,7 @@ app.whenReady().then(async () => {
   console.log('OPENING-TEST-RESULT');
   console.log(res);
   const img = await win.webContents.capturePage();
-  require('fs').writeFileSync(path.join(require('os').tmpdir(), 'infl-standard-opening.png'), img.toPNG());
-  console.log('screenshot saved');
+  require('fs').writeFileSync(path.join(require('os').tmpdir(), `infl-opening-${THEME}.png`), img.toPNG());
+  console.log('screenshot saved:', `infl-opening-${THEME}.png`);
   app.quit();
 }).catch(e => { console.error('TEST FAILED:', e); app.quit(); });
