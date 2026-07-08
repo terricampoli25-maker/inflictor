@@ -49,6 +49,7 @@ CREATE TABLE IF NOT EXISTS settings (
   report_frequency     TEXT    NOT NULL DEFAULT 'off',  -- off / daily / weekly (scheduled email)
   tz_offset            INTEGER,                          -- JS getTimezoneOffset() so the cron fires at the user's local evening
   report_last_sent     TEXT,                             -- YYYY-MM-DD of the last scheduled send (dedupe)
+  report_meds          INTEGER NOT NULL DEFAULT 1,       -- meds/reminders in reports (privacy-display meds show their discreet label)
   updated_at           TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

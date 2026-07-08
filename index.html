@@ -2987,6 +2987,9 @@ window.Planner = (() => {
       notifRepeat      = data.notification_repeat || 1;
       cheerEnabled     = data.cheer_enabled !== 0; localStorage.setItem('inflictor_cheer', cheerEnabled?'1':'0');
       awwEnabled       = data.aww_enabled   !== 0; localStorage.setItem('inflictor_aww',   awwEnabled?'1':'0');
+      // Meds/reminders in reports: a real account setting now (the scheduled email needs it server-side).
+      // Default = INCLUDED (privacy-display meds report under their discreet label, so "taken" always shows).
+      localStorage.setItem('inflictor_report_meds', data.report_meds === 0 ? '0' : '1');
     }
     document.getElementById('sound-btn')?.classList.toggle('muted', !soundEnabled);
     await loadWeek(); render(); scheduleNotifs(); scheduleMidnight();
@@ -3151,6 +3154,7 @@ window.Settings = (() => {
   }
   function setReportMeds(v) {
     localStorage.setItem('inflictor_report_meds', v ? '1' : '0');
+    api('settings',{method:'PUT',body:{report_meds: v ? 1 : 0}});   // the scheduled email reads this server-side
     flashMsg(v ? 'Reminders will show in your report.' : 'Reminders hidden from your report.', 'success');
   }
   function setEmailReminders(v) {
