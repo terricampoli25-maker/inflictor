@@ -548,7 +548,7 @@ async function handleStripe(segments, request, env) {
       client_reference_id:s.user_id,
       'metadata[product_code]':'INFLICTOR',
     });
-    if (!yearly) params.set('allow_promotion_codes','true');   // the beta code (100% off, 15 uses) is MONTHLY-only — never on the $45 year
+    if (yearly) params.set('allow_promotion_codes','true');   // the beta code (100% off first invoice, 15 uses) redeems on the YEAR — one free year, renews at $45
     if (user.stripe_customer_id) params.set('customer',user.stripe_customer_id);
     else if (user.email) params.set('customer_email',user.email);
     const res=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{'Authorization':`Bearer ${env.STRIPE_SECRET_KEY}`,'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
