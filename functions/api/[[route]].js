@@ -643,9 +643,14 @@ async function handleStripeWebhook(request, env) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session=event.data.object;
-      // Inflictor is the ONLY subscription product. One-time purchases on this same Stripe account (e.g. Ere Long,
-      // The Measure) fire this same webhook — ignore them so a non-Inflictor buyer never gets an Inflictor account/email.
+      // One-time purchases on this same Stripe account (Ere Long, The Measure, the Ave apps) fire this same
+      // webhook — ignore them so a non-Inflictor buyer never gets an Inflictor account/email.
       if (session.mode !== 'subscription') break;
+      // Since 2026-07-10 OTHER products can be subscriptions too (Ere Long $6/yr, product_code=ERELONG, fulfilled
+      // by the serial-activation worker). Ignore any checkout carrying a FOREIGN product_code; no code (the
+      // Inflictor's own links) or an explicit INFLICTOR code is ours. (Reconstructs the guard deployed 2026-07-11
+      // from a session whose patch was never committed — keep this in sync with the serial-activation worker's codes.)
+      { const pc = (session.metadata?.product_code || '').toUpperCase(); if (pc && pc !== 'INFLICTOR') break; }
       const email=(session.customer_details?.email || session.customer_email || '').toLowerCase().trim();
       let userId=session.client_reference_id, isNew=false;   // client_reference_id is set only for the in-app (logged-in) checkout
       if (!userId && email) {
