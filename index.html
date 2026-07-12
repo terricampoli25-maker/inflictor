@@ -1105,8 +1105,9 @@
   <div class="paywall-box">
     <div class="am-orn">★</div>
     <div class="paywall-title">A subscription is required</div>
-    <div class="paywall-text">The Inflictor is a subscription app — <b>$1 / month</b> during the beta. There's no free version. Subscribe, then come back and tap “I've subscribed.”</div>
-    <button class="btn btn-primary" onclick="App.paywallSubscribe()">Subscribe — $1 / month</button>
+    <div class="paywall-text">The Inflictor is a subscription app — <b>$3 / month</b> during the beta ($6 / month after), or <b>$45 / year</b>. There's no free version. Subscribe, then come back and tap “I've subscribed.”<br><span style="font-size:.85em;opacity:.8">Have a beta code? Choose monthly and enter it at checkout.</span></div>
+    <button class="btn btn-primary" onclick="App.paywallSubscribe('monthly')">Subscribe — $3 / month (beta)</button>
+    <button class="btn btn-primary" onclick="App.paywallSubscribe('yearly')">One year — $45</button>
     <button class="btn btn-ghost" onclick="App.paywallRecheck()">I've subscribed — let me in</button>
     <div class="paywall-msg" id="paywall-msg"></div>
     <button class="btn-link" style="margin-top:.6rem" onclick="App.paywallLogout()">Log out</button>
@@ -1534,7 +1535,10 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
     return !!u && !u.is_guest && (u.premium_status === 'premium' || u.premium_status === 'trial');
   }
   // ── Paywall (blocking subscribe screen) ──
-  const SUBSCRIBE_URL = 'https://buy.stripe.com/3cI8wQ1pOfup3k80464Ni03';   // THE INFLICTOR $1/mo Payment Link (confirmed by Terri 2026-07-08) — fallback only; the button prefers the logged-in checkout below
+  // THE INFLICTOR Payment Links (from Terri 2026-07-12) — fallbacks only; the buttons prefer the logged-in checkout below.
+  // (The old $1/mo link 3cI8wQ…Ni03 is retired — Terri deactivates it in Stripe.)
+  const SUBSCRIBE_URL        = 'https://buy.stripe.com/28EfZifgE3LH4oceZ04Ni0b';   // $3/mo beta (promo codes enabled — the 15-tester code redeems here)
+  const SUBSCRIBE_URL_YEARLY = 'https://buy.stripe.com/bJe14o1pOaa54oc9EG4Ni0c';   // $45/yr (no promo codes)
   function showPaywall() {
     const op = el('opening-screen'); if (op) op.style.display = 'none';
     hideAuthOverlay();
@@ -1547,14 +1551,14 @@ window.medIcon = a => (a && a.med_display === 'ribbon') ? '🎗️' : '💊';
   }
   // Prefer the server's logged-in checkout (ties the subscription to THIS account via client_reference_id,
   // so it links even if they pay with a different email). Fall back to the public Payment Link if that fails.
-  App.paywallSubscribe = async () => {
+  App.paywallSubscribe = async (plan) => {
     const m = el('paywall-msg'); if (m) { m.textContent = 'Opening checkout…'; m.className = 'paywall-msg'; }
     try {
-      const { ok, data } = await api('stripe/create-checkout', { method: 'POST' });
+      const { ok, data } = await api('stripe/create-checkout', { method: 'POST', body: { plan: plan === 'yearly' ? 'yearly' : 'monthly' } });
       if (ok && data.url) { window.location.href = data.url; return; }
     } catch {}
     if (m) m.textContent = '';
-    try { window.open(SUBSCRIBE_URL, '_blank'); } catch {}
+    try { window.open(plan === 'yearly' ? SUBSCRIBE_URL_YEARLY : SUBSCRIBE_URL, '_blank'); } catch {}
   };
   App.paywallRecheck = async () => {
     const m = el('paywall-msg'); if (m) { m.textContent = 'Checking…'; m.className = 'paywall-msg'; }

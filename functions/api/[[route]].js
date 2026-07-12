@@ -528,23 +528,27 @@ async function handleExport(segments, request, env) {
 async function handleStripe(segments, request, env) {
   const db=env.DB, action=segments[1];
 
-  // POST /api/stripe/create-checkout
+  // POST /api/stripe/create-checkout  — body: { plan: 'monthly' (default) | 'yearly' }
   if (action==='create-checkout'&&request.method==='POST') {
     const s=await getSession(request,db);
     if (!s) return json({error:'Unauthorized'},401);
     if (!env.STRIPE_SECRET_KEY||!env.STRIPE_PRICE_ID) return json({error:'Stripe is not yet configured on this server.'},503);
     const user=await db.prepare('SELECT * FROM users WHERE id=?').bind(s.user_id).first();
     if (!user) return json({error:'User not found'},404);
+    const { plan } = await request.json().catch(()=>({}));
+    const yearly = plan==='yearly' && !!env.STRIPE_PRICE_ID_YEARLY;
     const domain=env.APP_DOMAIN||'inflictor.pages.dev';
     const params=new URLSearchParams({
       mode:'subscription',
       'payment_method_types[0]':'card',
-      'line_items[0][price]':env.STRIPE_PRICE_ID,
+      'line_items[0][price]': yearly ? env.STRIPE_PRICE_ID_YEARLY : env.STRIPE_PRICE_ID,
       'line_items[0][quantity]':'1',
       success_url:`https://${domain}/?premium=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url:`https://${domain}/?premium=cancelled`,
       client_reference_id:s.user_id,
+      'metadata[product_code]':'INFLICTOR',
     });
+    if (!yearly) params.set('allow_promotion_codes','true');   // the beta code (100% off, 15 uses) is MONTHLY-only — never on the $45 year
     if (user.stripe_customer_id) params.set('customer',user.stripe_customer_id);
     else if (user.email) params.set('customer_email',user.email);
     const res=await fetch('https://api.stripe.com/v1/checkout/sessions',{method:'POST',headers:{'Authorization':`Bearer ${env.STRIPE_SECRET_KEY}`,'Content-Type':'application/x-www-form-urlencoded'},body:params.toString()});
