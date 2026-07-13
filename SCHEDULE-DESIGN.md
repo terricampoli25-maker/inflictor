@@ -43,8 +43,10 @@ The examples above are illustrative, not final.
   completed** and have a **memo** — they just have **no scheduled time**.
 - They **may have an optional duration** ("sometime today I should walk for half an
   hour"), but it's not tied to any clock time.
-- NOTE: the current Sometime-Today items have complete/not + pause but **no memo yet**,
-  so Phase 2 needs to add the memo "M" to them for parity.
+- ~~NOTE: the current Sometime-Today items have complete/not + pause but **no memo yet**,
+  so Phase 2 needs to add the memo "M" to them for parity.~~ **DONE** — verified in code
+  2026-07-13: Sometime-Today items have ✎ edit, an "M" memo (synced to the server memo
+  store, survives reinstalls), and complete/not-complete checks.
 
 ## Conflict reminders
 - The user is mostly trusted to **see** conflicts themselves.
