@@ -577,8 +577,6 @@
         <div style="text-align:right;margin-top:.38rem"><button type="button" class="btn-link" onclick="App.showForm('forgot')">Forgot thy secret?</button></div>
       </div>
       <button class="btn btn-primary" type="submit" id="btn-login">Enter the Stage</button>
-      <div class="divider"><span>or</span></div>
-      <button class="btn btn-ghost" type="button" onclick="App.doGuest()">Enter as Groundling</button>
     </form>
     <form class="auth-form" id="form-register" onsubmit="App.doRegister(event)">
       <div class="form-group"><label class="form-label" for="r-user">Choose a Name</label><input class="form-input" type="text" id="r-user" placeholder="3–30 chars, letters / numbers / _" autocomplete="username" required></div>
@@ -586,8 +584,6 @@
       <div class="form-group"><label class="form-label" for="r-pass">Create a Secret</label><input class="form-input" type="password" id="r-pass" placeholder="At least 8 characters" autocomplete="new-password" required></div>
       <div class="form-group"><label class="form-label" for="r-confirm">Confirm thy Secret</label><input class="form-input" type="password" id="r-confirm" placeholder="••••••••" autocomplete="new-password" required></div>
       <button class="btn btn-primary" type="submit" id="btn-register">Claim Thy Seat</button>
-      <div class="divider"><span>or</span></div>
-      <button class="btn btn-ghost" type="button" onclick="App.doGuest()">Enter as Groundling</button>
     </form>
     <form class="auth-form" id="form-forgot" onsubmit="App.doForgot(event)">
       <div class="am-back"><button type="button" class="am-back-btn" onclick="App.showForm(null)">← Return to entrance</button></div>
