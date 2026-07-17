@@ -671,6 +671,20 @@ async function handleStripeWebhook(request, env) {
         }
       }
       if (!userId) break;   // no logged-in ref and no email → nothing to link to
+      // A GUEST who pays becomes a full account (2026-07-17: a real buyer paid from a Groundling session and
+      // stayed locked out — hasActiveSub excludes guests, and guests can't log in). Clear the guest flag,
+      // attach the checkout email (unless another account owns it), and send the SET-PASSWORD welcome
+      // (a guest has no usable password, so the "log in with your existing account" variant is a dead end).
+      const payer = await db.prepare('SELECT is_guest FROM users WHERE id=?').bind(userId).first();
+      if (payer?.is_guest) {
+        isNew = true;
+        let claim = null;
+        if (email) {
+          const taken = await db.prepare('SELECT id FROM users WHERE lower(email)=? AND id<>?').bind(email, userId).first();
+          if (!taken) claim = email;
+        }
+        await db.prepare('UPDATE users SET is_guest=0, email=COALESCE(?, email) WHERE id=?').bind(claim, userId).run();
+      }
       // Grant access immediately — NO trial. (subscription.updated / invoice events keep the expiry current.)
       await db.prepare(`UPDATE users SET stripe_customer_id=?,stripe_subscription_id=?,premium_status='premium',premium_expires_at=NULL WHERE id=?`).bind(session.customer,session.subscription,userId).run();
       if (email) await sendWelcomeEmail(db, env, userId, email, isNew);   // setup guide: download + (new) set-password + firewall heads-up
