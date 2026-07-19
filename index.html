@@ -2184,6 +2184,7 @@ window.Planner = (() => {
   // ── Data ───────────────────────────────────────────────────────
   async function loadWeek() {
     const cacheKey = `inflictor_week_${toISO(weekStart)}`;
+    lastWeekFetch = Date.now();
     const { ok, data } = await api(`week?start=${toISO(weekStart)}`);
     if (ok) {
       weekData = data; taskStatus = {};
@@ -2200,6 +2201,24 @@ window.Planner = (() => {
       weekData = { schedule: null, dailyOverrides: {}, notes: {}, taskLogs: [] };
     }
   }
+  // ── Cross-surface freshness (2026-07-19) ─────────────────────
+  // The board used to fetch ONCE at startup, so edits made elsewhere (the web app via Thine, another
+  // device, a second tab) never appeared until a full restart — a tray-resumed desktop window or a
+  // long-lived browser tab just showed stale data. Now: whenever the window/tab comes back into view,
+  // refetch the week (throttled to 60s). Local edits are optimistic-and-synced, so a refresh only ever
+  // brings in newer server state.
+  let lastWeekFetch = 0;
+  async function refreshIfStale() {
+    try {
+      if (document.visibilityState !== 'visible') return;
+      if (!weekData) return;                                   // not logged in / not initialized yet
+      if (Date.now() - lastWeekFetch < 60_000) return;
+      await loadWeek(); render(); scheduleNotifs();
+    } catch {}
+  }
+  window.addEventListener('focus', refreshIfStale);
+  document.addEventListener('visibilitychange', refreshIfStale);
+
   const dayIdx = d => (d.getDay() === 0 ? 6 : d.getDay() - 1);   // 0=Mon … 6=Sun
   function getDaySchedule(ds) {
     const ovr = weekData?.dailyOverrides?.[ds];
