@@ -151,9 +151,13 @@ async function handleAuth(segments, request, env) {
     const { email = '' } = await request.json().catch(() => ({}));
     if (!(await rateLimit(db, 'forgot-ip', clientIp(request), 6, 3600)) || !(await rateLimit(db, 'forgot-email', String(email).toLowerCase(), 4, 3600))) return tooMany(600);
     if (!email) return json({ error: 'Email required' }, 400);
-    const user = await db.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
+    // Case-insensitive + trimmed, matching login — phone keyboards auto-capitalize and users add stray
+    // spaces; a case-sensitive match here silently no-ops (burned customer #1, 2026-07-19).
+    const user = await db.prepare('SELECT * FROM users WHERE lower(email) = lower(?)').bind(String(email).trim()).first();
     if (user) {
-      const rt = newToken(), rid = newId(), exp = new Date(Date.now() + 3_600_000).toISOString();
+      // 24h expiry (was 1h): reset emails routinely detour through Junk and get found hours later —
+      // a 1-hour fuse was dead before customer #1 ever saw it.
+      const rt = newToken(), rid = newId(), exp = new Date(Date.now() + 24 * 3_600_000).toISOString();
       await db.prepare('INSERT INTO password_resets (id,user_id,token,expires_at) VALUES (?,?,?,?)').bind(rid, user.id, rt, exp).run();
       if (env.RESEND_API_KEY) {
         const url = `https://${env.APP_DOMAIN||'inflictor.pages.dev'}/?reset=${rt}`;
@@ -161,7 +165,7 @@ async function handleAuth(segments, request, env) {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ from: env.FROM_EMAIL||'noreply@inflictor.app', to: email, subject: 'The Inflictor — Reset Thy Password',
-            html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;background:#110800;color:#d4af37;border:1px solid #5a3010"><h1 style="text-align:center;letter-spacing:.1em">THE INFLICTOR</h1><p style="text-align:center;font-style:italic;color:#a07840;margin-bottom:2rem">"What's done cannot be undone — but thy password can be restored."</p><div style="text-align:center;margin:2rem 0"><a href="${url}" style="display:inline-block;background:#d4af37;color:#110800;padding:.9rem 2.5rem;text-decoration:none;font-weight:bold">RESET THY PASSWORD</a></div><p style="font-size:.8rem;color:#6a5030;text-align:center">This link expires in one hour.</p></div>` }),
+            html: `<div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;padding:2rem;background:#110800;color:#d4af37;border:1px solid #5a3010"><h1 style="text-align:center;letter-spacing:.1em">THE INFLICTOR</h1><p style="text-align:center;font-style:italic;color:#a07840;margin-bottom:2rem">"What's done cannot be undone — but thy password can be restored."</p><div style="text-align:center;margin:2rem 0"><a href="${url}" style="display:inline-block;background:#d4af37;color:#110800;padding:.9rem 2.5rem;text-decoration:none;font-weight:bold">RESET THY PASSWORD</a></div><p style="font-size:.8rem;color:#6a5030;text-align:center">This link expires in 24 hours. (If this landed in your junk folder, mark us as a safe sender so future mail arrives.)</p></div>` }),
         });
       }
     }
