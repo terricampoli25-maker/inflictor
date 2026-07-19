@@ -203,6 +203,23 @@ if (!gotSingleInstanceLock) {
   app.whenReady().then(() => {
     // Windows app identity — lets the installed app group & pin correctly on the taskbar
     if (process.platform === 'win32') app.setAppUserModelId('com.inflictor.app');
+    // ── Auto-update (2026-07-19): desktop installs previously NEVER updated themselves — users kept old
+    // builds forever unless they manually reinstalled. Now: check the R2 feed (latest.yml, uploaded next to
+    // the installer) on launch and every 4h; download silently; the update installs itself when the user
+    // QUITS (autoInstallOnAppQuit) — which also properly closes the app first, ending the stale-install/
+    // "old copy still in the tray" problem. Fully guarded: any updater failure is logged and ignored.
+    if (app.isPackaged) {
+      try {
+        const { autoUpdater } = require('electron-updater');
+        autoUpdater.autoDownload = true;
+        autoUpdater.autoInstallOnAppQuit = true;
+        autoUpdater.on('error', (e) => console.error('[UPDATER]', (e && e.message) || e));
+        autoUpdater.on('update-downloaded', (info) => console.log('[UPDATER] downloaded', info && info.version, '— installs on quit'));
+        const check = () => { try { autoUpdater.checkForUpdates().catch(e => console.error('[UPDATER]', e.message)); } catch (e) { console.error('[UPDATER]', e.message); } };
+        check();
+        setInterval(check, 4 * 60 * 60 * 1000);
+      } catch (e) { console.error('[UPDATER] init failed:', e.message); }
+    }
     createTray();
     // If Windows launched us at login (openAsHidden), stay tucked in the tray so reminders fire silently.
     const startedHidden = process.platform === 'win32' && app.getLoginItemSettings().wasOpenedAtLogin;
